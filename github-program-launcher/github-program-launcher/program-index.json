@@ -1,9 +1,0 @@
-{
-  "version": 1,
-  "settings": {
-    "title": "プログラムランチャー",
-    "subtitle": "HTMLプログラムを選択してください。初回に開いたページは、次回からオフラインでも表示できるよう保存されます。",
-    "showPath": true
-  },
-  "programs": []
-}
