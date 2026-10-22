@@ -2,8 +2,39 @@
   "version": 1,
   "settings": {
     "title": "プログラムランチャー",
-    "subtitle": "HTMLプログラムを選択してください。初回に開いたページは、次回からオフラインでも表示できるよう保存されます。",
+    "subtitle": "使いたいツールを選択してください。",
     "showPath": true
   },
-  "programs": []
+  "programs": [
+    {
+      "file": "tools/index (1).html",
+      "title": "逆再生サンプラー",
+      "description": "音声を逆再生するサンプラー",
+      "color": "#7c5cff",
+      "textColor": "#ffffff",
+      "icon": "⏪",
+      "category": "tools",
+      "order": 10
+    },
+    {
+      "file": "tools/index (4).html",
+      "title": "ROUTE（SNS）（レガシー）",
+      "description": "ROUTE SNS の旧バージョン",
+      "color": "#d65c94",
+      "textColor": "#ffffff",
+      "icon": "💬",
+      "category": "tools",
+      "order": 20
+    },
+    {
+      "file": "tools/index (5).html",
+      "title": "P2Pファイル転送",
+      "description": "P2P方式でファイルを転送するツール",
+      "color": "#1fa6a0",
+      "textColor": "#ffffff",
+      "icon": "🔗",
+      "category": "tools",
+      "order": 30
+    }
+  ]
 }
