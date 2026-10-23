@@ -2,15 +2,26 @@
   "id": "./",
   "name": "プログラムランチャー",
   "short_name": "プログラム",
-  "description": "GitHub Pages上のHTMLプログラムを一覧・起動する軽量ランチャー",
+  "description": "GitHub Pages上のHTMLプログラムを起動する軽量ランチャー",
   "lang": "ja",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#0b1020",
   "theme_color": "#101522",
   "icons": [
-    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
   ]
 }

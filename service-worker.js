@@ -5,14 +5,13 @@
  * - Other same-origin assets: stale-while-revalidate.
  */
 const CACHE_PREFIX = "program-launcher-pwa-";
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
 const APP_SHELL = [
   "./",
   "./index.html",
   "./offline.html",
   "./manifest.webmanifest",
-  "./program-index.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png"
 ];
@@ -21,6 +20,11 @@ self.addEventListener("install", event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
     await cache.addAll(APP_SHELL);
+    // 設定JSONは任意ファイル。存在しなくてもService Workerのインストールを失敗させない。
+    try {
+      const settingsResponse = await fetch("./program-index.json", { cache: "no-store" });
+      if (isCacheable(settingsResponse)) await cache.put("./program-index.json", settingsResponse.clone());
+    } catch { /* JSONなし・オフラインでもPWAシェルのインストールを続行 */ }
     await self.skipWaiting();
   })());
 });

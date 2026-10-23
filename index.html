@@ -54,37 +54,160 @@
     section.list-section { margin-top: 34px; }
     .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 14px; }
     h2 { font-size: 1rem; margin: 0; font-weight: 700; color: #dce5ff; }
-    .section-count { font-size: .82rem; color: var(--muted); }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 235px), 1fr)); gap: 14px; }
-    .category-group + .category-group { margin-top: 27px; }
-    .category-title { margin: 0 0 12px; color: var(--muted); font-size: .86rem; font-weight: 650; }
+    .heading-meta { display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-width: 0; }
+    .section-count { font-size: .82rem; color: var(--muted); white-space: nowrap; }
+    .scroll-cue { display: none; color: #9ba9c6; font-size: .7rem; white-space: nowrap; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+      gap: 12px;
+    }
+    .category-group + .category-group { margin-top: 24px; }
+    .category-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 10px; color: var(--muted); font-size: .86rem; font-weight: 650; }
     .card {
       --card-accent: #7c9cff;
-      display: flex; min-height: 205px; flex-direction: column; overflow: hidden; position: relative;
-      border: 1px solid var(--line); border-radius: var(--radius); padding: 16px;
+      display: grid;
+      grid-template-columns: 58px minmax(0, 1fr);
+      align-items: start;
+      gap: 12px;
+      min-height: 0;
+      min-width: 0;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      padding: 12px 14px 12px 16px;
       background: linear-gradient(145deg, color-mix(in srgb, var(--card-accent) 18%, #151d30), #121827 72%);
-      color: var(--text); text-decoration: none; isolation: isolate;
+      color: var(--text);
+      text-decoration: none;
+      isolation: isolate;
       transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
     }
-    .card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--card-accent); }
-    .card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--card-accent) 68%, white 8%); box-shadow: 0 12px 30px rgba(0,0,0,.18); }
+    .card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--card-accent); }
+    .card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--card-accent) 68%, white 8%); box-shadow: 0 8px 22px rgba(0,0,0,.16); }
     .card:focus-visible { outline: 3px solid var(--card-accent); outline-offset: 3px; }
     .thumbnail {
-      display: grid; place-items: center; width: 100%; height: 82px; margin-bottom: 15px;
-      border-radius: 12px; background: color-mix(in srgb, var(--card-accent) 24%, #161d30);
-      overflow: hidden; color: var(--card-text, #fff);
+      display: grid;
+      place-items: center;
+      width: 58px;
+      height: 58px;
+      margin: 1px 0 0;
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--card-accent) 24%, #161d30);
+      overflow: hidden;
+      color: var(--card-text, #fff);
     }
-    .thumbnail .emoji { font-size: 2.2rem; line-height: 1; }
+    .thumbnail .emoji { font-size: 1.65rem; line-height: 1; }
     .thumbnail img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .card-title { margin: 0 0 7px; font-size: 1.08rem; font-weight: 750; line-height: 1.35; overflow-wrap: anywhere; }
-    .description { color: #bac5dc; font-size: .88rem; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; }
-    .path { color: #8290ad; font-size: .73rem; line-height: 1.4; margin-top: auto; padding-top: 14px; overflow-wrap: anywhere; }
-    .tag { display: inline-flex; align-self: flex-start; padding: 4px 8px; margin-bottom: 9px; border-radius: 999px; background: rgba(255,255,255,.08); color: #dfe6f8; font-size: .72rem; }
+    .card-main { display: flex; flex-direction: column; min-width: 0; }
+    .card-title { margin: 0 0 4px; font-size: 1rem; font-weight: 750; line-height: 1.35; overflow-wrap: anywhere; }
+    .description {
+      color: #bac5dc;
+      font-size: .84rem;
+      line-height: 1.5;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      overflow: hidden;
+    }
+    .path { color: #8290ad; font-size: .69rem; line-height: 1.35; margin-top: 7px; overflow-wrap: anywhere; }
+    .tag { display: inline-flex; align-self: flex-start; max-width: 100%; padding: 3px 7px; margin-bottom: 5px; border-radius: 999px; background: rgba(255,255,255,.08); color: #dfe6f8; font-size: .68rem; line-height: 1.35; overflow-wrap: anywhere; }
     .empty, .error { padding: 22px; border: 1px dashed var(--line); border-radius: 14px; color: var(--muted); line-height: 1.6; }
     .error { border-color: rgba(255, 119, 119, .3); color: #ffabab; }
     footer { border-top: 1px solid var(--line); color: #7e8aa4; margin-top: 44px; padding-top: 18px; font-size: .8rem; line-height: 1.6; }
     [hidden] { display: none !important; }
     .hide-path .path { display: none; }
+
+    @media (max-width: 640px) {
+      body { padding: 14px 12px 26px; }
+      .topbar { gap: 14px; }
+      h1 { font-size: 1.55rem; line-height: 1.2; }
+      .subtitle { margin-top: 7px; font-size: .88rem; line-height: 1.55; }
+      .actions { width: 100%; gap: 8px; }
+      .status-pill, .action-button { padding: 8px 10px; font-size: .78rem; }
+      .toolbar { margin: 18px 0 22px; }
+      .search { padding: 12px 13px; font-size: 16px; }
+      section.list-section { margin-top: 24px; }
+      .section-heading { margin-bottom: 11px; }
+      /* スマホでは見出しごとに横スワイプできるアプリタイル型レール */
+      .grid {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: clamp(112px, 34vw, 150px);
+        grid-template-columns: none;
+        gap: 10px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 2px 2px 11px;
+        scroll-snap-type: x proximity;
+        scroll-padding-inline: 2px;
+        overscroll-behavior-x: contain;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(165, 176, 200, .35) transparent;
+      }
+      .grid > .card { scroll-snap-align: start; }
+      .category-group + .category-group { margin-top: 21px; }
+      .category-title { margin-bottom: 9px; font-size: .82rem; }
+      .scroll-cue { display: inline; }
+      .card {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        min-height: 156px;
+        padding: 11px 10px 12px;
+        border-radius: 14px;
+      }
+      .card::before { width: 3px; }
+      .card:hover { transform: none; }
+      .thumbnail {
+        width: 44px;
+        height: 44px;
+        flex: 0 0 44px;
+        align-self: center;
+        margin: 0 0 1px;
+        border-radius: 12px;
+      }
+      .thumbnail .emoji { font-size: 1.35rem; }
+      .thumbnail img { border-radius: inherit; }
+      .tag { font-size: .62rem; padding: 3px 6px; margin: 0; }
+      .category-group .card .tag { display: none; }
+      .card-title {
+        font-size: .86rem;
+        line-height: 1.35;
+        margin: 0;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        overflow: hidden;
+        overflow-wrap: anywhere;
+      }
+      .description {
+        font-size: .72rem;
+        line-height: 1.4;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+      }
+      /* タイルを詰めるため、詳細なパスはPCでのみ表示 */
+      .path { display: none; }
+      .empty, .error { padding: 16px; }
+      footer { margin-top: 30px; font-size: .74rem; }
+    }
+    @media (max-width: 360px) {
+      body { padding-inline: 9px; }
+      .grid { grid-auto-columns: 112px; gap: 8px; }
+      .card { padding: 10px 9px; gap: 7px; min-height: 150px; }
+      .thumbnail { width: 42px; height: 42px; flex-basis: 42px; }
+      .thumbnail .emoji { font-size: 1.25rem; }
+      .card-title { font-size: .82rem; }
+      .description { font-size: .69rem; }
+      .scroll-cue { font-size: .65rem; }
+    }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; } }
   </style>
 </head>
@@ -108,12 +231,12 @@
     </div>
 
     <section id="recentSection" class="list-section" hidden>
-      <div class="section-heading"><h2>最近開いたプログラム</h2><span id="recentCount" class="section-count"></span></div>
+      <div class="section-heading"><h2>最近開いたプログラム</h2><div class="heading-meta"><span id="recentCount" class="section-count"></span><span class="scroll-cue" aria-hidden="true">横にスワイプ →</span></div></div>
       <div id="recent" class="grid"></div>
     </section>
 
     <section class="list-section" aria-labelledby="allHeading">
-      <div class="section-heading"><h2 id="allHeading">すべてのプログラム</h2><span id="count" class="section-count">読み込み中…</span></div>
+      <div class="section-heading"><h2 id="allHeading">すべてのプログラム</h2><div class="heading-meta"><span id="count" class="section-count">読み込み中…</span></div></div>
       <div id="app" aria-live="polite"><div class="empty">プログラム一覧を読み込んでいます…</div></div>
     </section>
 
@@ -181,25 +304,100 @@
       return fallback;
     }
 
+    function filenameOf(file) {
+      return file.split("/").pop().replace(/\.html?$/i, "");
+    }
+
+    // JSON未登録のHTMLにも、ファイル名から推測した絵文字または汎用アイコンを必ず割り当てる。
+    // HTMLの中身を1ファイルずつ取得しないため、自動一覧作成時の通信量を抑えられる。
+    function inferIcon(file) {
+      const basename = filenameOf(file).toLocaleLowerCase("ja");
+      const folders = file.split("/").slice(0, -1)
+        .filter(part => !/^(tools?|apps?|programs?|pages?|public|www)$/i.test(part))
+        .join(" ").toLocaleLowerCase("ja");
+      const name = `${basename} ${folders}`;
+      const rules = [
+        [/reverse|backward|rewind|逆再生/, "⏪"],
+        [/sampler|audio|sound|music|voice|wave|音声|音楽|サウンド/, "🎵"],
+        [/p2p|transfer|share|file|ファイル|転送/, "🔗"],
+        [/sns|social|chat|message|コミュ|交流/, "💬"],
+        [/video|movie|動画/, "🎬"],
+        [/image|photo|picture|camera|画像|写真/, "🖼️"],
+        [/game|puzzle|ゲーム|パズル/, "🎮"],
+        [/calendar|schedule|予定|カレンダー/, "📅"],
+        [/calc|calculator|計算/, "🧮"],
+        [/map|navigation|地図|ルート/, "🧭"],
+        [/editor|writer|note|memo|文章|メモ|編集/, "✏️"],
+        [/qr|barcode|qrコード/, "🔳"],
+        [/setting|config|設定/, "⚙️"]
+      ];
+      for (const [pattern, icon] of rules) if (pattern.test(name)) return icon;
+      return "🧩";
+    }
+
+    // ファイル名をハッシュ化し、一覧の順番が変わっても標準色が変わらないようにする。
+    function defaultColor(seed) {
+      const colors = ["#7c5cff", "#1fa6a0", "#e87945", "#d65c94", "#4c8fe8", "#b28a35", "#40a66c", "#9575cd"];
+      let hash = 0;
+      for (let i = 0; i < String(seed).length; i++) hash = ((hash << 5) - hash + String(seed).charCodeAt(i)) | 0;
+      return colors[Math.abs(hash) % colors.length];
+    }
+
     function normalizeProgram(program, position = 0) {
       if (!program || !safeFilePath(program.file) || !/\.html?$/i.test(program.file)) return null;
-      const filename = program.file.split("/").pop().replace(/\.html?$/i, "");
+      const filename = filenameOf(program.file);
+      const folder = program.file.split("/").slice(0, -1).join("/");
+      const title = String(program.title || filename.replace(/[-_]+/g, " "));
       return {
         file: program.file,
-        title: String(program.title || filename),
-        description: String(program.description || "説明はありません"),
-        color: safeColor(program.color),
+        title,
+        description: String(program.description || (folder ? `フォルダー: ${folder}` : "HTMLプログラムです。表示名や説明はJSONで変更できます。")),
+        color: safeColor(program.color, defaultColor(program.file)),
         textColor: safeColor(program.textColor, "#ffffff"),
-        icon: String(program.icon || "▣").slice(0, 12),
+        icon: String(program.icon || inferIcon(program.file)).slice(0, 12),
         thumbnail: typeof program.thumbnail === "string" && safeFilePath(program.thumbnail) ? program.thumbnail : "",
-        category: String(program.category || "その他"),
+        category: String(program.category || folder || "その他"),
         order: Number.isFinite(Number(program.order)) && program.order !== "" ? Number(program.order) : 100000 + position,
-        _position: position
+        _position: Number.isFinite(Number(program._position)) ? Number(program._position) : position
       };
     }
 
     function sortPrograms(programs) {
       return programs.slice().sort((a, b) => a.order - b.order || a._position - b._position || a.title.localeCompare(b.title, "ja"));
+    }
+
+    // 自動検出リストを基本にし、JSONで指定されたプロパティだけを上書きする。
+    // JSONにないファイルも自動検出結果に残す。設定だけに書かれたファイルも末尾に追加する。
+    function mergePrograms(discovered, definitions) {
+      const customByFile = new Map();
+      for (const item of definitions) {
+        if (item && safeFilePath(item.file) && /\.html?$/i.test(item.file)) customByFile.set(item.file, item);
+      }
+      const used = new Set();
+      const merged = [];
+      for (let i = 0; i < discovered.length; i++) {
+        const base = normalizeProgram(discovered[i], i);
+        if (!base) continue;
+        const custom = customByFile.get(base.file);
+        if (custom) {
+          const next = { ...base };
+          for (const key of ["title", "description", "color", "textColor", "icon", "thumbnail", "category", "order"]) {
+            const value = custom[key];
+            if (value !== undefined && value !== null && !(typeof value === "string" && value.trim() === "")) next[key] = value;
+          }
+          merged.push(normalizeProgram(next, i));
+          used.add(base.file);
+        } else {
+          merged.push(base);
+        }
+      }
+      let extraIndex = discovered.length;
+      for (const custom of definitions) {
+        if (!custom || !safeFilePath(custom.file) || !/\.html?$/i.test(custom.file) || used.has(custom.file) || discovered.some(p => p.file === custom.file)) continue;
+        merged.push(normalizeProgram(custom, extraIndex++));
+        used.add(custom.file);
+      }
+      return sortPrograms(merged);
     }
 
     function loadRecent() {
@@ -271,7 +469,10 @@
       path.className = "path";
       path.textContent = program.file;
 
-      card.append(thumbnail, category, title, description, path);
+      const content = document.createElement("div");
+      content.className = "card-main";
+      content.append(category, title, description, path);
+      card.append(thumbnail, content);
       return card;
     }
 
@@ -289,7 +490,7 @@
       if (!programs.length) {
         const empty = document.createElement("div");
         empty.className = "empty";
-        empty.textContent = "該当するプログラムがありません。program-index.json の設定、または検索語を確認してください。";
+        empty.textContent = "該当するプログラムがありません。検索語を確認してください。";
         container.append(empty);
         return;
       }
@@ -298,7 +499,13 @@
         group.className = "category-group";
         const heading = document.createElement("h3");
         heading.className = "category-title";
-        heading.textContent = category;
+        const label = document.createElement("span");
+        label.textContent = category;
+        const cue = document.createElement("span");
+        cue.className = "scroll-cue";
+        cue.setAttribute("aria-hidden", "true");
+        cue.textContent = "横にスワイプ →";
+        heading.append(label, cue);
         const grid = document.createElement("div");
         grid.className = "grid";
         for (const program of items) grid.append(makeCard(program));
@@ -327,14 +534,15 @@
     }
     $("search").addEventListener("input", render);
 
-    function applySettings(settings = {}) {
+    function applySettings(settings = {}, replace = false) {
+      if (replace) currentSettings = {};
       currentSettings = { ...currentSettings, ...settings };
-      if (settings.title) {
-        $("pageTitle").textContent = String(settings.title);
-        document.title = String(settings.title);
-      }
-      if (settings.subtitle) $("subtitle").textContent = String(settings.subtitle);
-      if (settings.showPath === false) document.documentElement.classList.add("hide-path");
+      const title = String(currentSettings.title || "プログラムランチャー");
+      const subtitle = String(currentSettings.subtitle || "HTMLプログラムを選択してください。初回に開いたページは、次回からオフラインでも表示できるよう保存されます。");
+      $("pageTitle").textContent = title;
+      document.title = title;
+      $("subtitle").textContent = subtitle;
+      document.documentElement.classList.toggle("hide-path", currentSettings.showPath === false);
     }
 
     async function fetchJSON(url) {
@@ -347,7 +555,7 @@
       try {
         const stored = JSON.parse(localStorage.getItem(cacheKey) || "null");
         if (stored && Array.isArray(stored.programs)) {
-          applySettings(stored.settings || {});
+          applySettings(stored.settings || {}, true);
           return sortPrograms(stored.programs.map(normalizeProgram).filter(Boolean));
         }
       } catch { /* キャッシュ破損は無視 */ }
@@ -356,15 +564,21 @@
 
     async function loadGitHubPrograms() {
       const match = location.hostname.match(/^([^./]+)\.github\.io$/i);
-      if (!match) throw new Error("program-index.json に一覧を設定してください（カスタムドメインでは自動検索できません）。");
+      if (!match) throw new Error("カスタムドメインではGitHubリポジトリを特定できません。program-index.json または保存済み一覧を利用してください。");
       const pathParts = location.pathname.split("/").filter(Boolean);
       const owner = match[1];
       const repo = pathParts.length ? decodeURIComponent(pathParts[0]) : `${owner}.github.io`;
       const repository = await fetchJSON(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`);
       const branch = repository.default_branch;
       const tree = await fetchJSON(`https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(branch)}?recursive=1`);
-      if (tree.truncated) throw new Error("リポジトリのファイル数が多いため自動検索できません。program-index.json に一覧を記入してください。");
-      const files = tree.tree.filter(item => item.type === "blob" && /\.html?$/i.test(item.path) && !["index.html", "offline.html"].includes(item.path.toLowerCase()) && !item.path.split("/").some(part => part.startsWith(".")));
+      if (tree.truncated) throw new Error("リポジトリ内のファイル数が多いため自動一覧を作れません。program-index.json に必要なファイルを設定してください。");
+      const files = tree.tree.filter(item => {
+        if (item.type !== "blob" || !/\.html?$/i.test(item.path)) return false;
+        const lower = item.path.toLowerCase();
+        if (lower === "index.html" || lower === "offline.html") return false;
+        if (item.path.split("/").some(part => part.startsWith("."))) return false;
+        return true;
+      });
       const programs = files.map((file, index) => {
         const parts = file.path.split("/");
         const filename = parts.pop().replace(/\.html?$/i, "");
@@ -372,76 +586,96 @@
         return normalizeProgram({
           file: file.path,
           title: filename.replace(/[-_]+/g, " "),
-          description: folder ? `フォルダー: ${folder}` : "説明はありません。program-index.json で編集できます。",
-          color: defaultColor(index), icon: "▣", category: folder || "その他", order: index * 10
+          description: folder ? `フォルダー: ${folder}` : "HTMLプログラムです。表示名や説明はJSONで変更できます。",
+          color: defaultColor(file.path), icon: inferIcon(file.path), category: folder || "その他"
         }, index);
       }).filter(Boolean);
       return sortPrograms(programs);
     }
 
-    function defaultColor(index) {
-      const colors = ["#7c5cff", "#1fa6a0", "#e87945", "#d65c94", "#4c8fe8", "#b28a35", "#40a66c", "#9575cd"];
-      return colors[index % colors.length];
+    function saveProgramCache(programs) {
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify({ settings: currentSettings, programs }));
+      } catch { /* ストレージが使えなくても一覧表示は続ける */ }
+    }
+
+    function showLoadError(message) {
+      $("count").textContent = "読み込み失敗";
+      $("app").replaceChildren();
+      const error = document.createElement("div");
+      error.className = "error";
+      error.textContent = message;
+      $("app").append(error);
     }
 
     async function init() {
-      let usedCachedList = false;
+      // 以前に取得した一覧を先に表示し、通信完了を待たせない。
       const previous = cachedPrograms();
-      try {
-        const config = await fetchJSON(INDEX_FILE);
-        applySettings(config.settings || {});
-        const configured = Array.isArray(config.programs)
-          ? sortPrograms(config.programs.map(normalizeProgram).filter(Boolean))
-          : [];
-        if (configured.length) {
-          allPrograms = configured;
-          localStorage.setItem(cacheKey, JSON.stringify({ settings: currentSettings, programs: configured }));
-          render();
-          return;
-        }
-        // programs: [] の場合は、GitHub上のHTMLを軽量に自動列挙する。
-      } catch (error) {
-        if (previous.length) {
-          allPrograms = previous;
-          usedCachedList = true;
-          render();
-        }
-      }
-
-      if (navigator.onLine) {
-        try {
-          const discovered = await loadGitHubPrograms();
-          if (discovered.length) {
-            allPrograms = discovered;
-            localStorage.setItem(cacheKey, JSON.stringify({ settings: currentSettings, programs: discovered }));
-            render();
-            return;
-          }
-          if (!allPrograms.length) throw new Error("HTMLファイルが見つかりませんでした。");
-        } catch (error) {
-          if (!allPrograms.length) {
-            $("count").textContent = "読み込み失敗";
-            $("app").replaceChildren();
-            const message = document.createElement("div");
-            message.className = "error";
-            message.textContent = `${error.message}\n手動で管理する場合は program-index.json の programs にHTMLファイルを追加してください。`;
-            $("app").append(message);
-            return;
-          }
-        }
-      }
-
-      if (!allPrograms.length && previous.length) {
+      if (previous.length) {
         allPrograms = previous;
-        usedCachedList = true;
-      }
-      if (allPrograms.length) {
         render();
-        if (!navigator.onLine || usedCachedList) $("footerStatus").textContent = "保存済みの一覧を表示中です。ネット接続時に更新できます。";
-      } else {
-        $("count").textContent = "一覧なし";
-        $("app").innerHTML = "<div class=\"empty\">オンラインで一度起動するか、program-index.json にプログラムを設定してください。</div>";
+        if (!navigator.onLine) $("footerStatus").textContent = "オフラインのため、保存済みの一覧を表示しています。";
       }
+
+      // 設定JSONとGitHubのHTML一覧を並行取得する。JSONは任意で、なくても自動一覧を作る。
+      const configPromise = fetchJSON(INDEX_FILE)
+        .then(config => ({ ok: true, config }))
+        .catch(error => ({ ok: false, error }));
+      const discoveryPromise = navigator.onLine
+        ? loadGitHubPrograms().then(programs => ({ ok: true, programs })).catch(error => ({ ok: false, error }))
+        : Promise.resolve({ ok: false, error: new Error("オフラインです") });
+
+      const configResult = await configPromise;
+      let config = null;
+      let definitions = [];
+      if (configResult.ok && configResult.config && typeof configResult.config === "object") {
+        config = configResult.config;
+        applySettings(config.settings || {}, true);
+        definitions = Array.isArray(config.programs) ? config.programs : [];
+        if (!previous.length && definitions.length) {
+          // GitHub APIを待つ間も、JSONの登録項目だけ先に表示できる。
+          allPrograms = mergePrograms([], definitions);
+          render();
+        }
+      } else if (navigator.onLine) {
+        // JSONが削除・未配置でも、以前の表示設定が残ってしまわないよう初期値へ戻す。
+        applySettings({}, true);
+      }
+
+      const discoveryResult = await discoveryPromise;
+      if (discoveryResult.ok) {
+        allPrograms = mergePrograms(discoveryResult.programs, definitions);
+        saveProgramCache(allPrograms);
+        render();
+        if (!discoveryResult.programs.length && !allPrograms.length) {
+          $("count").textContent = "0 件";
+          $("app").innerHTML = "<div class=\"empty\">表示できるHTMLプログラムが見つかりませんでした。</div>";
+        }
+        $("footerStatus").textContent = configResult.ok
+          ? "HTMLを自動検出し、program-index.json にある項目だけ表示設定を上書きしています。"
+          : "HTMLを自動検出しました。JSONがなくても基本アイコン付きで表示できます。";
+        return;
+      }
+
+      // 自動検出ができない場合は、保存済み一覧またはJSON登録分を表示する。
+      if (previous.length) {
+        allPrograms = mergePrograms(previous, definitions);
+        saveProgramCache(allPrograms);
+        render();
+        $("footerStatus").textContent = navigator.onLine
+          ? "GitHubから一覧を更新できなかったため、保存済みの一覧を表示しています。"
+          : "オフラインのため、保存済みの一覧を表示しています。";
+        return;
+      }
+      if (definitions.length) {
+        allPrograms = mergePrograms([], definitions);
+        render();
+        $("footerStatus").textContent = "GitHubから全HTML一覧を取得できないため、JSONに登録された項目だけを表示しています。";
+        return;
+      }
+
+      const detail = discoveryResult.error?.message || configResult.error?.message || "原因不明のエラー";
+      showLoadError(`${detail}\nオンライン接続を確認してください。初回の一覧取得後は、保存済み一覧をオフラインでも表示できます。program-index.json は任意です。`);
     }
 
     init();
