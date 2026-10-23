@@ -7,43 +7,43 @@
   },
   "programs": [
     {
-      "file": "tools/index (1).html",
-      "title": "逆再生サンプラー",
-      "description": "音声を逆再生するサンプラー",
-      "color": "#7c5cff",
+      "file": "tools/PRO-RACK.html",
+      "title": "PRO RACK",
+      "description": "Pro性能のミニＭｉｘツール",
+      "color": "#f59e0b",
       "textColor": "#ffffff",
-      "icon": "⏪",
+      "icon": "💽",
       "category": "tools",
-      "order": 10
+      "order": 1
     },
     {
-      "file": "tools/index (4).html",
+      "file": "archive/index (4).html",
       "title": "ROUTE（SNS）（レガシー）",
       "description": "ROUTE SNS の旧バージョン",
       "color": "#d65c94",
       "textColor": "#ffffff",
       "icon": "💬",
-      "category": "tools",
+      "category": "archive",
       "order": 20
     },
     {
-      "file": "https://touka-showmi.github.io/main/archive/P2P%20%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E8%BB%A2%E9%80%81V2.html",
+      "file": "archive/P2P%20%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E8%BB%A2%E9%80%81V2.html",
       "title": "P2Pファイル転送V2",
       "description": "P2P方式でファイルを転送するツール",
       "color": "#1fa6a0",
       "textColor": "#ffffff",
       "icon": "🔗",
-      "category": "tools",
+      "category": "archive",
       "order": 30
     }
      {
-      "file": "https://touka-showmi.github.io/main/archive/P2P%20%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E8%BB%A2%E9%80%81.html",
+      "file": "archive/P2P%20%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E8%BB%A2%E9%80%81.html",
       "title": "P2Pファイル転送",
       "description": "P2P方式でファイルを転送するツール",
       "color": "#1fa6a0",
       "textColor": "#ffffff",
       "icon": "🔗",
-      "category": "tools",
+      "category": "archive",
       "order": 30
     }
   ]
