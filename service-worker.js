@@ -5,7 +5,7 @@
  * - Other same-origin assets: stale-while-revalidate.
  */
 const CACHE_PREFIX = "program-launcher-pwa-";
-const CACHE_VERSION = "v2";
+const CACHE_VERSION = "v4";
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
 const APP_SHELL = [
   "./",

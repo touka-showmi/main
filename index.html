@@ -52,6 +52,9 @@
     }
     .search:focus { border-color: rgba(124, 156, 255, .75); box-shadow: 0 0 0 3px rgba(124, 156, 255, .12); }
     section.list-section { margin-top: 34px; }
+    #sections > .list-section:first-child { margin-top: 22px; }
+    .list-summary { margin: -12px 0 6px; color: var(--muted); font-size: .8rem; text-align: right; }
+    .recent-empty { color: var(--muted); font-size: .82rem; line-height: 1.5; padding: 8px 2px 2px; }
     .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 14px; }
     h2 { font-size: 1rem; margin: 0; font-weight: 700; color: #dce5ff; }
     .heading-meta { display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-width: 0; }
@@ -62,7 +65,7 @@
       grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
       gap: 12px;
     }
-    .category-group + .category-group { margin-top: 24px; }
+    .folder-section + .folder-section { margin-top: 30px; }
     .category-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 10px; color: var(--muted); font-size: .86rem; font-weight: 650; }
     .card {
       --card-accent: #7c9cff;
@@ -131,6 +134,8 @@
       .toolbar { margin: 18px 0 22px; }
       .search { padding: 12px 13px; font-size: 16px; }
       section.list-section { margin-top: 24px; }
+      #sections > .list-section:first-child { margin-top: 17px; }
+      .list-summary { margin: -8px 0 4px; font-size: .74rem; }
       .section-heading { margin-bottom: 11px; }
       /* スマホでは見出しごとに横スワイプできるアプリタイル型レール */
       .grid {
@@ -150,7 +155,7 @@
         scrollbar-color: rgba(165, 176, 200, .35) transparent;
       }
       .grid > .card { scroll-snap-align: start; }
-      .category-group + .category-group { margin-top: 21px; }
+      .folder-section + .folder-section { margin-top: 23px; }
       .category-title { margin-bottom: 9px; font-size: .82rem; }
       .scroll-cue { display: inline; }
       .card {
@@ -175,7 +180,7 @@
       .thumbnail .emoji { font-size: 1.35rem; }
       .thumbnail img { border-radius: inherit; }
       .tag { font-size: .62rem; padding: 3px 6px; margin: 0; }
-      .category-group .card .tag { display: none; }
+      .folder-section .card .tag { display: none; }
       .card-title {
         font-size: .86rem;
         line-height: 1.35;
@@ -230,18 +235,11 @@
       <input id="search" class="search" type="search" placeholder="題名・説明・ファイル名で検索…" aria-label="プログラムを検索">
     </div>
 
-    <section id="recentSection" class="list-section" hidden>
-      <div class="section-heading"><h2>最近開いたプログラム</h2><div class="heading-meta"><span id="recentCount" class="section-count"></span><span class="scroll-cue" aria-hidden="true">横にスワイプ →</span></div></div>
-      <div id="recent" class="grid"></div>
-    </section>
-
-    <section class="list-section" aria-labelledby="allHeading">
-      <div class="section-heading"><h2 id="allHeading">すべてのプログラム</h2><div class="heading-meta"><span id="count" class="section-count">読み込み中…</span></div></div>
-      <div id="app" aria-live="polite"><div class="empty">プログラム一覧を読み込んでいます…</div></div>
-    </section>
+    <div class="list-summary" aria-live="polite"><span id="count">読み込み中…</span></div>
+    <div id="sections" aria-live="polite"><div class="empty">プログラム一覧を読み込んでいます…</div></div>
 
     <footer>
-      <span id="footerStatus">一覧のカスタマイズは program-index.json で設定できます。</span>
+      <span id="footerStatus">見出し順とカードのカスタマイズは program-index.json で設定できます。</span>
       <span> · オフライン利用には、GitHub Pages上で一度オンライン起動する必要があります。</span>
     </footer>
   </main>
@@ -252,6 +250,7 @@
     const INDEX_FILE = "./program-index.json";
     const OPENED_KEY = "program-launcher-opened-v2";
     const MAX_RECENT = 20;
+    const DEFAULT_SECTION_ORDER = ["recent", "tools", "Archive"];
     const baseURL = new URL("./", location.href);
     const cacheKey = `program-launcher-index-v2:${baseURL.pathname}`;
     let allPrograms = [];
@@ -308,34 +307,161 @@
       return file.split("/").pop().replace(/\.html?$/i, "");
     }
 
-    // JSON未登録のHTMLにも、ファイル名から推測した絵文字または汎用アイコンを必ず割り当てる。
-    // HTMLの中身を1ファイルずつ取得しないため、自動一覧作成時の通信量を抑えられる。
-    function inferIcon(file) {
-      const basename = filenameOf(file).toLocaleLowerCase("ja");
-      const folders = file.split("/").slice(0, -1)
-        .filter(part => !/^(tools?|apps?|programs?|pages?|public|www)$/i.test(part))
-        .join(" ").toLocaleLowerCase("ja");
-      const name = `${basename} ${folders}`;
-      const rules = [
-        [/reverse|backward|rewind|逆再生/, "⏪"],
-        [/sampler|audio|sound|music|voice|wave|音声|音楽|サウンド/, "🎵"],
-        [/p2p|transfer|share|file|ファイル|転送/, "🔗"],
-        [/sns|social|chat|message|コミュ|交流/, "💬"],
-        [/video|movie|動画/, "🎬"],
-        [/image|photo|picture|camera|画像|写真/, "🖼️"],
-        [/game|puzzle|ゲーム|パズル/, "🎮"],
-        [/calendar|schedule|予定|カレンダー/, "📅"],
-        [/calc|calculator|計算/, "🧮"],
-        [/map|navigation|地図|ルート/, "🧭"],
-        [/editor|writer|note|memo|文章|メモ|編集/, "✏️"],
-        [/qr|barcode|qrコード/, "🔳"],
-        [/setting|config|設定/, "⚙️"]
-      ];
-      for (const [pattern, icon] of rules) if (pattern.test(name)) return icon;
-      return "🧩";
+    // JSON未登録のHTMLに適用する推測ルール。
+    // HTML本文を取得せず、パスだけでアイコン・カテゴリ・色・説明を推測するため軽量。
+    // 個別のJSON設定がある場合は、mergePrograms() が指定項目のみを上書きする。
+    const INFERENCE_RULES = [
+      // 音声・音楽（より具体的な語を先に判定）
+      { pattern: /reverse|backward|rewind|逆再生|逆再生/, icon: "⏪", category: "音声・音楽", color: "#7c5cff", description: "音声の逆再生・再生操作ツールです。" },
+      { pattern: /pro[-_ ]?rack|rack|mixer|mixing|\bmix\b|ミキサー|ミックス|dj[-_ ]?tool|\bdj\b|eq[-_ ]?editor|equalizer|イコライザー/, icon: "🎛️", category: "音声・音楽", color: "#f59e0b", description: "音声を調整・ミックスするためのツールです。" },
+      { pattern: /sampler|sample|音源|サンプラー|サンプル音/, icon: "🎹", category: "音声・音楽", color: "#8b5cf6", description: "サンプル音源を扱う音楽ツールです。" },
+      { pattern: /reverb|delay[-_ ]?effect|compressor|limiter|audio[-_ ]?effect|sound[-_ ]?effect|fx[-_ ]?rack|エフェクト|残響/, icon: "🎚️", category: "音声・音楽", color: "#d946ef", description: "音声エフェクトを扱うツールです。" },
+      { pattern: /player|playlist|プレイヤー|再生|recorder|録音|microphone|mic[-_ ]?test|マイク|録音/, icon: "▶️", category: "音声・音楽", color: "#7c5cff", description: "メディアの再生や録音に関するツールです。" },
+      { pattern: /synth|synthesizer|midi|sequencer|メトロノーム|metronome|bpm|tempo|pitch|音程|音階|楽器|instrument|piano|guitar|drum|beat[-_ ]?maker|作曲|作譜/, icon: "🎹", category: "音声・音楽", color: "#a855f7", description: "演奏・作曲・音楽制作を支援するツールです。" },
+      { pattern: /audio|sound|music|voice|vocal|waveform|wave[-_ ]?form|spectrum|spectrogram|音声|音楽|サウンド|ボイス|歌声|波形|スペクトラム/, icon: "🎵", category: "音声・音楽", color: "#8b5cf6", description: "音声・音楽を扱うツールです。" },
+
+      // ファイル・共有・保存
+      { pattern: /p2p|peer[-_ ]?to[-_ ]?peer|file[-_ ]?(transfer|share|send)|transfer|upload|download|ファイル転送|ファイル共有|送信|アップロード|ダウンロード/, icon: "🔗", category: "ファイル・共有", color: "#1fa6a0", description: "ファイルの送受信・共有に関するツールです。" },
+      { pattern: /file[-_ ]?(manager|browser|list)|folder|directory|explorer|storage|drive|ファイル管理|フォルダー|フォルダ|ディレクトリ|ストレージ/, icon: "🗂️", category: "ファイル管理", color: "#0d9488", description: "ファイルやフォルダーを整理するためのツールです。" },
+      { pattern: /zip|archive|compress|extract|decompress|圧縮|解凍|アーカイブ/, icon: "🗜️", category: "ファイル管理", color: "#0d9488", description: "ファイルの圧縮・展開に関するツールです。" },
+      { pattern: /backup|restore|同期|sync[-_ ]?files|cloud[-_ ]?storage|バックアップ|復元/, icon: "☁️", category: "ファイル管理", color: "#0ea5e9", description: "ファイルの保存・同期・復元を支援するツールです。" },
+
+      // SNS・連絡・情報配信
+      { pattern: /sns|social|\bchat\b|messenger|message|comment|forum|community|コミュニティ|交流|チャット|メッセージ|コメント|掲示板/, icon: "💬", category: "SNS・コミュニケーション", color: "#d65c94", description: "メッセージやコミュニケーションに関するツールです。" },
+      { pattern: /mail|email|e-mail|inbox|メール|郵便/, icon: "✉️", category: "連絡・メール", color: "#3b82f6", description: "メールや受信箱に関するツールです。" },
+      { pattern: /rss|feed[-_ ]?reader|atom|newsletter|news[-_ ]?reader|ニュース|フィード/, icon: "📰", category: "情報・ニュース", color: "#f97316", description: "ニュースや更新情報をまとめて確認するツールです。" },
+
+      // 画像・映像・デザイン
+      { pattern: /video[-_ ]?(editor|maker|converter)|movie[-_ ]?(maker|editor)|video|movie|film|動画|映像|映画|ビデオ/, icon: "🎬", category: "動画・映像", color: "#e11d48", description: "動画・映像を扱うツールです。" },
+      { pattern: /camera|webcam|photo[-_ ]?(editor|viewer)|image[-_ ]?(editor|viewer|tool|converter)|picture|画像|写真|カメラ|フォト/, icon: "🖼️", category: "画像・写真", color: "#2563eb", description: "画像・写真を表示または加工するツールです。" },
+      { pattern: /paint|draw|drawing|sketch|canvas|illustrat|whiteboard|お絵描き|描画|ペイント|ホワイトボード/, icon: "🎨", category: "デザイン", color: "#ec4899", description: "描画やデザイン制作を支援するツールです。" },
+      { pattern: /color[-_ ]?(picker|pick|palette|converter)|palette|色選択|カラーピッカー|配色|カラーコード/, icon: "🌈", category: "デザイン", color: "#ec4899", description: "色の選択や配色を扱うツールです。" },
+      { pattern: /svg|vector[-_ ]?editor|logo[-_ ]?maker|icon[-_ ]?maker|ロゴ|アイコン作成|ベクター/, icon: "✒️", category: "デザイン", color: "#a855f7", description: "図形・ロゴ・ベクター画像などの制作ツールです。" },
+      { pattern: /gif|animation|animator|アニメーション/, icon: "🎞️", category: "画像・動画", color: "#db2777", description: "アニメーションやGIFを扱うツールです。" },
+      { pattern: /screenshot|screen[-_ ]?capture|capture[-_ ]?screen|画面キャプチャ|スクリーンショット|画面保存/, icon: "📸", category: "画面・キャプチャ", color: "#64748b", description: "画面のキャプチャや保存に関するツールです。" },
+
+      // 個別パターンは、広いキーワード（IDE・chart・mapなど）より先に評価する。
+      { pattern: /qr[-_ ]?(code|generator)|barcode|qrコード|バーコード/, icon: "🔳", category: "コード・識別", color: "#64748b", description: "QRコードや識別コードを扱うツールです。" },
+
+      { pattern: /slideshow|slide[-_ ]?maker|presentation|powerpoint|スライド|プレゼン|発表資料/, icon: "🖥️", category: "プレゼンテーション", color: "#ea580c", description: "スライドやプレゼンテーション資料に関するツールです。" },
+      { pattern: /diagram|flowchart|mind[-_ ]?map|uml|フローチャート|マインドマップ|図解|ダイアグラム/, icon: "🗺️", category: "図解・設計", color: "#0d9488", description: "図解やフロー、構成の可視化に関するツールです。" },
+      { pattern: /3d[-_ ]?(viewer|model|editor)|three[-_ ]?js|model[-_ ]?viewer|3d表示|3dモデル/, icon: "🧊", category: "3D・シミュレーション", color: "#0891b2", description: "3Dモデルや立体表示に関するツールです。" },
+
+      // 開発・Web・Git
+      { pattern: /github|\bgit(?:[-_ ]?(?:branch|commit|diff|log|merge|tool))?\b|リポジトリ|ブランチ|コミット|バージョン管理/, icon: "🐙", category: "開発・Git", color: "#64748b", description: "Gitやリポジトリ管理を支援するツールです。" },
+      { pattern: /html[-_ ]?editor|css[-_ ]?editor|javascript|\bjs[-_ ]?editor\b|code[-_ ]?(editor|playground)|\bide\b|compiler|interpreter|terminal|console|playground|コードエディター|プログラミング|開発環境|コンパイラ|ターミナル/, icon: "💻", category: "開発ツール", color: "#4f46e5", description: "コードの作成・実行・確認を支援する開発ツールです。" },
+      { pattern: /json|yaml|toml|xml[-_ ]?editor|formatter|beautifier|minifier|lint|validator|validator|整形|フォーマッター|構文チェック|バリデーター/, icon: "{ }", category: "開発ツール", color: "#6366f1", description: "データ形式やコードの整形・検証に関するツールです。" },
+      { pattern: /regex|regular[-_ ]?expression|正規表現/, icon: "🔎", category: "開発ツール", color: "#6366f1", description: "正規表現の作成やテストを支援するツールです。" },
+      { pattern: /api[-_ ]?tester|http[-_ ]?client|rest[-_ ]?client|request[-_ ]?builder|webhook|apiテスト/, icon: "🔌", category: "開発ツール", color: "#0891b2", description: "APIやHTTPリクエストの確認に関する開発ツールです。" },
+      { pattern: /database|\bsql\b|db[-_ ]?(browser|viewer|tool)|データベース|データベース/, icon: "🗄️", category: "開発・データ", color: "#0f766e", description: "データベースやクエリを扱うためのツールです。" },
+      { pattern: /diff|compare[-_ ]?text|text[-_ ]?compare|比較|差分/, icon: "↔️", category: "開発ツール", color: "#64748b", description: "テキストやデータの差分を比較するツールです。" },
+      { pattern: /markdown|\bmd[-_ ]?editor\b|readme|マークダウン/, icon: "📝", category: "文章・編集", color: "#64748b", description: "Markdown文書の作成・表示に関するツールです。" },
+
+      // Web・ネットワーク・検索
+      { pattern: /url[-_ ]?(shortener|builder|parser)|link[-_ ]?(check|checker)|qr[-_ ]?(code|generator)|barcode|qrコード|url短縮|リンクチェック/, icon: "🔗", category: "Web・リンク", color: "#0891b2", description: "URL・リンク・QRコードを扱うツールです。" },
+      { pattern: /browser|web[-_ ]?view|webview|crawler|scraper|website[-_ ]?check|サイト確認|ブラウザー|ブラウザ|クローラー/, icon: "🌐", category: "Web・ネットワーク", color: "#0284c7", description: "Webページやサイト情報を扱うツールです。" },
+      { pattern: /search|finder|lookup|検索|サーチ/, icon: "🔍", category: "検索・調査", color: "#0ea5e9", description: "情報を検索・探索するためのツールです。" },
+      { pattern: /network|server|client|socket|websocket|p2p|peer|wifi|wi-fi|ping|ip[-_ ]?address|dns|ネットワーク|サーバー|サーバ|通信|ソケット/, icon: "🌐", category: "ネットワーク", color: "#0891b2", description: "ネットワークや通信に関するツールです。" },
+      { pattern: /route|routing|navigation|map|gps|geolocation|地図|経路|ルート|ナビ|位置情報/, icon: "🧭", category: "地図・位置情報", color: "#16a34a", description: "地図・位置情報・経路に関するツールです。" },
+
+      // 文章・言語・文書
+      { pattern: /translate|translator|translation|dictionary|辞書|翻訳|翻訳機/, icon: "🌍", category: "言語・翻訳", color: "#0891b2", description: "言語や翻訳に関するツールです。" },
+      { pattern: /pdf|document[-_ ]?(viewer|editor|tool)|word[-_ ]?counter|ocr|scan[-_ ]?document|文書|書類|スキャン|文字認識/, icon: "📄", category: "文書・PDF", color: "#dc2626", description: "文書・PDF・文字認識に関するツールです。" },
+      { pattern: /writer|text[-_ ]?editor|notepad|word[-_ ]?processor|memo|note|journal|diary|文章|テキスト編集|メモ|日記|ノート|執筆/, icon: "📝", category: "文章・メモ", color: "#64748b", description: "文章の作成やメモの記録に関するツールです。" },
+      { pattern: /font|typography|type[-_ ]?tool|文字組|フォント|タイポグラフィ/, icon: "🔤", category: "文章・デザイン", color: "#9333ea", description: "文字やフォントを扱うツールです。" },
+
+      // 日常ユーティリティ
+      { pattern: /calculator|calc[-_ ]?tool|math[-_ ]?tool|計算機|電卓|計算/, icon: "🧮", category: "計算・変換", color: "#2563eb", description: "計算や数値処理を支援するツールです。" },
+      { pattern: /unit[-_ ]?converter|currency[-_ ]?converter|converter|convert[-_ ]?tool|変換|単位換算|通貨換算/, icon: "🔄", category: "計算・変換", color: "#0d9488", description: "形式・単位・値の変換に関するツールです。" },
+      { pattern: /calendar|schedule|planner|appointment|予定|カレンダー|スケジュール|計画/, icon: "📅", category: "予定・計画", color: "#0d9488", description: "予定や計画を整理するためのツールです。" },
+      { pattern: /todo|to[-_ ]?do|task[-_ ]?list|checklist|kanban|タスク|チェックリスト|やること|TODO/, icon: "✅", category: "タスク管理", color: "#16a34a", description: "タスクやチェック項目を管理するツールです。" },
+      { pattern: /timer|stopwatch|pomodoro|countdown|clock|alarm|タイマー|ストップウォッチ|ポモドーロ|カウントダウン|時計|アラーム/, icon: "⏱️", category: "時間・計測", color: "#ea580c", description: "時間の計測や管理に関するツールです。" },
+      { pattern: /weather|forecast|天気|気象|予報/, icon: "🌤️", category: "天気・環境", color: "#0284c7", description: "天気や気象情報に関するツールです。" },
+      { pattern: /random|roulette|dice|lottery|shuffle|random[-_ ]?generator|ランダム|乱数|サイコロ|抽選|くじ|乱数生成|ランダム生成/, icon: "🎲", category: "生成・ランダム", color: "#9333ea", description: "ランダムな値や候補を生成するツールです。" },
+      { pattern: /password|passphrase|credential|secret[-_ ]?key|パスワード|パスフレーズ|認証情報/, icon: "🔐", category: "セキュリティ", color: "#475569", description: "パスワードや認証情報に関するツールです。" },
+      { pattern: /encrypt|decrypt|cipher|hash[-_ ]?tool|base64|encoder|decoder|暗号化|復号|エンコード|デコード|ハッシュ/, icon: "🔏", category: "セキュリティ・変換", color: "#475569", description: "データの変換や保護に関するツールです。" },
+      { pattern: /setting|config|preferences|option[-_ ]?tool|設定|構成|環境設定/, icon: "⚙️", category: "設定・管理", color: "#64748b", description: "アプリや機能の設定を管理するツールです。" },
+
+      // データ・グラフ・AI・学習
+      { pattern: /chart|graph|plot|dashboard|visuali[sz]er|analytics|statistics|統計|グラフ|チャート|可視化|ダッシュボード/, icon: "📊", category: "データ・可視化", color: "#0891b2", description: "データの集計・分析・可視化に関するツールです。" },
+      { pattern: /ai[-_ ]?tool|chatgpt|llm|generative[-_ ]?ai|prompt|neural|machine[-_ ]?learning|人工知能|生成ai|プロンプト|機械学習/, icon: "🤖", category: "AI・生成", color: "#7c3aed", description: "AIやプロンプトを扱うツールです。" },
+      { pattern: /quiz(?![-_ ]?game)|flashcard|vocabulary|learning|study[-_ ]?tool|test[-_ ]?maker|クイズ|単語帳|暗記|学習|練習問題|テスト作成/, icon: "📚", category: "学習・教育", color: "#ca8a04", description: "学習・練習・知識確認を支援するツールです。" },
+      { pattern: /finance|budget|expense|invoice|stock[-_ ]?tool|investment|currency[-_ ]?rate|家計|予算|支出|請求書|株価|投資|金融/, icon: "💰", category: "金融・家計", color: "#16a34a", description: "金融情報や予算管理に関するツールです。" },
+      { pattern: /health|fitness|workout|calorie|step[-_ ]?counter|heart[-_ ]?rate|健康|運動|筋トレ|カロリー|歩数|心拍/, icon: "💚", category: "健康・運動", color: "#16a34a", description: "健康や運動の記録・確認を支援するツールです。" },
+      { pattern: /workflow|automation|automate|bot[-_ ]?tool|scheduler|自動化|ワークフロー|自動実行|ボット/, icon: "⚡", category: "自動化", color: "#eab308", description: "繰り返し作業や処理の自動化に関するツールです。" },
+      { pattern: /game|puzzle|arcade|quiz[-_ ]?game|ゲーム|パズル|遊び|ミニゲーム/, icon: "🎮", category: "ゲーム", color: "#16a34a", description: "ゲームやパズルを楽しむためのページです。" },
+
+      { pattern: /simulator|simulation|physics[-_ ]?tool|物理シミュレーション|シミュレーター|シミュレーション/, icon: "⚗️", category: "シミュレーション", color: "#0d9488", description: "条件を変えて挙動を試すシミュレーション系ツールです。" },
+      { pattern: /emoji|emoticon|絵文字|顔文字/, icon: "😀", category: "文字・記号", color: "#eab308", description: "絵文字や顔文字を扱うツールです。" },
+      { pattern: /clipboard|copy[-_ ]?tool|paste[-_ ]?tool|コピー|クリップボード|貼り付け/, icon: "📋", category: "文字・ユーティリティ", color: "#64748b", description: "テキストのコピーや貼り付けを支援するツールです。" },
+      { pattern: /speech[-_ ]?to[-_ ]?text|transcri(?:be|ption)|dictation|音声認識|文字起こし|文字おこし|書き起こし/, icon: "🗣️", category: "音声・文字起こし", color: "#7c3aed", description: "音声の認識や文字起こしに関するツールです。" },
+      { pattern: /text[-_ ]?to[-_ ]?speech|tts|read[-_ ]?aloud|読み上げ|音声合成/, icon: "🔊", category: "音声・読み上げ", color: "#7c3aed", description: "テキストの読み上げや音声合成に関するツールです。" },
+      { pattern: /stopwatch|timer|pomodoro|countdown|clock|alarm|タイマー|ストップウォッチ|ポモドーロ|カウントダウン|時計|アラーム/, icon: "⏱️", category: "時間・計測", color: "#ea580c", description: "時間の計測や管理に関するツールです。" },
+      { pattern: /unit[-_ ]?test|test[-_ ]?runner|assertion|テストランナー|単体テスト/, icon: "🧪", category: "開発・テスト", color: "#16a34a", description: "コードや機能のテストを支援するツールです。" },
+      { pattern: /log[-_ ]?(viewer|analyzer)|monitor|monitoring|system[-_ ]?info|ログ解析|システム情報|モニター|監視/, icon: "📈", category: "監視・分析", color: "#0891b2", description: "ログやシステム状態の確認・分析に関するツールです。" },
+
+      // 末尾に置く汎用候補（具体的なルールを優先）
+
+    ];
+
+    const GENERIC_FOLDERS = /^(tools?|apps?|programs?|pages?|public|www|html|src|dist|build|assets?)$/i;
+
+    function inferenceText(file) {
+      const parts = String(file).split("/");
+      return parts.filter((part, index) => index === parts.length - 1 || !GENERIC_FOLDERS.test(part))
+        .join(" ").replace(/\.html?$/i, " ").replace(/[()[\]{}.,]/g, " ").toLocaleLowerCase("ja");
     }
 
-    // ファイル名をハッシュ化し、一覧の順番が変わっても標準色が変わらないようにする。
+    function inferMetadata(file) {
+      const text = inferenceText(file);
+      return INFERENCE_RULES.find(rule => rule.pattern.test(text)) || null;
+    }
+
+    function inferIcon(file) {
+      return inferMetadata(file)?.icon || "🧩";
+    }
+
+    function inferCategory(file) {
+      const inferred = inferMetadata(file);
+      if (inferred) return inferred.category;
+      const folders = String(file).split("/").slice(0, -1).reverse();
+      const meaningfulFolder = folders.find(part => !GENERIC_FOLDERS.test(part));
+      return meaningfulFolder || "その他";
+    }
+
+    // 表示セクションは最上位フォルダーで自動判定する。
+    // 例: tools/example.html -> tools、Archive/example.html -> Archive。
+    // JSONの programs[].section が指定されていれば、そちらを優先する。
+    function inferSection(file) {
+      const parts = String(file).split("/").filter(Boolean);
+      return parts.length > 1 ? parts[0] : "その他";
+    }
+
+    function inferColor(file) {
+      return inferMetadata(file)?.color || defaultColor(file);
+    }
+
+    function inferDescription(file) {
+      const inferred = inferMetadata(file);
+      if (inferred) return inferred.description;
+      const folders = String(file).split("/").slice(0, -1).reverse();
+      const meaningfulFolder = folders.find(part => !GENERIC_FOLDERS.test(part));
+      return meaningfulFolder ? `フォルダー「${meaningfulFolder}」にあるHTMLプログラムです。` : "HTMLプログラムです。表示名や説明はJSONでカスタマイズできます。";
+    }
+
+    function inferTitle(file) {
+      const filename = filenameOf(String(file));
+      const normalized = filename.replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim();
+      // index.html / main.html のような一般名は、意味のある親フォルダー名を題名に使う。
+      if (/^(index|main|app|home|default)(?:\s*\(\d+\))?$/i.test(normalized)) {
+        const folders = String(file).split("/").slice(0, -1).reverse();
+        const meaningfulFolder = folders.find(part => !GENERIC_FOLDERS.test(part));
+        if (meaningfulFolder) return meaningfulFolder.replace(/[-_]+/g, " ").trim();
+      }
+      return normalized || "HTMLプログラム";
+    }
+
+    // ファイル名をハッシュ化し、未知の用途にも安定した色を割り当てる。
     function defaultColor(seed) {
       const colors = ["#7c5cff", "#1fa6a0", "#e87945", "#d65c94", "#4c8fe8", "#b28a35", "#40a66c", "#9575cd"];
       let hash = 0;
@@ -345,18 +471,17 @@
 
     function normalizeProgram(program, position = 0) {
       if (!program || !safeFilePath(program.file) || !/\.html?$/i.test(program.file)) return null;
-      const filename = filenameOf(program.file);
-      const folder = program.file.split("/").slice(0, -1).join("/");
-      const title = String(program.title || filename.replace(/[-_]+/g, " "));
+      const title = String(program.title || inferTitle(program.file));
       return {
         file: program.file,
         title,
-        description: String(program.description || (folder ? `フォルダー: ${folder}` : "HTMLプログラムです。表示名や説明はJSONで変更できます。")),
-        color: safeColor(program.color, defaultColor(program.file)),
+        description: String(program.description || inferDescription(program.file)),
+        color: safeColor(program.color, inferColor(program.file)),
         textColor: safeColor(program.textColor, "#ffffff"),
         icon: String(program.icon || inferIcon(program.file)).slice(0, 12),
         thumbnail: typeof program.thumbnail === "string" && safeFilePath(program.thumbnail) ? program.thumbnail : "",
-        category: String(program.category || folder || "その他"),
+        category: String(program.category || inferCategory(program.file) || "その他"),
+        section: String(program.section || inferSection(program.file) || "その他"),
         order: Number.isFinite(Number(program.order)) && program.order !== "" ? Number(program.order) : 100000 + position,
         _position: Number.isFinite(Number(program._position)) ? Number(program._position) : position
       };
@@ -381,7 +506,7 @@
         const custom = customByFile.get(base.file);
         if (custom) {
           const next = { ...base };
-          for (const key of ["title", "description", "color", "textColor", "icon", "thumbnail", "category", "order"]) {
+          for (const key of ["title", "description", "color", "textColor", "icon", "thumbnail", "category", "section", "order"]) {
             const value = custom[key];
             if (value !== undefined && value !== null && !(typeof value === "string" && value.trim() === "")) next[key] = value;
           }
@@ -414,7 +539,7 @@
         recent.unshift({
           file: program.file, title: program.title, description: program.description,
           color: program.color, textColor: program.textColor, icon: program.icon,
-          thumbnail: program.thumbnail, category: program.category, order: program.order, openedAt: Date.now()
+          thumbnail: program.thumbnail, category: program.category, section: program.section, order: program.order, openedAt: Date.now()
         });
         localStorage.setItem(OPENED_KEY, JSON.stringify(recent.slice(0, MAX_RECENT)));
       } catch { /* ストレージ無効時も起動は継続する */ }
@@ -476,61 +601,129 @@
       return card;
     }
 
-    function groupByCategory(programs) {
+    function groupBySection(programs) {
       const groups = new Map();
       for (const program of programs) {
-        if (!groups.has(program.category)) groups.set(program.category, []);
-        groups.get(program.category).push(program);
+        const section = String(program.section || inferSection(program.file) || "その他");
+        if (!groups.has(section)) groups.set(section, []);
+        groups.get(section).push(program);
       }
       return groups;
     }
 
-    function renderGrouped(container, programs) {
-      container.replaceChildren();
-      if (!programs.length) {
-        const empty = document.createElement("div");
-        empty.className = "empty";
-        empty.textContent = "該当するプログラムがありません。検索語を確認してください。";
-        container.append(empty);
-        return;
+    function sectionOrderList() {
+      const source = Array.isArray(currentSettings.sectionOrder)
+        ? currentSettings.sectionOrder
+        : DEFAULT_SECTION_ORDER;
+      const cleaned = [];
+      const seen = new Set();
+      for (const item of source) {
+        if (typeof item !== "string" || !item.trim()) continue;
+        const value = item.trim();
+        const key = value.toLocaleLowerCase("ja");
+        if (seen.has(key)) continue;
+        seen.add(key);
+        cleaned.push(value);
       }
-      for (const [category, items] of groupByCategory(programs)) {
-        const group = document.createElement("div");
-        group.className = "category-group";
-        const heading = document.createElement("h3");
-        heading.className = "category-title";
-        const label = document.createElement("span");
-        label.textContent = category;
-        const cue = document.createElement("span");
-        cue.className = "scroll-cue";
-        cue.setAttribute("aria-hidden", "true");
-        cue.textContent = "横にスワイプ →";
-        heading.append(label, cue);
+      // sectionOrder を省略した場合や、設定に recent を書き忘れた場合も最近使った項目は先頭。
+      if (!seen.has("recent")) cleaned.unshift("recent");
+      return cleaned;
+    }
+
+    function orderSections(sections) {
+      const configured = sectionOrderList();
+      const rank = new Map(configured.map((name, index) => [name.toLocaleLowerCase("ja"), index]));
+      return sections.sort((a, b) => {
+        const aKey = String(a.dataset.sectionKey || "").toLocaleLowerCase("ja");
+        const bKey = String(b.dataset.sectionKey || "").toLocaleLowerCase("ja");
+        const aRank = rank.has(aKey) ? rank.get(aKey) : Number.MAX_SAFE_INTEGER;
+        const bRank = rank.has(bKey) ? rank.get(bKey) : Number.MAX_SAFE_INTEGER;
+        if (aRank !== bRank) return aRank - bRank;
+        return aKey.localeCompare(bKey, "ja");
+      });
+    }
+
+    function createSection(key, titleText, countText) {
+      const section = document.createElement("section");
+      section.className = "list-section folder-section";
+      section.dataset.sectionKey = key;
+      const heading = document.createElement("div");
+      heading.className = "section-heading";
+      const title = document.createElement("h2");
+      title.textContent = titleText;
+      const meta = document.createElement("div");
+      meta.className = "heading-meta";
+      const count = document.createElement("span");
+      count.className = "section-count";
+      count.textContent = countText;
+      const cue = document.createElement("span");
+      cue.className = "scroll-cue";
+      cue.setAttribute("aria-hidden", "true");
+      cue.textContent = "横にスワイプ →";
+      meta.append(count, cue);
+      heading.append(title, meta);
+      section.append(heading);
+      return section;
+    }
+
+    function makeRecentSection(query = "") {
+      const normalizedQuery = query.trim().toLocaleLowerCase("ja");
+      const recent = loadRecent()
+        .filter(item => !normalizedQuery || `${item.title} ${item.description} ${item.file} ${item.category}`.toLocaleLowerCase("ja").includes(normalizedQuery))
+        .slice(0, 6);
+      // 検索中に該当履歴がなければ空の見出しを増やさない。初回表示では見出しと案内を出す。
+      if (!recent.length && normalizedQuery) return null;
+      const section = createSection("recent", "最近使った項目", `${recent.length}件`);
+      if (recent.length) {
+        const grid = document.createElement("div");
+        grid.className = "grid";
+        for (const program of recent) grid.append(makeCard(program));
+        section.append(grid);
+      } else {
+        const empty = document.createElement("div");
+        empty.className = "recent-empty";
+        empty.textContent = "プログラムを開くと、ここに表示されます。";
+        section.append(empty);
+      }
+      return section;
+    }
+
+    function makeProgramSections(programs) {
+      const sections = [];
+      for (const [sectionName, items] of groupBySection(programs)) {
+        const section = createSection(sectionName, sectionName, `${items.length}件`);
         const grid = document.createElement("div");
         grid.className = "grid";
         for (const program of items) grid.append(makeCard(program));
-        group.append(heading, grid);
-        container.append(group);
+        section.append(grid);
+        sections.push(section);
       }
-    }
-
-    function renderRecent(query = "") {
-      const section = $("recentSection");
-      const container = $("recent");
-      const normalizedQuery = query.trim().toLocaleLowerCase("ja");
-      const recent = loadRecent().filter(item => !normalizedQuery || `${item.title} ${item.description} ${item.file} ${item.category}`.toLocaleLowerCase("ja").includes(normalizedQuery)).slice(0, 6);
-      container.replaceChildren();
-      section.hidden = recent.length === 0;
-      $("recentCount").textContent = recent.length ? `${recent.length}件` : "";
-      for (const program of recent) container.append(makeCard(program));
+      return sections;
     }
 
     function render() {
       const query = $("search").value.trim().toLocaleLowerCase("ja");
-      const filtered = allPrograms.filter(program => `${program.title} ${program.description} ${program.file} ${program.category}`.toLocaleLowerCase("ja").includes(query));
+      const filtered = allPrograms.filter(program => `${program.title} ${program.description} ${program.file} ${program.category} ${program.section}`.toLocaleLowerCase("ja").includes(query));
       $("count").textContent = `${filtered.length} / ${allPrograms.length} 件`;
-      renderGrouped($("app"), filtered);
-      renderRecent($("search").value);
+
+      const sections = [];
+      const recentSection = makeRecentSection($("search").value);
+      if (recentSection) sections.push(recentSection);
+      sections.push(...makeProgramSections(filtered));
+
+      const host = $("sections");
+      host.replaceChildren();
+      const ordered = orderSections(sections);
+      if (!ordered.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = allPrograms.length
+          ? "該当するプログラムがありません。検索語を確認してください。"
+          : "プログラム一覧を読み込んでいます…";
+        host.append(empty);
+        return;
+      }
+      host.append(...ordered);
     }
     $("search").addEventListener("input", render);
 
@@ -585,9 +778,9 @@
         const folder = parts.join("/");
         return normalizeProgram({
           file: file.path,
-          title: filename.replace(/[-_]+/g, " "),
-          description: folder ? `フォルダー: ${folder}` : "HTMLプログラムです。表示名や説明はJSONで変更できます。",
-          color: defaultColor(file.path), icon: inferIcon(file.path), category: folder || "その他"
+          title: inferTitle(file.path),
+          description: inferDescription(file.path),
+          color: inferColor(file.path), icon: inferIcon(file.path), category: inferCategory(file.path)
         }, index);
       }).filter(Boolean);
       return sortPrograms(programs);
@@ -601,11 +794,11 @@
 
     function showLoadError(message) {
       $("count").textContent = "読み込み失敗";
-      $("app").replaceChildren();
+      $("sections").replaceChildren();
       const error = document.createElement("div");
       error.className = "error";
       error.textContent = message;
-      $("app").append(error);
+      $("sections").append(error);
     }
 
     async function init() {
@@ -649,7 +842,7 @@
         render();
         if (!discoveryResult.programs.length && !allPrograms.length) {
           $("count").textContent = "0 件";
-          $("app").innerHTML = "<div class=\"empty\">表示できるHTMLプログラムが見つかりませんでした。</div>";
+          $("sections").innerHTML = "<div class=\"empty\">表示できるHTMLプログラムが見つかりませんでした。</div>";
         }
         $("footerStatus").textContent = configResult.ok
           ? "HTMLを自動検出し、program-index.json にある項目だけ表示設定を上書きしています。"
