@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P2Pファイル転送 (WebRTC)</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #4F46E5;
+      --primary-hover: #4338CA;
+      --danger: #EF4444;
+      --danger-hover: #DC2626;
+      --success: #10B981;
+      --bg: #F3F4F6;
+      --surface: #FFFFFF;
+      --text: #1F2937;
+      --text-muted: #6B7280;
+      --border: #E5E7EB;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    h1 { text-align: center; margin-bottom: 20px; font-size: 1.5rem; color: var(--text); }
+
+    .status-panel {
+      background: var(--surface);
+      padding: 15px 20px;
+      border-radius: var(--radius);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      background: #F3F4F6;
+      color: var(--text-muted);
+    }
+    .badge.connected { background: #D1FAE5; color: #065F46; }
+    .badge.disconnected { background: #FEE2E2; color: #991B1B; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .card h2 { font-size: 1.25rem; margin-bottom: 15px; border-bottom: 2px solid var(--border); padding-bottom: 5px; }
+
+    textarea {
+      width: 100%;
+      height: 70px;
+      font-family: monospace;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      resize: vertical;
+      margin-bottom: 10px;
+    }
+
+    button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    button:hover { background-color: var(--primary-hover); }
+    button:disabled { background-color: #9CA3AF; cursor: not-allowed; }
+    button.btn-danger { background-color: var(--danger); }
+    button.btn-danger:hover { background-color: var(--danger-hover); }
+
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-weight: 500; margin-bottom: 5px; font-size: 0.9rem; }
+
+    .qr-section {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    
+    .qr-box {
+      flex: 1;
+      min-width: 250px;
+      border: 1px dashed var(--border);
+      padding: 15px;
+      text-align: center;
+      border-radius: var(--radius);
+      background: #F9FAFB;
+    }
+
+    canvas { max-width: 100%; height: auto; }
+    #reader { width: 100%; max-width: 300px; margin: 0 auto; }
+
+    .progress-container {
+      margin-top: 15px;
+      display: none;
+    }
+    progress {
+      width: 100%;
+      height: 20px;
+      border-radius: 10px;
+    }
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 5px;
+    }
+
+    .file-actions { display: flex; gap: 10px; align-items: center; margin-top: 15px; }
+    input[type="file"] { flex: 1; }
+    
+    #downloadArea { margin-top: 15px; }
+    #downloadArea a {
+      display: inline-block;
+      background: var(--success);
+      color: white;
+      padding: 10px 15px;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>P2P ファイル転送 (WebRTC)</h1>
+
+  <div class="status-panel">
+    <div><strong>通信状況:</strong></div>
+    <div>P2P接続: <span id="p2pState" class="badge">未接続</span></div>
+    <div>データチャネル: <span id="dcState" class="badge">未接続</span></div>
+  </div>
+
+  <div class="card">
+    <h2>1. 接続の確立 (シグナリング)</h2>
+    
+    <div class="form-group">
+      <button id="createOfferBtn">【送信側】接続情報(オファー)を作成</button>
+    </div>
+
+    <div class="qr-section">
+      <div class="qr-box">
+        <label>自分の接続情報 (相手に渡す):</label>
+        <textarea id="localSdp" readonly placeholder="ボタンを押すとここに接続情報が出力されます"></textarea>
+        <div id="qrCanvasContainer">
+          <canvas id="qrCanvas" style="display:none;"></canvas>
+        </div>
+      </div>
+
+      <div class="qr-box">
+        <label>相手の接続情報 (受け取って適用):</label>
+        <textarea id="remoteSdp" placeholder="テキストを貼り付けるか、QRをスキャン"></textarea>
+        <button id="startScanBtn" style="margin-bottom:10px;">📷 QRコードをスキャン</button>
+        <div id="reader" style="display: none;"></div>
+        <button id="applyRemoteBtn" style="width: 100%;">接続情報を適用</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>2. ファイル送受信</h2>
+    <div class="file-actions">
+      <input type="file" id="fileInput" disabled>
+      <button id="sendFileBtn" disabled>送信開始</button>
+      <button id="cancelFileBtn" class="btn-danger" disabled>中止</button>
+    </div>
+
+    <div id="progressContainer" class="progress-container">
+      <progress id="fileProgress" value="0" max="100"></progress>
+      <div class="stats">
+        <span id="progressText">0%</span>
+        <span id="speedText">0 KB/s</span>
+      </div>
+      <div id="transferStatus" style="font-size: 0.9rem; margin-top: 5px; font-weight: 500;"></div>
+    </div>
+
+    <div id="downloadArea"></div>
+  </div>
+</div>
+
+<script>
+  // Google STUNサーバーを利用
+  const peerConnection = new RTCPeerConnection({
+    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+  });
+
+  let dataChannel = null;
+  let receivedBuffers = [];
+  let receivedSize = 0;
+  let fileMetaData = null;
+  
+  // 送信制御用
+  let isTransferring = false;
+  let cancelRequested = false;
+
+  // DOM要素
+  const localSdpEl = document.getElementById('localSdp');
+  const remoteSdpEl = document.getElementById('remoteSdp');
+  const fileInput = document.getElementById('fileInput');
+  const sendFileBtn = document.getElementById('sendFileBtn');
+  const cancelFileBtn = document.getElementById('cancelFileBtn');
+  const downloadArea = document.getElementById('downloadArea');
+  const progressContainer = document.getElementById('progressContainer');
+  const fileProgress = document.getElementById('fileProgress');
+  const progressText = document.getElementById('progressText');
+  const speedText = document.getElementById('speedText');
+  const transferStatus = document.getElementById('transferStatus');
+  
+  // バッジ要素
+  const p2pStateBadge = document.getElementById('p2pState');
+  const dcStateBadge = document.getElementById('dcState');
+
+  // QRコードスキャナーのインスタンス
+  let html5QrcodeScanner = null;
+
+  // --- ステータス監視 ---
+  peerConnection.onconnectionstatechange = () => {
+    const state = peerConnection.connectionState;
+    p2pStateBadge.innerText = state;
+    if (state === 'connected') {
+      p2pStateBadge.className = 'badge connected';
+    } else if (state === 'disconnected' || state === 'failed') {
+      p2pStateBadge.className = 'badge disconnected';
+    } else {
+      p2pStateBadge.className = 'badge';
+    }
+  };
+
+  // --- データチャネル設定 ---
+  function setupDataChannel(channel) {
+    dataChannel = channel;
+    dataChannel.binaryType = 'arraybuffer';
+
+    dataChannel.onopen = () => {
+      dcStateBadge.innerText = '接続済';
+      dcStateBadge.className = 'badge connected';
+      fileInput.disabled = false;
+      sendFileBtn.disabled = false;
+    };
+
+    dataChannel.onclose = () => {
+      dcStateBadge.innerText = '切断';
+      dcStateBadge.className = 'badge disconnected';
+      fileInput.disabled = true;
+      sendFileBtn.disabled = true;
+    };
+
+    dataChannel.onmessage = (event) => {
+      // 文字列受信時（メタデータ または キャンセル命令）
+      if (typeof event.data === 'string') {
+        const msg = JSON.parse(event.data);
+        
+        if (msg.type === 'cancel') {
+          // キャンセル命令を受信
+          receivedBuffers = [];
+          receivedSize = 0;
+          fileMetaData = null;
+          transferStatus.innerText = '送信側によって転送が中止されました。';
+          transferStatus.style.color = 'var(--danger)';
+          return;
+        }
+
+        if (msg.name && msg.size) {
+          // ファイルメタデータを受信
+          fileMetaData = msg;
+          receivedBuffers = [];
+          receivedSize = 0;
+          progressContainer.style.display = 'block';
+          transferStatus.style.color = 'var(--text)';
+          transferStatus.innerText = `受信中: ${fileMetaData.name} (${(fileMetaData.size / 1024 / 1024).toFixed(2)} MB)...`;
+        }
+      } else {
+        // バイナリデータ受信時
+        receivedBuffers.push(event.data);
+        receivedSize += event.data.byteLength;
+
+        // 進捗UI更新
+        const percent = Math.round((receivedSize / fileMetaData.size) * 100);
+        fileProgress.value = percent;
+        progressText.innerText = `${percent}%`;
+
+        if (receivedSize >= fileMetaData.size) {
+          // 受信完了処理
+          const blob = new Blob(receivedBuffers);
+          const downloadUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = downloadUrl;
+          a.download = fileMetaData.name;
+          a.innerText = `📥 ${fileMetaData.name} を保存する`;
+          downloadArea.innerHTML = '';
+          downloadArea.appendChild(a);
+          transferStatus.innerText = '受信完了！';
+          transferStatus.style.color = 'var(--success)';
+        }
+      }
+    };
+  }
+
+  peerConnection.ondatachannel = (event) => {
+    setupDataChannel(event.channel);
+  };
+
+  function waitForIceGathering() {
+    return new Promise((resolve) => {
+      if (peerConnection.iceGatheringState === 'complete') {
+        resolve();
+      } else {
+        const checkState = () => {
+          if (peerConnection.iceGatheringState === 'complete') {
+            peerConnection.removeEventListener('icegatheringstatechange', checkState);
+            resolve();
+          }
+        };
+        peerConnection.addEventListener('icegatheringstatechange', checkState);
+      }
+    });
+  }
+
+  // --- シグナリング処理とQRコード生成 ---
+  async function generateSDPAndQR() {
+    await waitForIceGathering();
+    const sdpString = JSON.stringify(peerConnection.localDescription);
+    localSdpEl.value = sdpString;
+    
+    // WebRTCのSDPはデータ量が多いため、LZStringでBase64に圧縮してからQR化
+    const compressedSdp = LZString.compressToBase64(sdpString);
+    
+    const canvas = document.getElementById('qrCanvas');
+    canvas.style.display = 'inline-block';
+    // エラー訂正レベルをL(Low)にしてデータ容量を最大化
+    QRCode.toCanvas(canvas, compressedSdp, { errorCorrectionLevel: 'L', width: 250 }, (error) => {
+      if (error) console.error('QR生成エラー:', error);
+    });
+  }
+
+  document.getElementById('createOfferBtn').onclick = async () => {
+    const channel = peerConnection.createDataChannel('fileTransfer');
+    setupDataChannel(channel);
+
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+    
+    localSdpEl.value = "ネットワーク探索中...";
+    await generateSDPAndQR();
+  };
+
+  document.getElementById('applyRemoteBtn').onclick = async () => {
+    let remoteText = remoteSdpEl.value.trim();
+    if (!remoteText) return alert('相手の接続情報を入力してください');
+
+    // QRから読み取ったBase64圧縮データか、生JSONかを判定して展開
+    let remoteSdp;
+    try {
+      if (!remoteText.startsWith('{')) {
+        remoteText = LZString.decompressFromBase64(remoteText);
+      }
+      remoteSdp = JSON.parse(remoteText);
+    } catch (e) {
+      return alert('接続情報の形式が不正です。正しくコピー/スキャンされているか確認してください。');
+    }
+
+    await peerConnection.setRemoteDescription(remoteSdp);
+
+    if (remoteSdp.type === 'offer') {
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
+      
+      localSdpEl.value = "応答情報を作成中...";
+      await generateSDPAndQR();
+    }
+  };
+
+  // --- QRコードスキャナー処理 ---
+  document.getElementById('startScanBtn').onclick = () => {
+    const readerDiv = document.getElementById('reader');
+    if (readerDiv.style.display === 'block') {
+      // 既に起動中の場合は閉じる
+      if(html5QrcodeScanner) html5QrcodeScanner.stop();
+      readerDiv.style.display = 'none';
+      return;
+    }
+    
+    readerDiv.style.display = 'block';
+    const html5QrCode = new Html5Qrcode("reader");
+    html5QrcodeScanner = html5QrCode;
+
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      (decodedText) => {
+        // スキャン成功
+        remoteSdpEl.value = decodedText;
+        html5QrCode.stop();
+        readerDiv.style.display = 'none';
+        alert('QRコードを読み取りました。「接続情報を適用」を押してください。');
+      },
+      (errorMessage) => {
+        // スキャン中のエラーは無視（毎フレーム発生するため）
+      }
+    ).catch((err) => {
+      alert(`カメラの起動に失敗しました: ${err}`);
+      readerDiv.style.display = 'none';
+    });
+  };
+
+  // --- ファイル送信とキャンセル処理 ---
+  sendFileBtn.onclick = () => {
+    const file = fileInput.files[0];
+    if (!file || !dataChannel) return;
+
+    isTransferring = true;
+    cancelRequested = false;
+    sendFileBtn.disabled = true;
+    cancelFileBtn.disabled = false;
+    fileInput.disabled = true;
+    progressContainer.style.display = 'block';
+    downloadArea.innerHTML = '';
+    transferStatus.innerText = '送信中...';
+    transferStatus.style.color = 'var(--text)';
+
+    // メタデータ送信
+    dataChannel.send(JSON.stringify({ name: file.name, size: file.size }));
+
+    const chunkSize = 16384;
+    const fileReader = new FileReader();
+    let offset = 0;
+    const startTime = performance.now();
+
+    fileReader.onload = (e) => {
+      if (cancelRequested) {
+        finalizeTransfer('キャンセル済');
+        return;
+      }
+
+      dataChannel.send(e.target.result);
+      offset += e.target.result.byteLength;
+
+      // 進捗と速度の計算
+      const percent = Math.round((offset / file.size) * 100);
+      fileProgress.value = percent;
+      progressText.innerText = `${percent}%`;
+
+      const elapsedSec = (performance.now() - startTime) / 1000;
+      const speedMBps = (offset / elapsedSec / 1024 / 1024).toFixed(2);
+      speedText.innerText = `${speedMBps} MB/s`;
+
+      if (offset < file.size) {
+        readNextChunk();
+      } else {
+        finalizeTransfer('送信完了', true);
+      }
+    };
+
+    function readNextChunk() {
+      if (cancelRequested) {
+        finalizeTransfer('キャンセル済');
+        return;
+      }
+      // WebRTCのバッファ溢れ防止
+      if (dataChannel.bufferedAmount > 65536) {
+        setTimeout(readNextChunk, 50);
+        return;
+      }
+      const slice = file.slice(offset, offset + chunkSize);
+      fileReader.readAsArrayBuffer(slice);
+    }
+
+    readNextChunk();
+  };
+
+  cancelFileBtn.onclick = () => {
+    if (isTransferring) {
+      cancelRequested = true;
+      // 相手にキャンセルを通知
+      if (dataChannel && dataChannel.readyState === 'open') {
+        dataChannel.send(JSON.stringify({ type: 'cancel' }));
+      }
+    }
+  };
+
+  function finalizeTransfer(message, isSuccess = false) {
+    isTransferring = false;
+    sendFileBtn.disabled = false;
+    cancelFileBtn.disabled = true;
+    fileInput.disabled = false;
+    transferStatus.innerText = message;
+    transferStatus.style.color = isSuccess ? 'var(--success)' : 'var(--danger)';
+    
+    if (!isSuccess) {
+      fileProgress.value = 0;
+      progressText.innerText = '0%';
+      speedText.innerText = '0 KB/s';
+    }
+  }
+</script>
+</body>
+</html>

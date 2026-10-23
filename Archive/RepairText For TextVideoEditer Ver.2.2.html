@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RepairText For TextVideoEditer Ver.2.2</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg:#0f172a;
+    --panel:#1e293b;
+    --panel2:#0b1220;
+    --line:#334155;
+    --text:#f8fafc;
+    --muted:#94a3b8;
+    --accent:#38bdf8;
+    --se-accent:#f43f5e;
+    --ok:#34d399;
+    --warn:#fbbf24;
+    --bad:#fb7185;
+    --shadow:rgba(0,0,0,0.3);
+    --btn-primary:#0284c7;
+    --btn-secondary:#475569;
+    --btn-success:#059669;
+  }
+
+  [data-theme="light"] {
+    color-scheme: light;
+    --bg:#f8fafc;
+    --panel:#ffffff;
+    --panel2:#f1f5f9;
+    --line:#cbd5e1;
+    --text:#0f172a;
+    --muted:#64748b;
+    --accent:#0284c7;
+    --se-accent:#e11d48;
+    --ok:#059669;
+    --warn:#d97706;
+    --bad:#e11d48;
+    --shadow:rgba(0,0,0,0.1);
+    --btn-primary:#0284c7;
+    --btn-secondary:#64748b;
+    --btn-success:#059669;
+  }
+
+  * { box-sizing:border-box; }
+  body {
+    margin:0; padding:20px;
+    background:var(--bg); color:var(--text);
+    font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;
+    transition: background 0.2s, color 0.2s;
+  }
+  .container { max-width:1400px; margin:0 auto; }
+  
+  .header-wrap { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px; }
+  h1 { font-size:22px; margin:0 0 8px; color:var(--accent); }
+  .description { color:var(--muted); line-height:1.6; font-size:14px; }
+  
+  .main-grid {
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) 360px minmax(0, 1fr);
+    gap:16px;
+    align-items:start;
+  }
+  .source-panel, .transform-panel, .result-panel { min-width:0; }
+  .transform-panel { position:sticky; top:12px; }
+  
+  /* 変換ボックス類 */
+  .conversion-box {
+    background:var(--panel2); border:1px solid var(--line); border-radius:8px;
+    padding:12px; margin-bottom:12px;
+  }
+  .conversion-box label {
+    display:block; font-size:11px; color:var(--muted); font-weight:700; margin-bottom:6px;
+  }
+
+  /* カスタムセレクトボックス用CSS */
+  .custom-select-wrapper { position: relative; width: 100%; user-select: none; }
+  .custom-select-trigger {
+    background:var(--panel); color:var(--text); border:1px solid var(--line);
+    border-radius:6px; padding:9px 10px; font-size:13px; font-weight:bold; cursor:pointer;
+    display: flex; justify-content: space-between; align-items: center;
+    transition: border-color 0.2s;
+  }
+  .custom-select-trigger:hover { border-color: var(--accent); }
+  .custom-select-wrapper.open .custom-select-trigger {
+    outline:2px solid var(--accent); border-color:var(--accent);
+  }
+  .custom-options {
+    position: absolute; display: none; top: calc(100% + 4px); left: 0; right: 0; z-index: 10;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+    overflow: hidden; box-shadow: 0 4px 12px var(--shadow);
+    max-height: 250px; overflow-y: auto;
+  }
+  .custom-select-wrapper.open .custom-options { display: block; }
+  .custom-option {
+    display: block; padding: 9px 10px; font-size: 13px; font-weight:bold; cursor: pointer; color: var(--text);
+    transition: background 0.15s;
+  }
+  .custom-option:hover { background: var(--line); }
+  .custom-option.selected { color: var(--accent); }
+
+  .file-note {
+    margin-top:6px; font-size:10px; line-height:1.5; color:var(--muted);
+  }
+  
+  .transform-pane { display:none; }
+  .transform-pane.active { display:block; }
+  .transform-pane h3 {
+    font-size:13px; margin:0 0 10px; color:var(--text);
+  }
+  .transform-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .source-actions, .result-actions {
+    display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;
+  }
+  .result-header {
+    display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+  }
+  .panel {
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px;
+  }
+  .panel h2 { font-size:16px; margin:0 0 12px; display:flex; align-items:center; justify-content:space-between; }
+  textarea {
+    width:100%; min-height:360px; resize:vertical;
+    background:var(--panel2); color:var(--text);
+    border:1px solid var(--line); border-radius:8px;
+    padding:12px; font:13px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;
+  }
+  .buttons { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  
+  /* ボタン全般のカラーをテーマ変数に連動 */
+  button {
+    border:0; border-radius:8px; padding:8px 14px;
+    cursor:pointer; font-weight:700; font-size:13px;
+    background:var(--btn-primary); color:white; transition:all 0.15s ease;
+  }
+  button.secondary { background:var(--btn-secondary); color:white; }
+  button.success { background:var(--btn-success); color:white; }
+  button.tab-btn { background:var(--panel2); border:1px solid var(--line); color:var(--muted); }
+  button.tab-btn.active { background:var(--accent); color:var(--bg); }
+  
+  /* モード切替ボタン用のスタイル */
+  button.theme-btn {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--line);
+    white-space: nowrap; flex-shrink: 0; padding: 10px 14px; font-size: 14px;
+  }
+  button.theme-btn:hover { border-color: var(--accent); }
+  
+  button:hover { filter:brightness(1.1); transform:translateY(-1px); }
+  
+  .filter-bar {
+    display:flex; gap:6px; background:var(--panel2); padding:4px; border-radius:8px; border:1px solid var(--line);
+  }
+  .filter-bar button {
+    padding:5px 12px; font-size:12px; border-radius:6px;
+  }
+
+  .batch-box {
+    display:flex; flex-wrap:wrap; gap:12px; align-items:center;
+    background:var(--panel2); padding:12px; border-radius:8px; border:1px solid var(--line);
+  }
+  .batch-item { display:flex; flex-direction:column; gap:4px; flex:1; min-width:140px; }
+  .batch-item label { font-size:11px; color:var(--muted); font-weight:bold; }
+  .batch-item input {
+    background:var(--panel); color:var(--text); border:1px solid var(--line);
+    border-radius:6px; padding:7px 10px; font-size:12px;
+  }
+
+  .status { margin-top:10px; min-height:22px; font-size:13px; color:var(--muted); }
+  .status.ok { color:var(--ok); }
+  .status.warn { color:var(--warn); }
+  .status.bad { color:var(--bad); }
+
+  .badge {
+    display:inline-block; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;
+  }
+  .badge-sub { background:#0284c7; color:#fff; }
+  .badge-se { background:var(--se-accent); color:#fff; }
+
+  .table-wrap { overflow:auto; max-height:500px; border:1px solid var(--line); border-radius:8px; margin-top:10px; }
+  table { width:100%; border-collapse:collapse; min-width:1100px; }
+  th,td { border-bottom:1px solid var(--line); padding:8px 10px; text-align:left; font-size:12px; vertical-align:middle; }
+  th { position:sticky; top:0; background:var(--panel2); z-index:1; }
+  .defaulted { color:var(--warn); }
+  .legend { margin-top:10px; font-size:12px; color:var(--muted); }
+
+  @media (max-width:1100px) {
+    .main-grid { grid-template-columns:minmax(0, 1fr) 320px minmax(0, 1fr); }
+  }
+  @media (max-width:900px) {
+    body { padding:10px; }
+    .main-grid { grid-template-columns:1fr; }
+    .transform-panel { position:static; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header-wrap">
+    <div>
+      <h1>RepairText For TextVideoEditer Ver.2.2</h1>
+      <div class="description">
+        字幕と効果音データの修復・時間抽出・一括変更・時間シフト・形式変換ツールです。TextVideoEditer Ver.2.1のために制作されました。<br>
+        TXT（独自形式）のテキストの編集。また、SRT・VTT形式からの独自形式への変換読み込み、独自形式からSRT・VTT形式への書き出しに対応しています。
+      </div>
+    </div>
+    <!-- モード切り替えボタン -->
+    <button id="themeToggleBtn" class="theme-btn"> ☀ / ☽切替 </button>
+  </div>
+
+  <div class="main-grid">
+    <!-- 左：変換前 -->
+    <section class="panel source-panel">
+      <h2>変換前</h2>
+      <textarea id="inputText" placeholder="独自フォーマット、SRT、VTTのいずれかを入力・貼り付けしてください。
+[00:01.000-00:03.000] text:こんにちは | size:40 | grad1:#ffffff
+[00:00.0-00:00.5] | カタカタ震える | 0.3
+壊れた行 text:テスト | font:Zen Kaku Gothic New"></textarea>
+      <div class="source-actions">
+        <button id="loadFileBtn" class="secondary">ファイルから読み込む</button>
+        <input type="file" id="fileInput" accept=".txt,.srt,.vtt,text/plain" style="display:none">
+        <button id="clearBtn" class="secondary">クリア</button>
+      </div>
+      <div class="file-note">
+        対応形式：独自ファイル（TXT） / SRT / VTT<br>
+        ※ SRT・VTTは、読み込んだ瞬間に独自ファイル形式へ変換されます。
+      </div>
+      <div id="status" class="status"></div>
+    </section>
+
+    <!-- 中央：変換・編集 -->
+    <section class="panel transform-panel">
+      <h2>変換・編集</h2>
+
+      <!-- 選択ボックスによるメニュー切り替え -->
+      <div class="conversion-box">
+        <label for="transformModeSelect">編集メニュー</label>
+        <select id="transformModeSelect">
+          <option value="timePane">時間で抽出</option>
+          <option value="shiftTimePane">時間をすべてずらす</option>
+          <option value="replacePane">一斉置換</option>
+          <option value="repairPane">テキストの修復</option>
+        </select>
+      </div>
+
+      <div id="timePane" class="transform-pane active">
+        <h3>時間で抽出</h3>
+        <div class="batch-box">
+          <div class="batch-item">
+            <label for="filterStart">開始時間（秒 または 00:00.0）</label>
+            <input type="text" id="filterStart" placeholder="例: 10 または 00:10.0">
+          </div>
+          <div class="batch-item">
+            <label for="filterEnd">終了時間（秒 または 00:00.0）</label>
+            <input type="text" id="filterEnd" placeholder="例: 30 または 00:30.0">
+          </div>
+        </div>
+        <div class="transform-actions">
+          <button id="applyTimeFilterBtn" class="success">抽出を実行</button>
+          <button id="clearTimeFilterBtn" class="secondary">解除</button>
+        </div>
+      </div>
+
+      <div id="shiftTimePane" class="transform-pane">
+        <h3>時間をすべてずらす</h3>
+        <div class="batch-box">
+          <div class="batch-item">
+            <label for="shiftSeconds">ずらす秒数（マイナスで前にずらす）</label>
+            <input type="number" id="shiftSeconds" step="0.1" placeholder="例: 2.5 または -1.0">
+          </div>
+        </div>
+        <div class="transform-actions">
+          <button id="shiftTimeBtn" class="success">時間をずらす</button>
+        </div>
+        <div class="file-note">
+          すべての字幕・効果音の時間が一括でずれます。<br>
+          ※0秒未満になる場合は0秒に自動調整されます。
+        </div>
+      </div>
+
+      <div id="replacePane" class="transform-pane">
+        <h3>一斉置換</h3>
+        <div class="batch-box">
+          <div class="batch-item">
+            <label for="batchKey">対象項目</label>
+            <select id="batchKey">
+              <option value="font">font (フォント名)</option>
+              <option value="size">size (文字サイズ)</option>
+              <option value="volume">volume (SE音量)</option>
+              <option value="grad1">grad1 (グラデーション色1)</option>
+              <option value="grad2">grad2 (グラデーション色2)</option>
+              <option value="edge">edge (縁取り色)</option>
+              <option value="line">line (縁太さ)</option>
+              <option value="in">in (イン効果)</option>
+              <option value="loop">loop (ループ効果)</option>
+              <option value="x">x (位置X)</option>
+              <option value="y">y (位置Y)</option>
+              <option value="slope">slope (傾き)</option>
+              <option value="text">text (字幕テキスト)</option>
+              <option value="file">file (SEファイル名)</option>
+            </select>
+          </div>
+          <div class="batch-item">
+            <label for="batchOld">変更前の値（空欄で全件対象）</label>
+            <input type="text" id="batchOld" placeholder="例: Noto Sans JP">
+          </div>
+          <div class="batch-item">
+            <label for="batchNew">変更後の値</label>
+            <input type="text" id="batchNew" placeholder="例: Zen Kaku Gothic New">
+          </div>
+        </div>
+        <div class="transform-actions">
+          <button id="batchApplyBtn" class="success">一括変更を適用</button>
+        </div>
+      </div>
+
+      <div id="repairPane" class="transform-pane">
+        <h3>テキストの修復</h3>
+        <div class="conversion-box">
+          <div class="file-note" style="margin-top:0">
+            独自形式の不足項目を標準値で補完し、字幕と効果音を解析します。
+          </div>
+        </div>
+        <div class="transform-actions">
+          <button id="repairBtn" class="success">修復を実行</button>
+          </div>
+      </div>
+    
+      <div class="transform-actions" style="margin-top:12px;">
+        <button id="applyToInputBtn" style="background:var(--btn-primary);">出力結果を変換前へ反映</button>
+      </div>
+    </section>
+
+    <!-- 右：変換後 -->
+    <section class="panel result-panel">
+      <div class="result-header">
+        <h2 style="margin-bottom:0;">変換後</h2>
+        <div class="filter-bar">
+          <button id="modeAll" class="tab-btn active">すべて</button>
+          <button id="modeSub" class="tab-btn">字幕のみ</button>
+          <button id="modeSe" class="tab-btn">効果音のみ</button>
+        </div>
+      </div>
+      <textarea id="outputText" placeholder="ここに変換・修復結果が表示されます。" readonly></textarea>
+      <div class="result-actions">
+        <button id="downloadCurrentBtn" class="success">独自形式で保存 (.txt)</button>
+        <button id="downloadSrtBtn" class="success" style="background:#d97706;">.srt 形式で保存</button>
+        <button id="downloadVttBtn" class="success" style="background:#059669;">.vtt 形式で保存</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- テーブル表示パネル -->
+  <section class="panel" style="margin-top:16px;">
+    <h2>抽出・復元リスト</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>種別</th>
+            <th>開始</th>
+            <th>終了</th>
+            <th>内容 / ファイル名</th>
+            <th>詳細パラメータ (font / 音量 など)</th>
+            <th>補完項目</th>
+          </tr>
+        </thead>
+        <tbody id="resultBody"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+"use strict";
+
+/* === テーマ切替機能 === */
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme) {
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  } else {
+    const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+    document.documentElement.setAttribute('data-theme', prefersLight ? 'light' : 'dark');
+  }
+}
+document.getElementById("themeToggleBtn").addEventListener('click', () => {
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+});
+initTheme();
+
+
+/* === カスタムセレクトボックス適用機能 === */
+function setupCustomSelect(selectElement) {
+  if (!selectElement) return;
+  
+  // 標準のselectを非表示にする
+  selectElement.style.display = 'none';
+  
+  const wrapper = document.createElement('div');
+  wrapper.className = 'custom-select-wrapper';
+  selectElement.parentNode.insertBefore(wrapper, selectElement);
+  wrapper.appendChild(selectElement);
+
+  const trigger = document.createElement('div');
+  trigger.className = 'custom-select-trigger';
+  
+  // 初期選択状態のテキストをセット
+  const setTriggerText = (text) => {
+    trigger.innerHTML = `<span>${text}</span><span style="font-size:10px; color:var(--muted)">▼</span>`;
+  };
+  setTriggerText(selectElement.options[selectElement.selectedIndex].text);
+  wrapper.appendChild(trigger);
+
+  const optionsDiv = document.createElement('div');
+  optionsDiv.className = 'custom-options';
+  wrapper.appendChild(optionsDiv);
+
+  Array.from(selectElement.options).forEach(opt => {
+    const span = document.createElement('span');
+    span.className = 'custom-option';
+    if(opt.selected) span.classList.add('selected');
+    span.dataset.value = opt.value;
+    span.textContent = opt.text;
+    optionsDiv.appendChild(span);
+
+    span.addEventListener('click', function(e) {
+      e.stopPropagation();
+      selectElement.value = this.dataset.value;
+      setTriggerText(this.textContent);
+      optionsDiv.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
+      this.classList.add('selected');
+      wrapper.classList.remove('open');
+      
+      // 元のselectに変更イベントを発火させ、後続の処理を動かす
+      selectElement.dispatchEvent(new Event('change'));
+    });
+  });
+
+  trigger.addEventListener('click', function(e) {
+    e.stopPropagation();
+    // 他の開いているセレクトボックスを閉じる
+    document.querySelectorAll('.custom-select-wrapper').forEach(w => {
+      if (w !== wrapper) w.classList.remove('open');
+    });
+    wrapper.classList.toggle('open');
+  });
+
+  // 外側をクリックしたら閉じる
+  document.addEventListener('click', function(e) {
+    if (!wrapper.contains(e.target)) {
+      wrapper.classList.remove('open');
+    }
+  });
+}
+
+
+const SE_LIST = [
+  "お寺の鐘", "きらーん2", "くすぐる", "しょげる", "ちょこっと触る",
+  "ひらめく2", "ぷよん", "カタカタ震える", "キャンセル6", "ジャジャーン",
+  "スイッチを押す", "スポッ", "ドラムロール", "ドンドンパフパフ", "ドーン",
+  "ニュッ1", "ニュッ2", "ニュッ3", "バーン", "パッ", "パパッ", "パフ",
+  "ビシッとツッコミ1", "ピアノの単音", "レベルアップ", "不安（ピアノ演奏）",
+  "可愛い動作", "可愛い足音", "可愛く座る", "和太鼓でドドン", "小鼓（こつづみ）",
+  "木魚ポク・ポク・ポク", "決定ボタンを押す7", "涙のしずく", "目が点になる",
+  "目をパチパチ", "試合終了のゴング", "超高速ダッシュ", "間抜け1", "間抜け3",
+  "間抜け4", "電気バチバチ", "食べ物をパクッ", "鳩時計1", "黄色い悲鳴"
+];
+
+const DEFAULTS_SUB = Object.freeze({
+  start: 0, duration: 4, text: "", font: "Noto Sans JP", size: 20,
+  grad1: "#FFFFFF", grad2: "#FFFFFF", in: "none", loop: "none",
+  edge: "#fcfcfc", line: 2.7, x: 0, y: 0, slope: 0
+});
+
+const DEFAULTS_SE = Object.freeze({
+  start: 0, duration: 0.5, volume: 0.3, file: "決定ボタンを押す7.mp3"
+});
+
+let currentResults = [];
+let workingResults = [];
+let currentDisplayMode = "all"; 
+let activeFilterStart = null;
+let activeFilterEnd = null;
+
+const $ = id => document.getElementById(id);
+
+// 2つのプルダウン（select）にカスタムデザインを適用
+setupCustomSelect($("transformModeSelect"));
+setupCustomSelect($("batchKey"));
+
+function parseTimecode(value) {
+  if (value == null) return null;
+  const s = String(value).trim().replace(",", ".");
+  if (!s) return null;
+
+  const parts = s.split(":");
+  if (parts.length === 3) {
+    const h = Number(parts[0]), m = Number(parts[1]), sec = Number(parts[2]);
+    if (Number.isFinite(h) && Number.isFinite(m) && Number.isFinite(sec)) {
+      return Math.max(0, h * 3600 + m * 60 + sec);
+    }
+  } else if (parts.length === 2) {
+    const min = Number(parts[0]), sec = Number(parts[1]);
+    if (Number.isFinite(min) && Number.isFinite(sec)) {
+      return Math.max(0, min * 60 + sec);
+    }
+  }
+
+  const n = Number(s);
+  return Number.isFinite(n) ? Math.max(0, n) : null;
+}
+
+function formatTimecode(seconds, isSe = false) {
+  const safe = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
+  const min = Math.floor(safe / 60);
+  const sec = safe - min * 60;
+  return isSe 
+    ? `${String(min).padStart(2,"0")}:${sec.toFixed(1).padStart(4,"0")}`
+    : `${String(min).padStart(2,"0")}:${sec.toFixed(3).padStart(6,"0")}`;
+}
+
+function formatSrtTime(seconds) {
+  const safe = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
+  const h = Math.floor(safe / 3600);
+  const m = Math.floor((safe % 3600) / 60);
+  const s = Math.floor(safe % 60);
+  const ms = Math.round((safe % 1) * 1000);
+  return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")},${String(ms).padStart(3,"0")}`;
+}
+
+function formatVttTime(seconds) {
+  return formatSrtTime(seconds).replace(",", ".");
+}
+
+function extractTimeRange(line) {
+  let m = line.match(/\[\s*([\d:.]+)\s*[-–—]\s*([\d:.]+)\s*\]/);
+  if (m) return { start: parseTimecode(m[1]), end: parseTimecode(m[2]) };
+  m = line.match(/\[\s*([\d:.]+)\s*\]/);
+  if (m) return { start: parseTimecode(m[1]), end: null };
+  return { start: null, end: null };
+}
+
+function isSeLine(line) {
+  if (line.includes("text:")) return false;
+  if (SE_LIST.some(se => line.includes(se))) return true;
+  if (line.includes(".mp3")) return true;
+  const parts = line.split("|");
+  if (parts.length >= 2 && !line.includes("font:") && !line.includes("size:")) return true;
+  return false;
+}
+
+function matchSeFileName(text) {
+  let cleaned = text.replace(/\.mp3$/i, "").trim();
+  const match = SE_LIST.find(se => cleaned.includes(se) || se.includes(cleaned));
+  return (match || cleaned) + ".mp3";
+}
+
+function extractKeyValue(line, key) {
+  const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`(?:^|[|\\s])${escaped}\\s*:\\s*(.*?)(?=\\s*(?:\\||\\b(?:text|font|size|grad1|grad2|in|loop|edge|line|x|y|slope)\\s*:|$))`, "i");
+  const m = line.match(re);
+  return m ? m[1].trim() : null;
+}
+
+function repairSeLine(line, index) {
+  const range = extractTimeRange(line);
+  const missing = [];
+  const start = range.start != null ? range.start : DEFAULTS_SE.start;
+  if (range.start == null) missing.push("start");
+
+  let parts = line.replace(/\[.*?\]/, "").split("|").map(s => s.trim()).filter(Boolean);
+  let fileRaw = parts[0] || "";
+  let volRaw = parts[1] || "";
+
+  if (!fileRaw) {
+    const found = SE_LIST.find(se => line.includes(se));
+    fileRaw = found ? found : DEFAULTS_SE.file;
+  }
+
+  let file = matchSeFileName(fileRaw);
+  if (!fileRaw) missing.push("file");
+
+  let volume = DEFAULTS_SE.volume;
+  const volNum = parseFloat(volRaw);
+  if (!isNaN(volNum) && volNum >= 0 && volNum <= 1) {
+    volume = Number(volNum.toFixed(2));
+  } else {
+    missing.push("volume (0.3適用)");
+  }
+
+  const end = range.end != null ? range.end : start + DEFAULTS_SE.duration;
+  if (range.end == null) missing.push("end");
+
+  return { type: "se", index, raw: line, start, end, file, volume, missing };
+}
+
+function repairSubLine(line, index) {
+  const range = extractTimeRange(line);
+  const missing = [];
+  const start = range.start != null ? range.start : DEFAULTS_SUB.start;
+  if (range.start == null) missing.push("start");
+
+  let end = range.end;
+  if (end == null) missing.push("end");
+
+  let mText = line.match(/(?:^|[|\s])text\s*:\s*(.*?)(?=\s*(?:\||\b(?:font|size|grad1|grad2|in|loop|edge|line|x|y|slope)\s*:|$))/i);
+  const text = mText ? mText[1].trim() : DEFAULTS_SUB.text;
+  if (!mText) missing.push("text");
+
+  const font = extractKeyValue(line, "font") || DEFAULTS_SUB.font;
+  if (!extractKeyValue(line, "font")) missing.push("font");
+
+  const size = Number(extractKeyValue(line, "size")) || DEFAULTS_SUB.size;
+  const grad1 = extractKeyValue(line, "grad1") || DEFAULTS_SUB.grad1;
+  const grad2 = extractKeyValue(line, "grad2") || DEFAULTS_SUB.grad2;
+  const inVal = extractKeyValue(line, "in") || DEFAULTS_SUB.in;
+  const loopVal = extractKeyValue(line, "loop") || DEFAULTS_SUB.loop;
+  const edge = extractKeyValue(line, "edge") || DEFAULTS_SUB.edge;
+  const stroke = Number(extractKeyValue(line, "line")) || DEFAULTS_SUB.line;
+  const x = Number(extractKeyValue(line, "x")) || DEFAULTS_SUB.x;
+  const y = Number(extractKeyValue(line, "y")) || DEFAULTS_SUB.y;
+  const slope = Number(extractKeyValue(line, "slope")) || DEFAULTS_SUB.slope;
+
+  return {
+    type: "sub", index, raw: line, start, end, text, font, size,
+    grad1, grad2, in: inVal, loop: loopVal, edge, line: stroke, x, y, slope, missing
+  };
+}
+
+function formatRecord(rec) {
+  if (rec.type === "se") {
+    return `[${formatTimecode(rec.start, true)}-${formatTimecode(rec.end, true)}] | ${rec.file} | ${rec.volume.toFixed(1)}`;
+  } else {
+    return `[${formatTimecode(rec.start)}-${formatTimecode(rec.end)}] ` +
+      `text:${rec.text} | font:${rec.font} | size:${rec.size} | ` +
+      `grad1:${rec.grad1} | grad2:${rec.grad2} | in:${rec.in} | loop:${rec.loop} | ` +
+      `edge:${rec.edge} | line:${rec.line} | x:${rec.x} | y:${rec.y} | slope:${rec.slope}`;
+  }
+}
+
+// SRT / VTT 形式から独自形式への変換処理
+function convertSrtOrVttToCustom(text) {
+  const timeRegex = /(?:(\d{2}:)?\d{2}:\d{2}[.,]\d{3})\s*-->\s*(?:(\d{2}:)?\d{2}:\d{2}[.,]\d{3})/;
+  const blocks = text.replace(/\r\n/g, "\n").split(/\n\s*\n/);
+  const customLines = [];
+
+  blocks.forEach(block => {
+    const lines = block.split("\n").map(l => l.trim()).filter(Boolean);
+    let timeIndex = lines.findIndex(l => timeRegex.test(l));
+    if (timeIndex !== -1) {
+      const match = lines[timeIndex].match(/([\d:.,]+)\s*-->\s*([\d:.,]+)/);
+      if (match) {
+        const startSec = parseTimecode(match[1]);
+        const endSec = parseTimecode(match[2]);
+        const subText = lines.slice(timeIndex + 1).join(" ");
+        if (startSec != null && endSec != null) {
+          const startStr = formatTimecode(startSec);
+          const endStr = formatTimecode(endSec);
+          customLines.push(`[${startStr}-${endStr}] text:${subText}`);
+        }
+      }
+    }
+  });
+
+  return customLines.join("\n");
+}
+
+
+function parseInputToRecords(text) {
+  const lines = text.split(/\r?\n/);
+  const results = [];
+  lines.forEach((line, i) => {
+    if (!line.trim()) return;
+    if (isSeLine(line)) results.push(repairSeLine(line, i));
+    else results.push(repairSubLine(line, i));
+  });
+  for (let i = 0; i < results.length; i++) {
+    const cur = results[i];
+    if (cur.type === "sub" && cur.end == null) {
+      const nextSub = results.slice(i + 1).find(r => r.type === "sub");
+      const nextStart = nextSub ? nextSub.start : Infinity;
+      cur.end = Math.max(cur.start, Math.min(cur.start + DEFAULTS_SUB.duration, nextStart));
+    }
+  }
+  return results;
+}
+
+function recordsToSrt(records) {
+  const filtered = records.filter(r => r.type === "sub");
+  return filtered.map((r, i) =>
+    `${i + 1}\n${formatSrtTime(r.start)} --> ${formatSrtTime(r.end)}\n${r.text}\n`
+  ).join("\n");
+}
+
+function recordsToVtt(records) {
+  const filtered = records.filter(r => r.type === "sub");
+  return "WEBVTT\n\n" + filtered.map((r, i) =>
+    `${i + 1}\n${formatVttTime(r.start)} --> ${formatVttTime(r.end)}\n${r.text}\n`
+  ).join("\n");
+}
+
+function getFilteredResults() {
+  return workingResults.filter(r => {
+    if (currentDisplayMode === "sub" && r.type !== "sub") return false;
+    if (currentDisplayMode === "se" && r.type !== "se") return false;
+
+    const rStart = r.start;
+    const rEnd = (r.end != null) ? r.end : rStart;
+
+    if (activeFilterStart != null && rEnd < activeFilterStart) return false;
+    if (activeFilterEnd != null && rStart > activeFilterEnd) return false;
+
+    return true;
+  });
+}
+
+function updateOutputText() {
+  const filtered = getFilteredResults();
+  $("outputText").value = filtered.map(formatRecord).join("\n");
+  renderTable(filtered);
+}
+
+function renderTable(results) {
+  const tbody = $("resultBody");
+  tbody.innerHTML = "";
+
+  results.forEach(rec => {
+    const tr = document.createElement("tr");
+    const isSe = rec.type === "se";
+    
+    const badgeHtml = isSe 
+      ? `<span class="badge badge-se">SE</span>` 
+      : `<span class="badge badge-sub">字幕</span>`;
+
+    const detailText = isSe
+      ? `音量: ${rec.volume}`
+      : `font:${rec.font} | size:${rec.size} | grad1:${rec.grad1} | in:${rec.in}`;
+
+    tr.innerHTML = `
+      <td>${rec.index + 1}</td>
+      <td>${badgeHtml}</td>
+      <td>${formatTimecode(rec.start, isSe)}</td>
+      <td>${formatTimecode(rec.end, isSe)}</td>
+      <td><strong>${isSe ? rec.file : rec.text}</strong></td>
+      <td style="color:var(--muted);">${detailText}</td>
+      <td class="${rec.missing.length ? 'defaulted' : ''}">${rec.missing.length ? rec.missing.join(", ") : 'なし'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function repairAll() {
+  const input = $("inputText").value;
+  currentResults = parseInputToRecords(input);
+
+  // 変換・編集は常に作業用データだけへ適用し、左側の原本は変更しない。
+  workingResults = currentResults.map(r => ({...r, missing: Array.isArray(r.missing) ? [...r.missing] : []}));
+
+  activeFilterStart = null;
+  activeFilterEnd = null;
+  updateOutputText();
+
+  if (currentResults.length === 0) {
+    $("status").textContent = "";
+    $("status").className = "status";
+    return;
+  }
+
+  const repairedCount = currentResults.filter(r => r.missing.length).length;
+  $("status").textContent = `${currentResults.length}件を自動処理。 (${repairedCount}件で設定補完)`;
+  $("status").className = repairedCount ? "status warn" : "status ok";
+}
+
+// 出力結果を変換前へ反映する処理
+$("applyToInputBtn").addEventListener("click", () => {
+  const outputText = $("outputText").value.trim();
+  if (!outputText) {
+    $("status").textContent = "反映する出力データがありません。";
+    $("status").className = "status warn";
+    return;
+  }
+
+  // 押した瞬間だけ、表示中の変換結果を左側へ反映して新しい原本にする。
+  $("inputText").value = outputText;
+  repairAll();
+  $("status").textContent = "出力結果を変換前へ反映しました。";
+  $("status").className = "status ok";
+});
+
+// 時間指定抽出実行処理
+$("applyTimeFilterBtn").addEventListener("click", () => {
+  const rawStart = $("filterStart").value.trim();
+  const rawEnd = $("filterEnd").value.trim();
+
+  const parsedStart = parseTimecode(rawStart);
+  const parsedEnd = parseTimecode(rawEnd);
+
+  if (rawStart !== "" && parsedStart == null) {
+    $("status").textContent = "開始時間の指定形式が正しくありません。";
+    $("status").className = "status bad";
+    return;
+  }
+  if (rawEnd !== "" && parsedEnd == null) {
+    $("status").textContent = "終了時間の指定形式が正しくありません。";
+    $("status").className = "status bad";
+    return;
+  }
+
+  activeFilterStart = parsedStart;
+  activeFilterEnd = parsedEnd;
+
+  updateOutputText();
+
+  const count = $("outputText").value.split("\n").filter(Boolean).length;
+  $("status").textContent = `時間指定抽出を適用しました。（該当 ${count} 件）`;
+  $("status").className = "status ok";
+});
+
+// 時間指定解除処理
+$("clearTimeFilterBtn").addEventListener("click", () => {
+  $("filterStart").value = "";
+  $("filterEnd").value = "";
+  activeFilterStart = null;
+  activeFilterEnd = null;
+  updateOutputText();
+  $("status").textContent = "時間指定抽出を解除しました。";
+  $("status").className = "status ok";
+});
+
+// 時間シフト処理
+$("shiftTimeBtn").addEventListener("click", () => {
+  const shiftVal = $("shiftSeconds").value.trim();
+  if (!shiftVal) {
+    $("status").textContent = "ずらす秒数を入力してください。";
+    $("status").className = "status bad";
+    return;
+  }
+  
+  const shiftSec = parseFloat(shiftVal);
+  if (isNaN(shiftSec)) {
+    $("status").textContent = "有効な数値を入力してください。";
+    $("status").className = "status bad";
+    return;
+  }
+
+  let count = 0;
+  workingResults.forEach(rec => {
+    if (rec.start != null) {
+      rec.start = Math.max(0, rec.start + shiftSec);
+    }
+    if (rec.end != null) {
+      rec.end = Math.max(0, rec.end + shiftSec);
+    }
+    count++;
+  });
+
+  if (count > 0) {
+    updateOutputText();
+    const sign = shiftSec >= 0 ? "+" : "";
+    $("status").textContent = `すべての時間を ${sign}${shiftSec} 秒ずらしました。`;
+    $("status").className = "status ok";
+  }
+});
+
+
+// 一括変更処理
+$("batchApplyBtn").addEventListener("click", () => {
+  const key = $("batchKey").value;
+  const oldVal = $("batchOld").value.trim();
+  const newVal = $("batchNew").value.trim();
+
+  if (!newVal) {
+    $("status").textContent = "変更後の値を入力してください。";
+    $("status").className = "status bad";
+    return;
+  }
+
+  let count = 0;
+  workingResults.forEach(rec => {
+    if (key in rec) {
+      const currentValStr = String(rec[key]);
+      if (!oldVal || currentValStr === oldVal || currentValStr.includes(oldVal)) {
+        if (["size", "line", "x", "y", "slope"].includes(key)) {
+          const num = Number(newVal);
+          if (Number.isFinite(num)) rec[key] = num;
+        } else if (key === "volume") {
+          const num = parseFloat(newVal);
+          if (!isNaN(num) && num >= 0 && num <= 1) rec[key] = Number(num.toFixed(2));
+        } else {
+          rec[key] = newVal;
+        }
+        count++;
+      }
+    }
+  });
+
+  if (count > 0) {
+    updateOutputText();
+    $("status").textContent = `${count}件の「${key}」を出力結果側だけに適用しました。`;
+    $("status").className = "status ok";
+  } else {
+    $("status").textContent = "対象となる項目が見つかりませんでした。";
+    $("status").className = "status warn";
+  }
+});
+
+// エディタは独自形式のみを扱う。入力変更時は新しい原本として再解析する。
+$("inputText").addEventListener("input", repairAll);
+
+$("repairBtn").addEventListener("click", () => {
+  if (!$("inputText").value.trim()) {
+    $("status").textContent = "修復するデータがありません。";
+    $("status").className = "status warn";
+    return;
+  }
+  repairAll();
+  $("status").textContent = "テキストの修復を実行しました。";
+  $("status").className = "status ok";
+});
+
+// ファイル読み込み：TXTは独自形式、SRT/VTTは読み込み直後に独自形式へ変換
+$("loadFileBtn").addEventListener("click", () => $("fileInput").click());
+
+$("fileInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    let content = String(evt.target.result || "");
+    const ext = file.name.split(".").pop().toLowerCase();
+
+    if (ext === "srt" || ext === "vtt") {
+      content = convertSrtOrVttToCustom(content);
+      if (!content.trim()) {
+        $("inputText").value = "";
+        $("outputText").value = "";
+        $("status").textContent = `${ext.toUpperCase()}形式を独自形式へ変換できませんでした。`;
+        $("status").className = "status bad";
+        e.target.value = "";
+        return;
+      }
+      $("status").textContent = `${file.name} を読み込み、${ext.toUpperCase()}を独自形式へ変換しました。`;
+    } else {
+      $("status").textContent = `TXT「${file.name}」を独自形式として読み込みました。`;
+    }
+
+    $("inputText").value = content;
+    repairAll();
+    $("status").className = "status ok";
+  };
+
+  reader.readAsText(file, "UTF-8");
+  e.target.value = "";
+});
+
+
+// 中央編集メニュー切替（選択ボックス）
+$("transformModeSelect").addEventListener("change", (e) => {
+  const targetId = e.target.value;
+  document.querySelectorAll(".transform-pane").forEach(p => p.classList.remove("active"));
+  $(targetId).classList.add("active");
+});
+
+// 表示切り替えタブ
+["modeAll", "modeSub", "modeSe"].forEach(id => {
+  $(id).addEventListener("click", (e) => {
+    document.querySelectorAll(".filter-bar button").forEach(b => b.classList.remove("active"));
+    e.target.classList.add("active");
+    currentDisplayMode = id === "modeSub" ? "sub" : id === "modeSe" ? "se" : "all";
+    updateOutputText();
+  });
+});
+
+
+// ファイル保存・出力変換関数
+function downloadText(content, filename) {
+  if (!content) return;
+  const blob = new Blob([content], {type: "text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+$("downloadCurrentBtn").addEventListener("click", () => {
+  const text = $("outputText").value;
+  downloadText(text, `repaired_${currentDisplayMode}.txt`);
+});
+
+// .srt ダウンロード
+$("downloadSrtBtn").addEventListener("click", () => {
+  const filtered = getFilteredResults().filter(r => r.type === "sub");
+  if (filtered.length === 0) {
+    $("status").textContent = "出力可能な字幕データがありません。";
+    $("status").className = "status warn";
+    return;
+  }
+  const srtContent = recordsToSrt(filtered);
+  downloadText(srtContent, "subtitles.srt");
+});
+
+// .vtt ダウンロード
+$("downloadVttBtn").addEventListener("click", () => {
+  const filtered = getFilteredResults().filter(r => r.type === "sub");
+  if (filtered.length === 0) {
+    $("status").textContent = "出力可能な字幕データがありません。";
+    $("status").className = "status warn";
+    return;
+  }
+  const vttContent = recordsToVtt(filtered);
+  downloadText(vttContent, "subtitles.vtt");
+});
+
+$("clearBtn").addEventListener("click", () => {
+  $("inputText").value = "";
+  $("outputText").value = "";
+  $("resultBody").innerHTML = "";
+  $("status").textContent = "";
+  $("filterStart").value = "";
+  $("filterEnd").value = "";
+  activeFilterStart = null;
+  activeFilterEnd = null;
+  currentResults = [];
+});
+
+// 初期実行
+repairAll();
+</script>
+</body>
+</html>

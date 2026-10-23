@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="ja" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アカペラ Studio Console - かんたん音質向上</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;600;800&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"M PLUS Rounded 1c"', '"Outfit"', 'sans-serif'],
+                    },
+                    colors: {
+                        studio: {
+                            bg: '#0f172a',
+                            card: '#1e293b',
+                            accent: '#a855f7',
+                            cyan: '#06b6d4',
+                            rose: '#f43f5e'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0f172a;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(168, 85, 247, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.15) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(244, 63, 94, 0.08) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: #f8fafc;
+        }
+
+        /* Glassmorphism panel */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Neon Glow Utility */
+        .glow-purple { box-shadow: 0 0 20px rgba(168, 85, 247, 0.35); }
+        .glow-cyan { box-shadow: 0 0 20px rgba(6, 182, 212, 0.35); }
+        .glow-rose { box-shadow: 0 0 20px rgba(244, 63, 94, 0.35); }
+
+        /* Custom Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 10px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 9999px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #a855f7;
+            box-shadow: 0 0 12px #a855f7;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -7px;
+            transition: all 0.2s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #c084fc;
+        }
+        
+        /* Cyan variant thumb */
+        .slider-cyan::-webkit-slider-thumb {
+            background: #06b6d4 !important;
+            box-shadow: 0 0 12px #06b6d4 !important;
+        }
+        
+        /* Rose variant thumb */
+        .slider-rose::-webkit-slider-thumb {
+            background: #f43f5e !important;
+            box-shadow: 0 0 12px #f43f5e !important;
+        }
+
+        /* Active Radio EQ Button Effect */
+        input[type="radio"]:checked + .eq-btn {
+            background: linear-gradient(135deg, rgba(168,85,247,0.3) 0%, rgba(6,182,212,0.3) 100%);
+            border-color: #a855f7;
+            color: #ffffff;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+        }
+
+        /* Pulse animation for VU Meter LED */
+        @keyframes pulse-fast {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .animate-pulse-fast { animation: pulse-fast 0.6s infinite; }
+    </style>
+</head>
+<body class="min-h-screen py-8 px-4 flex flex-col items-center">
+
+    <!-- Header Section -->
+    <header class="w-full max-w-5xl mb-8 text-center flex flex-col items-center">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-800/80 border border-purple-500/30 text-purple-300 text-xs font-bold mb-3 tracking-wider uppercase">
+            <span class="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span>
+            Vocal Studio Console
+        </div>
+        <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent mb-2">
+            簡単アカペラ・クオリティアップ器
+        </h1>
+        <p class="text-slate-400 text-sm sm:text-base max-w-xl">
+            機械の難しい設定は一切不要！スライダーを動かすだけで、あなたの歌声をスタジオ品質のステキな音に整えます。
+        </p>
+    </header>
+
+    <!-- Global Status Toast -->
+    <div id="statusToast" class="hidden w-full max-w-5xl mb-6 p-4 rounded-xl text-center text-sm font-bold transition-all duration-300"></div>
+
+    <!-- Main Studio Dashboard Container -->
+    <main class="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+        <!-- LEFT COLUMN: Video Preview & Visualizer (5 Cols) -->
+        <section class="lg:col-span-5 flex flex-col gap-6">
+            
+            <!-- STEP 1: Video Upload & Preview -->
+            <div class="glass-panel p-6 rounded-3xl flex flex-col gap-4 relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 text-xs">1</span>
+                        動画を選ぶ
+                    </span>
+                    <span id="videoStatusBadge" class="text-xs bg-slate-800 text-slate-400 px-2.5 py-1 rounded-full border border-slate-700">未選択</span>
+                </div>
+
+                <!-- Dropzone / File Picker -->
+                <label id="uploadZone" for="videoInput" class="group border-2 border-dashed border-slate-700 hover:border-purple-500/60 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all duration-300 bg-slate-900/40 hover:bg-slate-900/70">
+                    <div class="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm font-bold text-slate-200">動画ファイルをここへドラッグ</p>
+                        <p class="text-xs text-slate-500 mt-1">またはクリックして選択 (MP4, MOV, WebM)</p>
+                    </div>
+                    <input type="file" id="videoInput" accept="video/*" class="hidden">
+                </label>
+
+                <!-- Video Viewport & Spectrum Canvas -->
+                <div id="playerContainer" class="hidden relative rounded-2xl overflow-hidden bg-black border border-slate-800 shadow-inner group">
+                    <video id="videoPlayer" class="w-full aspect-video object-contain" controls playsinline></video>
+                    
+                    <!-- Audio Waveform Visualizer Overlay -->
+                    <div class="absolute bottom-0 left-0 right-0 h-16 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity">
+                        <canvas id="visualizerCanvas" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+
+                <!-- Quick Presets -->
+                <div id="presetArea" class="hidden pt-2 border-t border-slate-800/80">
+                    <p class="text-xs text-slate-400 mb-2 font-bold">🪄 ワンタッチ簡単プリセット</p>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button id="presetBallad" class="py-1.5 px-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold text-purple-300 border border-purple-500/20 transition">✨ しっとりバラード</button>
+                        <button id="presetPop" class="py-1.5 px-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold text-cyan-300 border border-cyan-500/20 transition">🎤 くっきりポップス</button>
+                        <button id="presetReset" class="py-1.5 px-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold text-slate-400 border border-slate-700 transition">🔄 リセット</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Helpful Floating Tip Box -->
+            <div class="glass-card p-4 rounded-2xl flex items-start gap-3 border border-purple-500/10">
+                <span class="text-lg">💡</span>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    <strong class="text-slate-200">コツ：</strong> イヤホンやヘッドホンをつけて動画を再生しながら各スライダーを動かすと、声の変化がとてもよくわかりますよ！
+                </p>
+            </div>
+        </section>
+
+        <!-- RIGHT COLUMN: Equalizer & Effect Studio Controls (7 Cols) -->
+        <section class="lg:col-span-7 flex flex-col gap-6">
+            
+            <div class="glass-panel p-6 sm:p-8 rounded-3xl relative flex flex-col gap-6">
+                
+                <!-- Overlay Shield before upload -->
+                <div id="controlsOverlay" class="absolute inset-0 z-20 rounded-3xl bg-slate-950/70 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center transition-all duration-300">
+                    <div class="w-12 h-12 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center mb-3">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </div>
+                    <p class="font-bold text-slate-200 text-lg">動画を読み込むと操作できます</p>
+                    <p class="text-xs text-slate-400 mt-1">左側から動画を選択してください</p>
+                </div>
+
+                <!-- Section Title -->
+                <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+                    <span class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-300 text-xs">2</span>
+                        かんたん音質調整
+                    </span>
+                    <span class="text-xs text-slate-500">Real-time Audio Engine</span>
+                </div>
+
+                <!-- Control 1: Reverb Spatial (空間系) -->
+                <div class="glass-card p-5 rounded-2xl flex flex-col gap-3">
+                    <div class="flex justify-between items-center">
+                        <label for="reverbSlider" class="font-bold text-purple-300 flex items-center gap-2 text-sm">
+                            <span>🌌</span> 空間系 <span class="text-xs font-normal text-slate-400">（ホールの広がり）</span>
+                        </label>
+                        <span id="reverbVal" class="font-mono text-xs font-bold px-2.5 py-1 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30">0 %</span>
+                    </div>
+                    <p class="text-xs text-slate-400">広いコンサートホールで歌っているような、包み込む響きを加えます。</p>
+                    <input type="range" id="reverbSlider" min="0" max="100" value="0" disabled>
+                </div>
+
+                <!-- Control 2: Delay / Echo (繰り返し系) -->
+                <div class="glass-card p-5 rounded-2xl flex flex-col gap-3">
+                    <div class="flex justify-between items-center">
+                        <label for="delaySlider" class="font-bold text-cyan-300 flex items-center gap-2 text-sm">
+                            <span>🔁</span> 繰り返し系 <span class="text-xs font-normal text-slate-400">（やまびこ）</span>
+                        </label>
+                        <span id="delayVal" class="font-mono text-xs font-bold px-2.5 py-1 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">0 %</span>
+                    </div>
+                    <p class="text-xs text-slate-400">声が心地よく追っかけてくるリズム感のある残響を作ります。</p>
+                    <input type="range" id="delaySlider" min="0" max="100" value="0" class="slider-cyan" disabled>
+                </div>
+
+                <!-- Control 3: Limiter (音割れ防止くん) -->
+                <div class="glass-card p-5 rounded-2xl flex flex-col gap-3">
+                    <div class="flex justify-between items-center">
+                        <label for="limiterSlider" class="font-bold text-rose-300 flex items-center gap-2 text-sm">
+                            <span>🛡️</span> 音割れ防止くん
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <!-- Visual Clip Indicator LED -->
+                            <div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
+                                <span id="limiterLed" class="w-2.5 h-2.5 rounded-full bg-slate-700"></span>
+                                <span class="text-[10px] text-slate-500 font-mono">PROTECT</span>
+                            </div>
+                            <span id="limiterVal" class="font-mono text-xs font-bold px-2.5 py-1 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30">Lv. 0</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-400">大きな声を張り上げた時の「ビリビリッ」とした不快な音割れを自動で優しく防ぎます。</p>
+                    <input type="range" id="limiterSlider" min="0" max="10" value="0" class="slider-rose" disabled>
+                </div>
+
+                <!-- Control 4: EQ (声に深みを出し丸) -->
+                <div class="glass-card p-5 rounded-2xl flex flex-col gap-3">
+                    <div class="flex justify-between items-center">
+                        <label class="font-bold text-amber-300 flex items-center gap-2 text-sm">
+                            <span>🎨</span> 声に深みを出し丸
+                        </label>
+                        <span class="text-[11px] text-slate-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">マイルド補正 (+3.5dB)</span>
+                    </div>
+                    <p class="text-xs text-slate-400">ワンタップで声の欲しい帯域をほんのり持ち上げて魅力をアップさせます。</p>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="eqType" value="high" class="sr-only" disabled>
+                            <div class="eq-btn py-2.5 px-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-bold text-xs text-center transition hover:border-purple-500/50 flex flex-col gap-0.5">
+                                <span>高音</span>
+                                <span class="text-[10px] font-normal text-slate-400">抜け感アップ</span>
+                            </div>
+                        </label>
+
+                        <label class="cursor-pointer">
+                            <input type="radio" name="eqType" value="mid" class="sr-only" disabled>
+                            <div class="eq-btn py-2.5 px-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-bold text-xs text-center transition hover:border-purple-500/50 flex flex-col gap-0.5">
+                                <span>中音</span>
+                                <span class="text-[10px] font-normal text-slate-400">存在感アップ</span>
+                            </div>
+                        </label>
+
+                        <label class="cursor-pointer">
+                            <input type="radio" name="eqType" value="low" class="sr-only" disabled>
+                            <div class="eq-btn py-2.5 px-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-bold text-xs text-center transition hover:border-purple-500/50 flex flex-col gap-0.5">
+                                <span>低音</span>
+                                <span class="text-[10px] font-normal text-slate-400">温かみアップ</span>
+                            </div>
+                        </label>
+
+                        <label class="cursor-pointer">
+                            <input type="radio" name="eqType" value="none" class="sr-only" checked disabled>
+                            <div class="eq-btn py-2.5 px-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-bold text-xs text-center transition hover:border-purple-500/50 flex flex-col gap-0.5">
+                                <span>なし</span>
+                                <span class="text-[10px] font-normal text-slate-400">そのまま</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Export Button -->
+                <div class="pt-4 border-t border-slate-800 flex flex-col gap-3">
+                    <button id="saveBtn" disabled class="w-full py-4 px-6 rounded-2xl font-extrabold text-white text-base bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 shadow-lg shadow-purple-500/25 active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                        ✨ 完成した動画を書き出して保存
+                    </button>
+                    <p class="text-[11px] text-slate-500 text-center">
+                        ※保存ボタンを押すと動画が最初から再生され、音質アップ済みの新しい動画ファイルを作成します。
+                    </p>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Export Progress Modal Window -->
+    <div id="exportModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-md p-6 sm:p-8 rounded-3xl border border-purple-500/30 flex flex-col items-center text-center gap-5 shadow-2xl">
+            <div class="relative w-20 h-20 flex items-center justify-center">
+                <div class="absolute inset-0 rounded-full border-4 border-purple-500/20"></div>
+                <div id="spinnerRing" class="absolute inset-0 rounded-full border-4 border-purple-500 border-t-transparent animate-spin"></div>
+                <span class="text-2xl">🎬</span>
+            </div>
+            
+            <div>
+                <h3 id="modalTitle" class="text-xl font-extrabold text-slate-100">高音質動画を作成中...</h3>
+                <p id="modalSub" class="text-xs text-slate-400 mt-1">動画を再生しながらエンコードしています。<br>このまま画面を閉じずにお待ちください。</p>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-900 rounded-full h-3 border border-slate-800 overflow-hidden">
+                <div id="exportProgressBar" class="bg-gradient-to-r from-purple-500 to-cyan-400 h-full w-0% transition-all duration-200"></div>
+            </div>
+            <span id="exportProgressPercent" class="font-mono text-xs text-purple-300 font-bold">0 %</span>
+
+            <button id="cancelExportBtn" class="mt-2 text-xs text-slate-500 hover:text-rose-400 underline transition">
+                処理をキャンセル
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript Audio Logic -->
+    <script>
+        // DOM Elements
+        const videoInput = document.getElementById('videoInput');
+        const uploadZone = document.getElementById('uploadZone');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const playerContainer = document.getElementById('playerContainer');
+        const controlsOverlay = document.getElementById('controlsOverlay');
+        const presetArea = document.getElementById('presetArea');
+        const videoStatusBadge = document.getElementById('videoStatusBadge');
+        
+        // Control Inputs
+        const reverbSlider = document.getElementById('reverbSlider');
+        const delaySlider = document.getElementById('delaySlider');
+        const limiterSlider = document.getElementById('limiterSlider');
+        const eqRadios = document.querySelectorAll('input[name="eqType"]');
+        const saveBtn = document.getElementById('saveBtn');
+
+        // Text & Status Indicators
+        const reverbVal = document.getElementById('reverbVal');
+        const delayVal = document.getElementById('delayVal');
+        const limiterVal = document.getElementById('limiterVal');
+        const limiterLed = document.getElementById('limiterLed');
+        const statusToast = document.getElementById('statusToast');
+
+        // Presets Buttons
+        const presetBallad = document.getElementById('presetBallad');
+        const presetPop = document.getElementById('presetPop');
+        const presetReset = document.getElementById('presetReset');
+
+        // Export Modal Elements
+        const exportModal = document.getElementById('exportModal');
+        const exportProgressBar = document.getElementById('exportProgressBar');
+        const exportProgressPercent = document.getElementById('exportProgressPercent');
+        const cancelExportBtn = document.getElementById('cancelExportBtn');
+
+        // Visualizer Canvas
+        const visualizerCanvas = document.getElementById('visualizerCanvas');
+        const canvasCtx = visualizerCanvas.getContext('2d');
+
+        // Web Audio API State
+        let audioCtx, mediaSource, eqNode, convolverNode, reverbGainNode, delayNode, delayFeedbackNode, delayMixGainNode, limiterNode, analyserNode, mediaDest;
+        let isAudioSetup = false;
+        let isExporting = false;
+        let mediaRecorder = null;
+        let visualizerAnimationFrame = null;
+
+        // Toast Helper
+        function showToast(msg, type = 'info') {
+            statusToast.textContent = msg;
+            statusToast.classList.remove('hidden', 'bg-rose-500/20', 'text-rose-300', 'bg-emerald-500/20', 'text-emerald-300', 'bg-purple-500/20', 'text-purple-300');
+            
+            if (type === 'error') {
+                statusToast.classList.add('bg-rose-500/20', 'text-rose-300', 'border', 'border-rose-500/30');
+            } else if (type === 'success') {
+                statusToast.classList.add('bg-emerald-500/20', 'text-emerald-300', 'border', 'border-emerald-500/30');
+            } else {
+                statusToast.classList.add('bg-purple-500/20', 'text-purple-300', 'border', 'border-purple-500/30');
+            }
+        }
+
+        // Impulse Response Generator for Hall Reverb
+        function createHallImpulseResponse(ctx, duration = 2.2) {
+            const sampleRate = ctx.sampleRate;
+            const length = sampleRate * duration;
+            const impulse = ctx.createBuffer(2, length, sampleRate);
+            const left = impulse.getChannelData(0);
+            const right = impulse.getChannelData(1);
+
+            for (let i = 0; i < length; i++) {
+                // Smooth exponential room decay curve
+                const decay = Math.pow(1 - i / length, 3.5);
+                left[i] = (Math.random() * 2 - 1) * decay;
+                right[i] = (Math.random() * 2 - 1) * decay;
+            }
+            return impulse;
+        }
+
+        function setupAudioNodes() {
+            if (isAudioSetup) return;
+
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+
+                // Source node connected to HTML Video element
+                mediaSource = audioCtx.createMediaElementSource(videoPlayer);
+
+                // 1. EQ Node (BiquadFilter)
+                eqNode = audioCtx.createBiquadFilter();
+                eqNode.type = 'peaking';
+                eqNode.Q.value = 1.0;
+                eqNode.gain.value = 0; // default off
+
+                // 2. Reverb Path (Convolver)
+                convolverNode = audioCtx.createConvolver();
+                convolverNode.buffer = createHallImpulseResponse(audioCtx, 2.0);
+                reverbGainNode = audioCtx.createGain();
+                reverbGainNode.gain.value = 0;
+
+                // 3. Delay Path (Echo)
+                delayNode = audioCtx.createDelay(1.0);
+                delayNode.delayTime.value = 0.32; // ~320ms timing
+                delayFeedbackNode = audioCtx.createGain();
+                delayFeedbackNode.gain.value = 0.28; // Feedback intensity
+                delayMixGainNode = audioCtx.createGain();
+                delayMixGainNode.gain.value = 0;
+
+                // Routing Feedback Loop
+                delayNode.connect(delayFeedbackNode);
+                delayFeedbackNode.connect(delayNode);
+
+                // Dry Signal Path
+                const dryGainNode = audioCtx.createGain();
+                dryGainNode.gain.value = 1.0;
+
+                // 4. Limiter (DynamicsCompressor)
+                limiterNode = audioCtx.createDynamicsCompressor();
+                limiterNode.attack.value = 0.003;
+                limiterNode.release.value = 0.1;
+                limiterNode.ratio.value = 20; // Hard limiting ratio
+                limiterNode.threshold.value = 0; // Off default
+
+                // 5. Analyser Node for Visualizer Canvas
+                analyserNode = audioCtx.createAnalyser();
+                analyserNode.fftSize = 64;
+
+                // 6. Media Destination Node for recording output
+                mediaDest = audioCtx.createMediaStreamDestination();
+
+                // --- AUDIO GRAPH ROUTING ---
+                // Source -> EQ
+                mediaSource.connect(eqNode);
+
+                // EQ -> Dry / Reverb / Delay
+                eqNode.connect(dryGainNode);
+                eqNode.connect(convolverNode);
+                eqNode.connect(delayNode);
+
+                // Connect effect paths to their gains
+                convolverNode.connect(reverbGainNode);
+                delayNode.connect(delayMixGainNode);
+
+                // Sum all paths into Limiter
+                dryGainNode.connect(limiterNode);
+                reverbGainNode.connect(limiterNode);
+                delayMixGainNode.connect(limiterNode);
+
+                // Limiter -> Analyser
+                limiterNode.connect(analyserNode);
+
+                // Analyser -> Speakers & Output Stream Destination
+                analyserNode.connect(audioCtx.destination);
+                analyserNode.connect(mediaDest);
+
+                isAudioSetup = true;
+                startVisualizer();
+
+            } catch (err) {
+                console.error("Audio Context Setup Error:", err);
+                showToast("音声エンジンの初期化に失敗しました", "error");
+            }
+        }
+
+        function startVisualizer() {
+            if (!analyserNode) return;
+
+            const bufferLength = analyserNode.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            function draw() {
+                visualizerAnimationFrame = requestAnimationFrame(draw);
+
+                analyserNode.getByteFrequencyData(dataArray);
+
+                // Resize Canvas dynamically
+                visualizerCanvas.width = visualizerCanvas.clientWidth;
+                visualizerCanvas.height = visualizerCanvas.clientHeight;
+
+                const width = visualizerCanvas.width;
+                const height = visualizerCanvas.height;
+
+                canvasCtx.clearRect(0, 0, width, height);
+
+                const barWidth = (width / bufferLength) * 1.5;
+                let barHeight;
+                let x = 0;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    barHeight = (dataArray[i] / 255) * height;
+
+                    // Dynamic gradient bar fill
+                    const gradient = canvasCtx.createLinearGradient(0, height, 0, 0);
+                    gradient.addColorStop(0, 'rgba(168, 85, 247, 0.2)');
+                    gradient.addColorStop(0.5, 'rgba(6, 182, 212, 0.6)');
+                    gradient.addColorStop(1, 'rgba(244, 63, 94, 0.9)');
+
+                    canvasCtx.fillStyle = gradient;
+                    canvasCtx.fillRect(x, height - barHeight, barWidth - 2, barHeight);
+
+                    x += barWidth;
+                }
+
+                // Check audio peak level for Limiter LED light
+                let sum = 0;
+                for(let i=0; i<dataArray.length; i++) sum += dataArray[i];
+                const avg = sum / dataArray.length;
+                if (avg > 140 && limiterSlider.value > 0) {
+                    limiterLed.className = "w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_#f43f5e] animate-pulse-fast";
+                } else {
+                    limiterLed.className = "w-2.5 h-2.5 rounded-full bg-slate-700";
+                }
+            }
+
+            draw();
+        }
+
+        function handleFileSelect(file) {
+            if (!file || !file.type.startsWith('video/')) {
+                showToast("動画ファイル（MP4, MOV等）を選んでください", "error");
+                return;
+            }
+
+            const url = URL.createObjectURL(file);
+            videoPlayer.src = url;
+
+            uploadZone.classList.add('hidden');
+            playerContainer.classList.remove('hidden');
+            presetArea.classList.remove('hidden');
+            controlsOverlay.classList.add('hidden');
+
+            videoStatusBadge.textContent = "準備完了";
+            videoStatusBadge.className = "text-xs bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-500/30 font-semibold";
+
+            // Enable Controls
+            reverbSlider.disabled = false;
+            delaySlider.disabled = false;
+            limiterSlider.disabled = false;
+            saveBtn.disabled = false;
+            eqRadios.forEach(r => r.disabled = false);
+
+            if (!isAudioSetup) setupAudioNodes();
+        }
+
+        videoInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0]));
+
+        // Drag & Drop
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('border-purple-500', 'bg-purple-500/10');
+        });
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('border-purple-500', 'bg-purple-500/10');
+        });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('border-purple-500', 'bg-purple-500/10');
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        });
+
+        // Ensure AudioContext is active on user play
+        videoPlayer.addEventListener('play', () => {
+            if (!isAudioSetup) setupAudioNodes();
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        });
+
+        // Reverb Slider (Spatial)
+        reverbSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            reverbVal.textContent = `${val} %`;
+            if (isAudioSetup) {
+                reverbGainNode.gain.value = (val / 100) * 1.2; // Blend ratio
+            }
+        });
+
+        // Delay Slider (Echo)
+        delaySlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            delayVal.textContent = `${val} %`;
+            if (isAudioSetup) {
+                delayMixGainNode.gain.value = (val / 100) * 0.45; // Subtle echo mix
+            }
+        });
+
+        // Limiter Slider (音割れ防止くん)
+        limiterSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            limiterVal.textContent = `Lv. ${val}`;
+            if (isAudioSetup) {
+                // Map Level 0-10 to threshold 0dB to -30dB
+                limiterNode.threshold.value = - (val / 10) * 30;
+            }
+        });
+
+        // EQ Radio Buttons (声に深みを出し丸: Light boost +3.5dB)
+        eqRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (!isAudioSetup) return;
+                const type = e.target.value;
+
+                if (type === 'high') {
+                    eqNode.frequency.value = 4000;
+                    eqNode.gain.value = 3.5;
+                } else if (type === 'mid') {
+                    eqNode.frequency.value = 1000;
+                    eqNode.gain.value = 3.5;
+                } else if (type === 'low') {
+                    eqNode.frequency.value = 250;
+                    eqNode.gain.value = 3.5;
+                } else {
+                    eqNode.gain.value = 0; // None
+                }
+            });
+        });
+
+        // Presets Logic
+        presetBallad.addEventListener('click', () => {
+            reverbSlider.value = 45;
+            delaySlider.value = 20;
+            limiterSlider.value = 6;
+            document.querySelector('input[name="eqType"][value="mid"]').checked = true;
+            
+            reverbSlider.dispatchEvent(new Event('input'));
+            delaySlider.dispatchEvent(new Event('input'));
+            limiterSlider.dispatchEvent(new Event('input'));
+            document.querySelector('input[name="eqType"][value="mid"]').dispatchEvent(new Event('change'));
+            showToast("プリセット「しっとりバラード」を適用しました", "info");
+        });
+
+        presetPop.addEventListener('click', () => {
+            reverbSlider.value = 25;
+            delaySlider.value = 10;
+            limiterSlider.value = 8;
+            document.querySelector('input[name="eqType"][value="high"]').checked = true;
+
+            reverbSlider.dispatchEvent(new Event('input'));
+            delaySlider.dispatchEvent(new Event('input'));
+            limiterSlider.dispatchEvent(new Event('input'));
+            document.querySelector('input[name="eqType"][value="high"]').dispatchEvent(new Event('change'));
+            showToast("プリセット「くっきりポップス」を適用しました", "info");
+        });
+
+        presetReset.addEventListener('click', () => {
+            reverbSlider.value = 0;
+            delaySlider.value = 0;
+            limiterSlider.value = 0;
+            document.querySelector('input[name="eqType"][value="none"]').checked = true;
+
+            reverbSlider.dispatchEvent(new Event('input'));
+            delaySlider.dispatchEvent(new Event('input'));
+            limiterSlider.dispatchEvent(new Event('input'));
+            document.querySelector('input[name="eqType"][value="none"]').dispatchEvent(new Event('change'));
+            showToast("設定を初期化しました", "info");
+        });
+
+        // Video Export Implementation
+        saveBtn.addEventListener('click', async () => {
+            if (!isAudioSetup || !videoPlayer.src) return;
+
+            if (audioCtx.state === 'suspended') {
+                await audioCtx.resume();
+            }
+
+            try {
+                isExporting = true;
+                exportModal.classList.remove('hidden');
+                
+                // Get Video stream
+                const captureMethod = videoPlayer.captureStream || videoPlayer.mozCaptureStream;
+                if (!captureMethod) {
+                    throw new Error("お使いのブラウザは動画の書き出しに対応していません (Chrome, Edge, Firefox等を推奨)");
+                }
+
+                const videoStream = captureMethod.call(videoPlayer);
+                const videoTracks = videoStream.getVideoTracks();
+
+                if (videoTracks.length === 0) {
+                    throw new Error("動画の映像トラックが取得できませんでした");
+                }
+
+                // Combine Video track + Web Audio Output stream
+                const audioTracks = mediaDest.stream.getAudioTracks();
+                const combinedStream = new MediaStream([...videoTracks, ...audioTracks]);
+
+                // MediaRecorder Setup
+                const options = { mimeType: 'video/webm;codecs=vp8,opus' };
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    delete options.mimeType; // fallback to default
+                }
+
+                mediaRecorder = new MediaRecorder(combinedStream, options);
+                const chunks = [];
+
+                mediaRecorder.ondataavailable = e => {
+                    if (e.data && e.data.size > 0) chunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    if (!isExporting) return; // Cancelled
+
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+
+                    // Automatic Download Trigger
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `acappella_enhanced_${Date.now()}.webm`;
+                    document.body.appendChild(a);
+                    a.click();
+
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    }, 200);
+
+                    cleanupExport();
+                    showToast("🎉 動画のダウンロードが完了しました！", "success");
+                };
+
+                // Time progress updater
+                const updateProgress = () => {
+                    if (!isExporting || !videoPlayer.duration) return;
+                    const percent = Math.min(100, Math.floor((videoPlayer.currentTime / videoPlayer.duration) * 100));
+                    exportProgressBar.style.width = `${percent}%`;
+                    exportProgressPercent.textContent = `${percent} %`;
+
+                    if (isExporting && !videoPlayer.paused && !videoPlayer.ended) {
+                        requestAnimationFrame(updateProgress);
+                    }
+                };
+
+                // Play from start for recording
+                videoPlayer.currentTime = 0;
+                
+                const handleVideoEnd = () => {
+                    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                        mediaRecorder.stop();
+                    }
+                    videoPlayer.removeEventListener('ended', handleVideoEnd);
+                };
+
+                videoPlayer.addEventListener('ended', handleVideoEnd);
+
+                await videoPlayer.play();
+                mediaRecorder.start(1000); // chunk every 1s
+                requestAnimationFrame(updateProgress);
+
+            } catch (err) {
+                console.error(err);
+                cleanupExport();
+                showToast(err.message || "書き出し中にエラーが発生しました", "error");
+            }
+        });
+
+        // Cancel Export
+        cancelExportBtn.addEventListener('click', () => {
+            cleanupExport();
+            showToast("書き出しをキャンセルしました", "info");
+        });
+
+        function cleanupExport() {
+            isExporting = false;
+            exportModal.classList.add('hidden');
+            exportProgressBar.style.width = '0%';
+            exportProgressPercent.textContent = '0 %';
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            if (videoPlayer) {
+                videoPlayer.pause();
+            }
+        }
+    </script>
+</body>
+</html>

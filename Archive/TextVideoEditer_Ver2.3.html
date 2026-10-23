@@ -1,0 +1,2522 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TextVideoEditer_Ver2.3</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700;900&family=Zen+KakuGothic+New:wght@700;900&family=Zen+Old+Mincho:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --accent-color: #38bdf8;
+      --accent-hover: #0284c7;
+      --text-color: #f8fafc;
+      --border-color: #334155;
+      --input-bg: #0f172a;
+      --input-text: #ffffff;
+      --sub-bg: #0f172a;
+      --item-bg: #1e293b;
+      --muted-text: #94a3b8;
+      --button-bg: #475569;
+      --button-hover: #334155;
+    }
+
+    [data-theme="light"] {
+      color-scheme: light;
+      --bg-color: #f1f5f9;
+      --card-bg: #ffffff;
+      --accent-color: #0284c7;
+      --accent-hover: #0369a1;
+      --text-color: #0f172a;
+      --border-color: #cbd5e1;
+      --input-bg: #f8fafc;
+      --input-text: #0f172a;
+      --sub-bg: #f8fafc;
+      --item-bg: #f1f5f9;
+      --muted-text: #64748b;
+      --button-bg: #94a3b8;
+      --button-hover: #64748b;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme="dark"]) {
+        color-scheme: light;
+        --bg-color: #f1f5f9;
+        --card-bg: #ffffff;
+        --accent-color: #0284c7;
+        --accent-hover: #0369a1;
+        --text-color: #0f172a;
+        --border-color: #cbd5e1;
+        --input-bg: #f8fafc;
+        --input-text: #0f172a;
+        --sub-bg: #f8fafc;
+        --item-bg: #f1f5f9;
+        --muted-text: #64748b;
+        --button-bg: #94a3b8;
+        --button-hover: #64748b;
+      }
+    }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--sub-bg); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      cursor: pointer; opacity: 0.7; transition: opacity 0.2s;
+    }
+    input[type="number"]::-webkit-inner-spin-button:hover,
+    input[type="number"]::-webkit-outer-spin-button:hover { opacity: 1.0; }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      margin: 0; padding: 20px;
+      background: var(--bg-color); color: var(--text-color);
+      transition: background 0.3s, color 0.3s;
+    }
+    .container {
+         max-width: 1400px; margin: 0 auto;
+      background: var(--card-bg); padding: 25px;
+      border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      transition: background 0.3s;
+      width: 100%; box-sizing: border-box;
+    }
+    .header-area {
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;
+    }
+    .header-left {
+      display: flex; align-items: center; gap: 10px; min-width: 0;
+    }
+    .header-actions {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end;
+    }
+    .header-actions button { white-space: nowrap; }
+    .custom-title-group {
+      display: flex; align-items: center; gap: 6px; min-width: 0;
+    }
+    .custom-title-group label {
+      font-size: 12px; color: var(--text-color); white-space: nowrap;
+    }
+    #customTitleInput {
+      width: min(320px, 40vw); min-width: 140px;
+      box-sizing: border-box;
+    }
+    h2 { margin: 0; color: var(--accent-color); font-size: 20px; }
+    .layout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+    @media (max-width: 900px) { .layout-grid { grid-template-columns: 1fr; } }
+    
+    .preview-section { display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; }
+    canvas {
+      border: 2px solid var(--border-color); max-width: 100%; height: auto;
+      display: block; margin: 10px 0 5px 0; background: #000; border-radius: 8px;
+    }
+    .player-controls {
+      display: flex; flex-direction: column; gap: 8px; width: 100%;
+      background: var(--sub-bg); padding: 10px; border-radius: 8px;
+      border: 1px solid var(--border-color); box-sizing: border-box;
+    }
+       .button-row { display: flex; flex-wrap: wrap; gap: 4px; width: 100%; justify-content: space-between; }
+    .player-controls button { padding: 6px 4px; font-size: 12px; background: var(--button-bg); color: white; min-height: 30px; flex: 1 1 auto; border-radius: 6px; }
+    .player-controls button:hover:not(:disabled) { background: var(--button-hover); }
+    .seekbar-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+    #seekBar { flex-grow: 1; cursor: pointer; height: 24px; margin: 0; min-width: 0; }
+    #timeDisplay { font-size: 12px; font-variant-numeric: tabular-nums; min-width: 75px; text-align: right; }
+
+    /* 上部3操作：標準は縦並び。901px以上で横並び */
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      flex-wrap: nowrap;
+      gap: 10px;
+      margin-bottom: 15px;
+      width: 100%;
+      align-items: stretch;
+    }
+    .control-group > * {
+      min-width: 0;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      flex: 0 0 auto;
+    }
+    .control-group > input[type="file"],
+    .control-group > button,
+    .control-group > .custom-select-wrapper {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+    .control-group .custom-select-trigger {
+      display: flex;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    .control-group .custom-select-options {
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* 901px以上のみ、上部3操作を左寄せの横一列にする */
+    @media (min-width: 901px) {
+      .control-group {
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+      }
+      .control-group > input[type="file"] {
+        width: 320px;
+        min-width: 320px;
+        max-width: 320px;
+      }
+      .control-group > button {
+        width: 220px;
+        min-width: 220px;
+        max-width: 220px;
+      }
+      .control-group > .custom-select-wrapper {
+        flex: 0 0 260px;
+        width: 260px;
+        min-width: 260px;
+        max-width: 260px;
+      }
+    }
+
+    input[type="text"], input[type="number"], input[type="file"] {
+      padding: 8px 12px; font-size: 14px; background-color: var(--input-bg);
+      color: var(--input-text); border: 1px solid var(--border-color);
+      border-radius: 8px; box-sizing: border-box; transition: all 0.2s ease; width: 100%;
+    }
+    input[type="text"]:focus, input[type="number"]:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25); }
+    input[type="file"] { background: var(--input-bg); }
+    input[type="color"] { padding: 2px; height: 38px; width: 100%; cursor: pointer; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 8px; }
+    
+    button {
+      cursor: pointer; background: #0284c7; color: white; border: none; font-weight: bold;
+      transition: background 0.2s, transform 0.1s; border-radius: 20px; padding: 8px 16px; font-size: 13px; white-space: nowrap;
+    }
+    button:active:not(:disabled) { transform: scale(0.97); }
+    button:hover:not(:disabled) { background: #0369a1; }
+    button:disabled { background: #64748b; cursor: not-allowed; }
+    .btn-danger { background: #e11d48; } .btn-danger:hover:not(:disabled) { background: #be123c; }
+    .btn-add { background: #16a34a; } .btn-add:hover:not(:disabled) { background: #15803d; }
+    .btn-gray { background: var(--button-bg); color: #fff; } .btn-gray:hover:not(:disabled) { background: var(--button-hover); }
+
+    .tab-container { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid var(--border-color); margin-bottom: 12px; gap: 10px; }
+    .tab-left { display: flex; gap: 4px; flex-wrap: wrap; }
+    .tab-right-actions { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+    .tab-btn {
+      padding: 10px 16px; background: var(--sub-bg); color: var(--muted-text);
+      border: 1px solid var(--border-color); border-bottom: none; border-radius: 12px 12px 0 0;
+      font-size: 14px; cursor: pointer; transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--card-bg); color: var(--accent-color); font-weight: bold;
+      border-color: var(--accent-color); border-bottom: 2px solid var(--card-bg); margin-bottom: -2px;
+    }
+
+    .editor-section { display: flex; flex-direction: column; gap: 15px; width: 100%; box-sizing: border-box; }
+    .panel-content { display: flex; flex-direction: column; gap: 15px; }
+    .panel-content.hidden { display: none; }
+
+    .list-container { max-height: 180px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; background: var(--sub-bg); }
+    .item-row {
+      display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; margin-bottom: 6px;
+      background: var(--item-bg); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    }
+    .item-row.active { border-color: var(--accent-color); background: #0284c722; }
+    .item-info { display: flex; flex-direction: column; gap: 2px; }
+    .item-title { font-weight: bold; font-size: 14px; color: var(--text-color); }
+    .item-sub { font-size: 12px; color: var(--muted-text); }
+    
+    .editor-form { background: var(--sub-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group-full { grid-column: span 2; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 12px; color: var(--muted-text); font-weight: bold; }
+
+    .custom-select-wrapper { position: relative; user-select: none; width: 100%; max-width: 100%; min-width: 0; flex: 1 1 auto; box-sizing: border-box; }
+    .custom-select-trigger {
+      display: flex; justify-content: space-between; align-items: center; padding: 8px 16px;
+      background-color: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color);
+      border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1); box-sizing: border-box; min-height: 38px; white-space: nowrap; overflow: hidden;
+    }
+    .custom-select-trigger span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px; }
+    .custom-select-trigger:hover { border-color: var(--accent-color); box-shadow: 0 0 6px rgba(56, 189, 248, 0.2); }
+    .custom-select-trigger.open { border-color: var(--accent-color); border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); }
+    .custom-select-trigger svg { transition: transform 0.2s ease; color: var(--accent-color); flex-shrink: 0; }
+    .custom-select-trigger.open svg { transform: rotate(180deg); }
+    .custom-select-options {
+      position: absolute; top: 100%; left: 0; right: 0; background-color: var(--card-bg);
+      border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 16px 16px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3); max-height: 220px; overflow-y: auto; z-index: 1000; display: none;
+    }
+    .custom-select-options.open { display: block; animation: dropDownAnim 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    @keyframes dropDownAnim { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    .custom-select-option { padding: 10px 16px; font-size: 13px; cursor: pointer; color: var(--text-color); transition: background 0.15s, color 0.15s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .custom-select-option:hover { background-color: var(--item-bg); color: var(--accent-color); }
+    .custom-select-option.selected { background-color: var(--accent-hover); color: white; font-weight: bold; }
+    .custom-select-option.disabled { opacity: 0.5; cursor: not-allowed; background-color: transparent !important; color: var(--muted-text) !important; }
+    .custom-select-option:last-child { border-radius: 0 0 16px 16px; }
+
+    @media (max-width: 600px) {
+      html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+      body { padding: 8px; box-sizing: border-box; }
+      .container { width: 100%; max-width: 100%; padding: 12px; box-sizing: border-box; }
+      .header-area { flex-direction: column; align-items: stretch; gap: 8px; }
+      .header-left { flex-direction: column; align-items: stretch; gap: 8px; }
+      .header-area h2 { overflow-wrap: anywhere; }
+      .custom-title-group { width: 100%; }
+      #customTitleInput { width: 100%; min-width: 0; }
+      .header-actions { width: 100%; flex-direction: column; align-items: stretch; }
+      .header-actions button { width: 100%; }
+      .header-area #themeToggleBtn { width: 100%; }
+
+      /* スマホでは上部の主要操作を完全な縦並びにする */
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        margin-bottom: 12px;
+        width: 100%;
+      }
+      .control-group > * {
+        flex: 0 0 100% !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        margin: 0;
+        box-sizing: border-box;
+      }
+      .control-group > input[type="file"],
+      .control-group > button,
+      .control-group > .custom-select-wrapper,
+      .control-group .custom-select-trigger,
+      .control-group .custom-select-options {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box;
+      }
+      .control-group > .custom-select-wrapper {
+        flex: 0 0 100% !important;
+      }
+
+      .layout-grid { width: 100%; min-width: 0; }
+      .preview-section, .editor-section { min-width: 0; }
+      canvas { max-width: 100%; height: auto; }
+
+      .editor-form { grid-template-columns: 1fr; }
+      .form-group-full { grid-column: span 1; }
+
+      .tab-container {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        min-width: 0;
+        border-bottom: none;
+      }
+      .tab-left {
+        width: 100%;
+        min-width: 0;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 5px;
+        flex-wrap: nowrap;
+      }
+      .tab-btn {
+        flex: 1 1 0;
+        min-width: 0;
+        text-align: center;
+        border-radius: 8px 8px 0 0;
+      }
+      .tab-right-actions {
+        width: 100%;
+        min-width: 0;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding-top: 8px;
+      }
+      .tab-right-actions > * {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+      }
+      .tab-right-actions .custom-select-wrapper {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+      }
+
+      .player-controls { min-width: 0; }
+      .button-row { width: 100%; }
+      .player-controls button {
+        min-height: 40px;
+        min-width: 0;
+        padding: 10px 8px;
+        white-space: nowrap;
+      }
+      #timeDisplay { min-width: 68px; }
+      button { padding: 10px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header-area">
+    <div class="header-left">
+      <h2>TextVideoEditer_Ver2.3</h2>
+      <div class="custom-title-group">
+        <label for="customTitleInput">　編集ファイルをカスタマイズ：</label>
+        <input type="text" id="customTitleInput" placeholder="入力するとタブ名に反映">
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="importProjectBtn" class="btn-gray">プロジェクト読込(txt)</button>
+      <button id="exportProjectBtn" class="btn-gray">プロジェクト書出(txt)</button>
+      <button id="themeToggleBtn" class="btn-gray"> ☀ / ☽切替 </button>
+    </div>
+    <input type="file" id="projectTxtInput" accept=".txt" style="display: none;">
+  </div>
+
+  <div class="control-group">
+    <input type="file" id="videoInput" accept="video/*">
+    <select id="aspectRatioSelect">
+      <option value="16:9">横長 (16:9 標準)</option>
+      <option value="9:16">縦長 (9:16 ショート用)</option>
+      <option value="1:1">正方形 (1:1 スクエア)</option>
+      <option value="4:5">縦長 (4:5 ポートレート)</option>
+    </select>
+    <button id="exportBtn" disabled>動画を合成・書き出し</button>
+  </div>
+
+  <div class="layout-grid">
+    <div class="preview-section">
+      <canvas id="mainCanvas" width="640" height="360"></canvas>
+      
+      <div class="player-controls">
+        <div class="button-row">
+          <button id="btnStart" disabled title="最初に戻る">|◀</button>
+          <button id="btnRewind" disabled title="5秒戻る">◀◀</button>
+          <button id="btnPlayPause" disabled style="flex-grow: 1.5;">▶ 再生</button>
+          <button id="btnStop" disabled title="停止">⏹</button>
+          <button id="btnForward" disabled title="5秒進む">▶▶</button>
+          <button id="btnEnd" disabled title="最後に行く">▶|</button>
+        </div>
+        <div class="seekbar-row">
+          <input type="range" id="seekBar" min="0" max="100" step="0.1" value="0" disabled>
+          <div id="timeDisplay">0.0 / 0.0</div>
+        </div>
+      </div>
+
+      <video id="outputVideo" controls style="max-width: 100%; display: none; margin-top: 10px;"></video>
+      <div id="statusText" style="margin-top: 10px; font-size: 14px; color: var(--accent-color);">動画ファイルを読み込んでください</div>
+    </div>
+
+    <div class="editor-section">
+      <div class="tab-container">
+        <div class="tab-left">
+          <button id="tabTelopBtn" class="tab-btn active">📝字幕</button>
+          <button id="tabAudioBtn" class="tab-btn">🎵音声</button>
+        </div>
+
+        <div id="telopTabActions" class="tab-right-actions">
+          <button id="importTxtBtn" class="btn-gray">読込(txt)</button>
+          <button id="exportTxtBtn" class="btn-gray">書出(txt)</button>
+          <button id="sortTelopBtn" class="btn-gray">開始秒で並び替え</button>
+          <input type="file" id="txtInput" accept=".txt" style="display: none;">
+          <button id="addTelopBtn" class="btn-add">+ 追加</button>
+        </div>
+
+        <div id="audioTabActions" class="tab-right-actions" style="display: none;">
+          <button id="importAudioTxtBtn" class="btn-gray">読込(txt)</button>
+          <button id="exportAudioTxtBtn" class="btn-gray">書出(txt)</button>
+          <button id="sortAudioBtn" class="btn-gray">開始秒で並び替え</button>
+          <input type="file" id="audioTxtInput" accept=".txt" style="display: none;">
+          <input type="file" id="audioFileInput" accept=".mp3,.wav,audio/mpeg,audio/wav,audio/x-wav,audio/wave" multiple style="display: none;">
+          
+          <select id="loadedAudioPoolSelect">
+            <option value="" disabled selected>-- 未ロード --</option>
+            <option value="load-file">📁 ファイルから読み込む...</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- テロップ編集パネル -->
+      <div id="telopPanel" class="panel-content">
+        <div class="list-container" id="telopListContainer"></div>
+
+        <div class="editor-form" id="telopForm">
+          <div class="form-group form-group-full">
+            <label>テロップ文字列</label>
+            <input type="text" id="editText" value="">
+          </div>
+          
+          <div class="form-group">
+            <label>表示開始時間 (秒)</label>
+            <input type="number" id="editStartTime" step="0.1" min="0">
+            <button type="button" id="setTelopStartNowBtn" class="btn-gray">▶ 現在時刻を開始秒に入力</button>
+          </div>
+          <div class="form-group">
+            <label>表示終了時間 (秒)</label>
+            <input type="number" id="editEndTime" step="0.1" min="0">
+            <button type="button" id="setTelopEndNowBtn" class="btn-gray">▶ 現在時刻を終了秒に入力</button>
+          </div>
+
+          <div class="form-group">
+            <label>フォント名</label>
+            <select id="editFont">
+              <option value="Noto Sans JP">Noto Sans JP (標準ゴシック)</option>
+              <option value="Zen Kaku Gothic New">Zen Kaku Gothic New (角ゴシック)</option>
+              <option value="Zen Old Mincho">Zen Old Mincho (明朝体)</option>
+              <option value="sans-serif">ゴシック体 (システム標準)</option>
+              <option value="serif">明朝体 (システム標準)</option>
+            </select>
+          </div>
+          
+          <!-- ★ UI追加箇所：カスタムフォント読込 -->
+          <div class="form-group">
+            <label>カスタムフォント読込 (.ttf / .otf)</label>
+            <input type="file" id="customFontInput" accept=".ttf,.otf" style="padding: 6px;">
+          </div>
+          
+          <div class="form-group">
+            <label>字幕の縁取り色</label>
+            <input type="color" id="editEdgeColor" value="#fcfcfc" aria-label="字幕の縁取り色">
+          </div>
+          <div class="form-group">
+            <label>縁取りの太さ (0〜)</label>
+            <input type="number" id="editStrokeWidth" step="0.5" min="0" max="50">
+          </div>
+          
+          <div class="form-group form-group-full">
+            <label>文字サイズ</label>
+            <input type="number" id="editSize" step="1" min="10" max="200">
+          </div>
+
+          <div class="form-group">
+            <label>出現アニメーション</label>
+            <select id="editInAnim">
+              <option value="none">なし</option>
+              <option value="pop">出現: pop (拡大)</option>
+              <option value="fade">出現: fade (フェード)</option>
+              <option value="slideUp">出現: slideUp (下から)</option>
+              <option value="bounce">出現: bounce (弾む)</option>
+              <option value="drop">出現: drop (落下)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>ループアニメーション</label>
+            <select id="editLoopAnim">
+              <option value="none">なし</option>
+              <option value="subtleShake">ループ: 微振動</option>
+              <option value="hardShake">ループ: 激震</option>
+              <option value="glitch">ループ: グリッチ</option>
+              <option value="pulse">ループ: 脈動</option>
+              <option value="float">ループ: 浮遊</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>位置 X (-240 〜 240)</label>
+            <input type="number" id="editX" step="5">
+          </div>
+          <div class="form-group">
+            <label>位置 Y (-180 〜 180)</label>
+            <input type="number" id="editY" step="5">
+          </div>
+          <div class="form-group">
+            <label>角度 (-180 〜 180°)</label>
+            <input type="number" id="editAngle" step="1" value="0">
+          </div>
+          <div class="form-group">
+            <label>グラデーション色 1</label>
+            <input type="color" id="editGradColor1">
+          </div>
+          <div class="form-group">
+            <label>グラデーション色 2</label>
+            <input type="color" id="editGradColor2">
+          </div>
+          <div class="form-group form-group-full">
+            <button id="deleteTelopBtn" class="btn-danger" style="width: 100%;">選択中のテロップを削除</button>
+            <button id="duplicateTelopBtn" class="btn-gray" style="width: 100%; margin-top: 8px;">選択中のテロップを複製</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 音声編集パネル -->
+      <div id="audioPanel" class="panel-content hidden">
+        <div class="list-container" id="audioListContainer"></div>
+
+        <div class="editor-form" id="audioForm">
+          <div class="form-group form-group-full">
+            <label>トラック名</label>
+            <input type="text" id="editAudioName" readonly style="opacity: 0.8;">
+          </div>
+          <div class="form-group">
+            <label>再生開始時間 (秒)</label>
+            <input type="number" id="editAudioStartTime" step="0.1" min="0">
+            <button type="button" id="setAudioStartNowBtn" class="btn-gray">▶ 現在時刻を開始秒に入力</button>
+          </div>
+          <div class="form-group">
+            <label>再生終了時間 (秒)</label>
+            <input type="number" id="editAudioEndTime" step="0.1" min="0">
+            <button type="button" id="setAudioEndNowBtn" class="btn-gray">▶ 現在時刻を終了秒に入力</button>
+          </div>
+          <div class="form-group form-group-full">
+            <label>音量 (0.0 〜 1.0)</label>
+            <input type="number" id="editAudioVolume" step="0.05" min="0" max="1" value="1.0">
+          </div>
+          <div class="form-group form-group-full">
+            <button id="deleteAudioBtn" class="btn-danger" style="width: 100%;">選択中の音声を削除</button>
+            <button id="duplicateAudioBtn" class="btn-gray" style="width: 100%; margin-top: 8px;">選択中の音声を複製</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  function setupCustomSelect(selectElement) {
+    if (selectElement.nextElementSibling && selectElement.nextElementSibling.classList.contains('custom-select-wrapper')) {
+      selectElement.nextElementSibling.remove();
+    }
+    
+    selectElement.style.display = 'none';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-select-wrapper';
+    
+    const trigger = document.createElement('div');
+    trigger.className = 'custom-select-trigger';
+    
+    const textSpan = document.createElement('span');
+    const selectedOpt = selectElement.options[selectElement.selectedIndex];
+    textSpan.textContent = selectedOpt ? selectedOpt.textContent : '';
+    
+    const iconSpan = document.createElement('span');
+    iconSpan.innerHTML = `<svg fill="currentColor" height="20" viewBox="0 0 24 24" width="20"><path d="M7 10l5 5 5-5z"/></svg>`;
+    iconSpan.style.display = 'flex';
+    iconSpan.style.alignItems = 'center';
+
+    trigger.appendChild(textSpan);
+    trigger.appendChild(iconSpan);
+
+    const optionsContainer = document.createElement('div');
+    optionsContainer.className = 'custom-select-options';
+
+    Array.from(selectElement.options).forEach((option, index) => {
+      const optDiv = document.createElement('div');
+      optDiv.className = 'custom-select-option';
+      
+      if (index === selectElement.selectedIndex) optDiv.classList.add('selected');
+      if (option.disabled) optDiv.classList.add('disabled');
+      
+      optDiv.textContent = option.textContent;
+
+      optDiv.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (option.disabled) return;
+
+        selectElement.selectedIndex = index;
+        selectElement.dispatchEvent(new Event('change'));
+        updateCustomSelectDisplay(selectElement);
+
+        optionsContainer.classList.remove('open');
+        trigger.classList.remove('open');
+      });
+
+      optionsContainer.appendChild(optDiv);
+    });
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.querySelectorAll('.custom-select-options.open').forEach(el => {
+        if (el !== optionsContainer) {
+          el.classList.remove('open');
+          el.previousElementSibling.classList.remove('open');
+        }
+      });
+      optionsContainer.classList.toggle('open');
+      trigger.classList.toggle('open');
+    });
+
+    wrapper.appendChild(trigger);
+    wrapper.appendChild(optionsContainer);
+    selectElement.parentNode.insertBefore(wrapper, selectElement.nextSibling);
+  }
+
+  function updateCustomSelectDisplay(selectElement) {
+    const wrapper = selectElement.nextElementSibling;
+    if (wrapper && wrapper.classList.contains('custom-select-wrapper')) {
+      const textSpan = wrapper.querySelector('.custom-select-trigger span');
+      const selectedOpt = selectElement.options[selectElement.selectedIndex];
+      if (selectedOpt && textSpan) {
+        textSpan.textContent = selectedOpt.textContent;
+      }
+      
+      const options = wrapper.querySelectorAll('.custom-select-option');
+      options.forEach((optDiv, index) => {
+        if (index === selectElement.selectedIndex) {
+          optDiv.classList.add('selected');
+        } else {
+          optDiv.classList.remove('selected');
+        }
+      });
+    }
+  }
+
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.custom-select-options.open').forEach(el => {
+      el.classList.remove('open');
+      el.previousElementSibling.classList.remove('open');
+    });
+  });
+
+  document.querySelectorAll('select').forEach(setupCustomSelect);
+
+  const themeToggleBtn = document.getElementById('themeToggleBtn');
+const customTitleInput = document.getElementById('customTitleInput');
+
+function updateBrowserTabTitle() {
+  const customTitle = (customTitleInput?.value || '').trim();
+  document.title = customTitle ? `${customTitle} | TextVideoEditer` : 'TextVideoEditer';
+}
+
+if (customTitleInput) {
+  customTitleInput.addEventListener('input', updateBrowserTabTitle);
+}
+updateBrowserTabTitle();
+  function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    } else {
+      const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+      document.documentElement.setAttribute('data-theme', prefersLight ? 'light' : 'dark');
+    }
+  }
+  themeToggleBtn.addEventListener('click', () => {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+  initTheme();
+
+  const tabTelopBtn = document.getElementById('tabTelopBtn');
+  const tabAudioBtn = document.getElementById('tabAudioBtn');
+  const telopPanel = document.getElementById('telopPanel');
+  const audioPanel = document.getElementById('audioPanel');
+  const telopTabActions = document.getElementById('telopTabActions');
+  const audioTabActions = document.getElementById('audioTabActions');
+
+  tabTelopBtn.addEventListener('click', () => {
+    tabTelopBtn.classList.add('active');
+    tabAudioBtn.classList.remove('active');
+    telopPanel.classList.remove('hidden');
+    audioPanel.classList.add('hidden');
+    telopTabActions.style.display = 'flex';
+    audioTabActions.style.display = 'none';
+  });
+
+  tabAudioBtn.addEventListener('click', () => {
+    tabAudioBtn.classList.add('active');
+    tabTelopBtn.classList.remove('active');
+    audioPanel.classList.remove('hidden');
+    telopPanel.classList.add('hidden');
+    telopTabActions.style.display = 'none';
+    audioTabActions.style.display = 'flex';
+  });
+
+  let audioCtx = null;
+  function getAudioContext() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    return audioCtx;
+  }
+
+  function formatTimecode(seconds) {
+    const safeSeconds = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
+    const min = Math.floor(safeSeconds / 60);
+    const sec = safeSeconds % 60;
+    return `${String(min).padStart(2, '0')}:${sec.toFixed(1).padStart(4, '0')}`;
+  }
+  function parseTimecode(tcStr) {
+    if (!tcStr) return 0;
+    const parts = String(tcStr).trim().split(':');
+    if (parts.length === 2) return (parseFloat(parts[0]) || 0) * 60 + (parseFloat(parts[1]) || 0);
+    return parseFloat(tcStr) || 0;
+  }
+  function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
+  function easeOutBounce(x) {
+    const n1 = 7.5625, d1 = 2.75;
+    if (x < 1 / d1) return n1 * x * x;
+    else if (x < 2 / d1) return n1 * (x -= 1.5 / d1) * x + 0.75;
+    else if (x < 2.5 / d1) return n1 * (x -= 2.25 / d1) * x + 0.9375;
+    else return n1 * (x -= 2.625 / d1) * x + 0.984375;
+  }
+
+  const DEFAULT_FONT_FAMILY = 'Noto Sans JP';
+  const DEFAULT_FONT_SIZE = 36;
+  const DEFAULT_COLOR_PRESET = 'COLOR_PRESET';
+  const DEFAULT_GRAD_COLOR1 = '#FFFFFF';
+  const DEFAULT_GRAD_COLOR2 = '#FFFFFF';
+  const DEFAULT_IN_ANIM = 'none';
+  const DEFAULT_LOOP_ANIM = 'none';
+  const DEFAULT_EDGE_COLOR = '#fcfcfc';
+  const DEFAULT_STROKE_WIDTH = 6;
+
+  let telopList = [
+    {
+      id: 1, text: 'マルチテロップ動画編集ツール', startTime: 0.0, endTime: 3.0, fontFamily: DEFAULT_FONT_FAMILY, fontSize: 40,
+      x: 0, y: 0, rotation: 0, useGradient: true, gradColor1: '#FF007F', gradColor2: '#00F0FF', gradAngle: 45,
+      strokeColor: DEFAULT_EDGE_COLOR, colorPreset: DEFAULT_COLOR_PRESET, strokeWidth: DEFAULT_STROKE_WIDTH, shadowColor: 'rgba(0, 0, 0, 0.8)', shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 3,
+      inAnimType: 'pop', inAnimDuration: 0.6, loopAnimType: 'subtleShake', loopSpeed: 1.0, loopIntensity: 1.0
+    }
+  ];
+  let selectedTelopId = 1;
+  let loadedAudioPool = []; 
+  let audioList = []; 
+  let selectedAudioId = null;
+  let activeAudioSources = [];
+
+  const videoInput = document.getElementById('videoInput');
+  const importProjectBtn = document.getElementById('importProjectBtn');
+  const exportProjectBtn = document.getElementById('exportProjectBtn');
+  const projectTxtInput = document.getElementById('projectTxtInput');
+  let sourceVideoFileName = '';
+  let projectVideoFileName = '';
+  const aspectRatioSelect = document.getElementById('aspectRatioSelect');
+  const exportBtn = document.getElementById('exportBtn');
+  // プレビュー用Canvas。UI表示専用で低負荷を維持する。
+  const canvas = document.getElementById('mainCanvas');
+  const ctx = canvas.getContext('2d', { alpha: false });
+
+  // 書き出し専用Canvas。画面には表示せず、1080p級の解像度でMediaRecorderへ渡す。
+  let exportCanvas = null;
+  let exportCtx = null;
+  const outputVideo = document.getElementById('outputVideo');
+  const statusText = document.getElementById('statusText');
+  const btnStart = document.getElementById('btnStart');
+  const btnRewind = document.getElementById('btnRewind');
+  const btnPlayPause = document.getElementById('btnPlayPause');
+  const btnStop = document.getElementById('btnStop');
+  const btnForward = document.getElementById('btnForward');
+  const btnEnd = document.getElementById('btnEnd');
+  const seekBar = document.getElementById('seekBar');
+  const timeDisplay = document.getElementById('timeDisplay');
+  const telopListContainer = document.getElementById('telopListContainer');
+  const addTelopBtn = document.getElementById('addTelopBtn');
+  const deleteTelopBtn = document.getElementById('deleteTelopBtn');
+  const duplicateTelopBtn = document.getElementById('duplicateTelopBtn');
+
+  const editText = document.getElementById('editText');
+  const editFont = document.getElementById('editFont');
+  const customFontInput = document.getElementById('customFontInput'); // ★ 追加
+  const editEdgeColor = document.getElementById('editEdgeColor');
+  const editStrokeWidth = document.getElementById('editStrokeWidth');
+  const editSize = document.getElementById('editSize');
+  const editStartTime = document.getElementById('editStartTime');
+  const editEndTime = document.getElementById('editEndTime');
+  const setTelopStartNowBtn = document.getElementById('setTelopStartNowBtn');
+  const setTelopEndNowBtn = document.getElementById('setTelopEndNowBtn');
+  const editInAnim = document.getElementById('editInAnim');
+  const editLoopAnim = document.getElementById('editLoopAnim');
+  const editX = document.getElementById('editX');
+  const editY = document.getElementById('editY');
+  const editAngle = document.getElementById('editAngle');
+  const editGradColor1 = document.getElementById('editGradColor1');
+  const editGradColor2 = document.getElementById('editGradColor2');
+
+  const audioListContainer = document.getElementById('audioListContainer');
+  const audioFileInput = document.getElementById('audioFileInput');
+  const loadedAudioPoolSelect = document.getElementById('loadedAudioPoolSelect');
+  const deleteAudioBtn = document.getElementById('deleteAudioBtn');
+  const duplicateAudioBtn = document.getElementById('duplicateAudioBtn');
+  const editAudioName = document.getElementById('editAudioName');
+  const editAudioStartTime = document.getElementById('editAudioStartTime');
+  const editAudioEndTime = document.getElementById('editAudioEndTime');
+  const editAudioVolume = document.getElementById('editAudioVolume');
+  const setAudioStartNowBtn = document.getElementById('setAudioStartNowBtn');
+  const setAudioEndNowBtn = document.getElementById('setAudioEndNowBtn');
+
+  let sourceVideo = document.createElement('video');
+  sourceVideo.playsInline = true;
+  sourceVideo.setAttribute('playsinline', '');
+  sourceVideo.setAttribute('webkit-playsinline', '');
+  outputVideo.playsInline = true;
+  outputVideo.setAttribute('playsinline', '');
+  outputVideo.setAttribute('webkit-playsinline', '');
+
+  // iPhone / iPadOS Safari 判定。iPadOS は MacIntel と報告する場合があるため touch points も確認。
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  let isPreviewPlaying = false;
+  let previewAnimationFrame;
+  let mediaElementSourceNode = null;
+
+  // Safari/iOSでCanvasへフォントを反映させるための軽量なロード確認。
+  async function ensureFontLoaded(fontFamily) {
+    if (!isIOS) return true;
+    const family = String(fontFamily || '').trim();
+    if (!family || !document.fonts) return true;
+    const escaped = family.replace(/\"/g, '\\"');
+    try {
+      if (document.fonts.load) {
+        await Promise.race([
+          document.fonts.load(`700 40px "${escaped}"`),
+          new Promise(resolve => setTimeout(resolve, isIOS ? 3000 : 1500))
+        ]);
+      }
+      if (document.fonts.check) return document.fonts.check(`700 40px "${escaped}"`);
+    } catch (e) {
+      console.warn('フォント確認を継続します:', family, e);
+    }
+    return true;
+  }
+
+  // ★ カスタムフォント読み込み処理
+  customFontInput.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // ファイル名から拡張子を削除してフォント名を生成
+      const fontName = file.name.replace(/\.[^/.]+$/, "");
+      
+      // バイナリデータを取得してフォントとして解析
+      const buffer = await file.arrayBuffer();
+      const fontFace = new FontFace(fontName, buffer);
+      
+      // フォントのロードを待機
+      const loadedFace = await fontFace.load();
+      document.fonts.add(loadedFace);
+
+      // セレクトボックスに新しい選択肢を追加
+      const opt = document.createElement('option');
+      opt.value = fontName;
+      opt.textContent = `${fontName} (カスタム)`;
+      editFont.appendChild(opt);
+
+      // カスタムセレクトUIを再構築して反映
+      setupCustomSelect(editFont);
+      editFont.value = fontName;
+      updateCustomSelectDisplay(editFont);
+      
+      // 状態を同期してCanvasに即時反映
+      syncTelopFormToState();
+
+      statusText.textContent = `カスタムフォント「${fontName}」を追加しました`;
+    } catch (err) {
+      console.error(err);
+      alert(`フォントの読み込みに失敗しました: ${err.message}`);
+    } finally {
+      e.target.value = ''; // 入力リセット
+    }
+  });
+
+  function enableControls() {
+    [exportBtn, btnStart, btnRewind, btnPlayPause, btnStop, btnForward, btnEnd, seekBar].forEach(el => el.disabled = false);
+  }
+
+  function updateCanvasDimensions() {
+    // これはプレビュー専用。書き出しCanvasとは分離する。
+    const ratio = aspectRatioSelect.value;
+    let targetW = 640, targetH = 360;
+    if (ratio === '9:16') { targetW = 405; targetH = 720; }
+    else if (ratio === '1:1') { targetW = 540; targetH = 540; }
+    else if (ratio === '4:5') { targetW = 576; targetH = 720; }
+    canvas.width = targetW; canvas.height = targetH;
+  }
+
+  function getExportCanvasDimensions() {
+    const ratio = aspectRatioSelect.value;
+    if (ratio === '9:16') return { width: 1080, height: 1920 };
+    if (ratio === '1:1') return { width: 1080, height: 1080 };
+    if (ratio === '4:5') return { width: 1080, height: 1350 };
+    return { width: 1920, height: 1080 };
+  }
+
+  function ensureExportCanvas() {
+    const { width, height } = getExportCanvasDimensions();
+
+    if (!exportCanvas) {
+      exportCanvas = document.createElement('canvas');
+      exportCtx = exportCanvas.getContext('2d', { alpha: false });
+      if (!exportCtx) throw new Error('書き出しCanvasの2Dコンテキストを作成できませんでした。');
+    }
+
+    if (exportCanvas.width !== width || exportCanvas.height !== height) {
+      exportCanvas.width = width;
+      exportCanvas.height = height;
+    }
+
+    exportCtx.imageSmoothingEnabled = true;
+    exportCtx.imageSmoothingQuality = 'high';
+    return exportCanvas;
+  }
+
+  function drawVideoToCanvas(targetCtx, targetCanvas) {
+    const cw = targetCanvas.width, ch = targetCanvas.height;
+    const vw = sourceVideo.videoWidth, vh = sourceVideo.videoHeight;
+
+    targetCtx.save();
+    targetCtx.fillStyle = '#000';
+    targetCtx.fillRect(0, 0, cw, ch);
+    targetCtx.imageSmoothingEnabled = true;
+    targetCtx.imageSmoothingQuality = 'high';
+
+    if (!vw || !vh) {
+      targetCtx.drawImage(sourceVideo, 0, 0, cw, ch);
+      targetCtx.restore();
+      return;
+    }
+
+    const videoAspect = vw / vh;
+    const canvasAspect = cw / ch;
+    let renderW, renderH, renderX, renderY;
+
+    if (videoAspect > canvasAspect) {
+      renderH = ch;
+      renderW = ch * videoAspect;
+      renderX = (cw - renderW) / 2;
+      renderY = 0;
+    } else {
+      renderW = cw;
+      renderH = cw / videoAspect;
+      renderX = 0;
+      renderY = (ch - renderH) / 2;
+    }
+
+    targetCtx.drawImage(sourceVideo, renderX, renderY, renderW, renderH);
+    targetCtx.restore();
+  }
+
+  function renderExportFrame(currentVideoTime, nowMs = performance.now()) {
+    const targetCanvas = ensureExportCanvas();
+    const targetCtx = exportCtx;
+
+    drawVideoToCanvas(targetCtx, targetCanvas);
+    telopList.forEach(t => drawSingleTelop(targetCtx, targetCanvas, t, currentVideoTime, nowMs));
+    return targetCanvas;
+  }
+
+  aspectRatioSelect.addEventListener('change', () => {
+    updateCanvasDimensions();
+    if (sourceVideo.src) drawPreviewAtTime(sourceVideo.currentTime);
+  });
+
+  videoInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      sourceVideoFileName = file.name;
+      projectVideoFileName = file.name;
+      sourceVideo.src = URL.createObjectURL(file);
+      sourceVideo.load();
+      sourceVideo.onloadedmetadata = () => {
+        enableControls(); updateCanvasDimensions();
+        syncSeekBarToVideoDuration();
+        updateTimeDisplay();
+        statusText.textContent = `動画ロード完了 (長さ: ${sourceVideo.duration.toFixed(1)}秒)`;
+        drawPreviewAtTime(0);
+      };
+    }
+  });
+
+  function renderTelopListUI() {
+    telopListContainer.innerHTML = '';
+    telopList.forEach((t) => {
+      const item = document.createElement('div');
+      item.className = `item-row ${t.id === selectedTelopId ? 'active' : ''}`;
+      item.innerHTML = `
+        <div class="item-info">
+          <span class="item-title">${t.text || '(無題)'}</span>
+          <span class="item-sub">${t.startTime.toFixed(1)}s 〜 ${t.endTime.toFixed(1)}s</span>
+        </div>
+      `;
+      item.addEventListener('click', () => {
+        selectedTelopId = t.id; renderTelopListUI(); updateTelopFormValues(); drawPreviewAtTime(t.startTime);
+      });
+      telopListContainer.appendChild(item);
+    });
+  }
+
+  function updateTelopFormValues() {
+    const target = telopList.find(t => t.id === selectedTelopId);
+    if (!target) return;
+    editText.value = target.text; editFont.value = target.fontFamily; editEdgeColor.value = target.strokeColor || DEFAULT_EDGE_COLOR; editSize.value = target.fontSize;
+    editStrokeWidth.value = target.strokeWidth; editStartTime.value = target.startTime; editEndTime.value = target.endTime; editInAnim.value = target.inAnimType;
+    editLoopAnim.value = target.loopAnimType; editX.value = target.x; editY.value = target.y;
+    editAngle.value = Number.isFinite(Number(target.rotation)) ? target.rotation : 0;
+    editGradColor1.value = target.gradColor1; editGradColor2.value = target.gradColor2;
+    document.querySelectorAll('#editFont, #editInAnim, #editLoopAnim').forEach(updateCustomSelectDisplay);
+  }
+
+  function syncTelopFormToState() {
+    const target = telopList.find(t => t.id === selectedTelopId);
+    if (!target) return;
+    target.text = editText.value; target.fontFamily = editFont.value; target.strokeColor = normalizeHexColor(editEdgeColor.value, DEFAULT_EDGE_COLOR); target.colorPreset = target.colorPreset || DEFAULT_COLOR_PRESET; target.fontSize = parseInt(editSize.value, 10) || DEFAULT_FONT_SIZE;
+    const parsedStroke = parseFloat(editStrokeWidth.value); target.strokeWidth = Number.isFinite(parsedStroke) ? Math.max(0, parsedStroke) : DEFAULT_STROKE_WIDTH;
+    target.startTime = parseFloat(editStartTime.value) || 0; target.endTime = parseFloat(editEndTime.value) || 0;
+    target.inAnimType = editInAnim.value; target.loopAnimType = editLoopAnim.value; target.x = parseFloat(editX.value) || 0;
+    target.y = parseFloat(editY.value) || 0;
+    const parsedRotation = parseFloat(editAngle.value);
+    target.rotation = Number.isFinite(parsedRotation) ? Math.max(-180, Math.min(180, parsedRotation)) : 0;
+    target.gradColor1 = editGradColor1.value; target.gradColor2 = editGradColor2.value;
+    
+    renderTelopListUI();
+    if(!isPreviewPlaying) drawPreviewAtTime(target.startTime);
+  }
+
+  [editText, editFont, editEdgeColor, editStrokeWidth, editSize, editStartTime, editEndTime, editInAnim, editLoopAnim, editX, editY, editAngle, editGradColor1, editGradColor2].forEach(elem => {
+    elem.addEventListener('input', syncTelopFormToState); elem.addEventListener('change', syncTelopFormToState);
+  });
+
+  addTelopBtn.addEventListener('click', () => {
+    const newId = telopList.length > 0 ? Math.max(...telopList.map(t => t.id)) + 1 : 1;
+    telopList.push({
+      id: newId, text: '新しいテロップ', startTime: 0.0, endTime: 4.0, fontFamily: DEFAULT_FONT_FAMILY, fontSize: DEFAULT_FONT_SIZE,
+      x: 0, y: 0, rotation: 0, useGradient: true, gradColor1: '#FFFFFF', gradColor2: '#FFFFFF', gradAngle: 45,
+      strokeColor: DEFAULT_EDGE_COLOR, colorPreset: DEFAULT_COLOR_PRESET, strokeWidth: DEFAULT_STROKE_WIDTH, shadowColor: 'rgba(0, 0, 0, 0.8)', shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 3,
+      inAnimType: 'none', inAnimDuration: 0.5, loopAnimType: 'none', loopSpeed: 1.0, loopIntensity: 1.0
+    });
+    selectedTelopId = newId; renderTelopListUI(); updateTelopFormValues(); drawPreviewAtTime(0);
+  });
+
+  deleteTelopBtn.addEventListener('click', () => {
+    if (telopList.length <= 1) { alert('最低1つのテロップが必要です。'); return; }
+    telopList = telopList.filter(t => t.id !== selectedTelopId);
+    selectedTelopId = telopList[0].id; renderTelopListUI(); updateTelopFormValues(); drawPreviewAtTime(0);
+  });
+
+  duplicateTelopBtn.addEventListener('click', () => {
+    const target = telopList.find(t => t.id === selectedTelopId);
+    if (!target) return;
+    const newId = telopList.length > 0 ? Math.max(...telopList.map(t => t.id)) + 1 : 1;
+    const newStart = Math.max(0, Number(target.endTime) || 0);
+    const duplicated = {
+      ...target,
+      id: newId,
+      startTime: newStart,
+      endTime: newStart + 1.0
+    };
+    telopList.push(duplicated);
+    selectedTelopId = newId;
+    renderTelopListUI();
+    updateTelopFormValues();
+    drawPreviewAtTime(newStart);
+  });
+
+  // 音声関連処理
+  loadedAudioPoolSelect.addEventListener('change', (e) => {
+    const selectedPoolId = e.target.value;
+    if (selectedPoolId === 'load-file') { audioFileInput.click(); loadedAudioPoolSelect.value = ''; updateCustomSelectDisplay(loadedAudioPoolSelect); return; }
+    if (!selectedPoolId) return;
+    const poolItem = loadedAudioPool.find(item => String(item.id) === String(selectedPoolId));
+    if (poolItem) {
+      const newId = audioList.length > 0 ? Math.max(...audioList.map(a => a.id)) + 1 : 1;
+      audioList.push({ id: newId, name: poolItem.name, buffer: poolItem.buffer, startTime: 0.0, endTime: poolItem.buffer ? poolItem.buffer.duration : 0.0, volume: 1.0 });
+      selectedAudioId = newId; renderAudioListUI(); updateAudioFormValues(); statusText.textContent = `音声「${poolItem.name}」をトラックに追加しました`;
+    }
+    loadedAudioPoolSelect.value = ''; updateCustomSelectDisplay(loadedAudioPoolSelect);
+  });
+
+  function getAudioFileExtension(fileName) {
+    const name = String(fileName || '').trim().toLowerCase();
+    const dot = name.lastIndexOf('.');
+    return dot >= 0 ? name.slice(dot + 1) : '';
+  }
+
+  function isSupportedAudioFile(file) {
+    const extension = getAudioFileExtension(file.name);
+    const mime = String(file.type || '').toLowerCase();
+
+    // iOS Safariでは File.type が空、または application/octet-stream になるケースが
+    // あるため、MIMEだけでは判定せず拡張子も確認する。
+    if (extension === 'mp3' || extension === 'wav') return true;
+
+    return [
+      'audio/mpeg',
+      'audio/mp3',
+      'audio/wav',
+      'audio/wave',
+      'audio/x-wav'
+    ].includes(mime);
+  }
+
+  audioFileInput.addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const ctx = getAudioContext();
+    let loadedCount = 0;
+    const failedFiles = [];
+    const skippedFiles = [];
+
+    statusText.textContent = `${files.length}件の音声ファイルをロード中...`;
+
+    for (const file of files) {
+      const extension = getAudioFileExtension(file.name);
+
+      if (!isSupportedAudioFile(file)) {
+        skippedFiles.push(`${file.name} (形式: ${file.type || '不明'})`);
+        continue;
+      }
+
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const decodedBuffer = await ctx.decodeAudioData(arrayBuffer);
+
+        loadedAudioPool.push({
+          id: Date.now() + Math.random(),
+          name: file.name,
+          buffer: decodedBuffer
+        });
+        loadedCount++;
+      } catch (err) {
+        console.error(`音声「${file.name}」のロードに失敗しました。`, err);
+        failedFiles.push(
+          `${file.name} — ${err?.message || 'デコードに失敗しました'}`
+        );
+      }
+    }
+
+    updateAudioPoolSelectUI();
+    audioFileInput.value = '';
+
+    const messages = [];
+    if (loadedCount > 0) {
+      messages.push(`${loadedCount}件の音声ファイルをロードしました。音声欄から追加できます。`);
+    }
+
+    if (failedFiles.length > 0) {
+      messages.push(`読み込み失敗: ${failedFiles.join(' / ')}`);
+    }
+
+    if (skippedFiles.length > 0) {
+      messages.push(`対象外形式: ${skippedFiles.join(' / ')}`);
+    }
+
+    if (loadedCount === 0) {
+      statusText.textContent = '音声ファイルをロードできませんでした。MP3/WAVを選択してください。';
+      alert(
+        [
+          '音声ファイルを読み込めませんでした。',
+          '',
+          ...messages
+        ].join('\n')
+      );
+    } else {
+      statusText.textContent = messages.join(' ');
+      if (failedFiles.length > 0 || skippedFiles.length > 0) {
+        alert(
+          [
+            `読み込み完了: ${loadedCount}件`,
+            '',
+            ...messages.filter(message => !message.includes('件の音声ファイルをロードしました'))
+          ].join('\n')
+        );
+      }
+    }
+  });
+
+  function updateAudioPoolSelectUI() {
+    loadedAudioPoolSelect.innerHTML = '';
+    const defaultOpt = document.createElement('option'); defaultOpt.value = ''; defaultOpt.disabled = true; defaultOpt.selected = true;
+    defaultOpt.textContent = loadedAudioPool.length === 0 ? '-- 未ロード --' : '-- ロード済み音源 --'; loadedAudioPoolSelect.appendChild(defaultOpt);
+    const loadFileOpt = document.createElement('option'); loadFileOpt.value = 'load-file'; loadFileOpt.textContent = '📁 ファイルから読み込む...'; loadedAudioPoolSelect.appendChild(loadFileOpt);
+    loadedAudioPool.forEach(item => {
+      const opt = document.createElement('option'); opt.value = item.id; opt.textContent = item.name; loadedAudioPoolSelect.appendChild(opt);
+    });
+    setupCustomSelect(loadedAudioPoolSelect); updateCustomSelectDisplay(loadedAudioPoolSelect);
+  }
+
+  function normalizeHexColor(value, fallback = DEFAULT_EDGE_COLOR) {
+    const v = String(value || '').trim(); return /^#[0-9a-fA-F]{6}$/.test(v) ? v.toLowerCase() : fallback;
+  }
+  function formatSubtitleTimecode(seconds) {
+    const safeSeconds = Number.isFinite(seconds) ? Math.max(0, seconds) : 0; const min = Math.floor(safeSeconds / 60); const sec = safeSeconds % 60;
+    return `${String(min).padStart(2, '0')}:${sec.toFixed(3).padStart(6, '0')}`;
+  }
+
+  // プロジェクトtxt（字幕・音声・カスタムタイトルを一括保存）
+  // v2では、字幕・音声部分に既存の個別txt形式をそのまま利用する。
+  const PROJECT_FORMAT_HEADER = 'TextVidoEditer Project v2';
+  const LEGACY_PROJECT_FORMAT_HEADER = 'TextVidoEditer Project v1';
+
+  function stripFileExtension(fileName) {
+    const name = String(fileName || '').trim();
+    return name.replace(/\.[^./\\]+$/, '') || name;
+  }
+
+  function sanitizeDownloadFileName(name, fallback = 'TextVideoEditer') {
+    const cleaned = String(name || '')
+      .replace(/[<>:"/\\|?*\x00-\x1F]/g, '_')
+      .replace(/[. ]+$/g, '')
+      .trim();
+    return cleaned || fallback;
+  }
+
+  function getProjectDownloadBaseName() {
+    const customTitle = String(customTitleInput?.value || '').trim();
+    if (customTitle) return sanitizeDownloadFileName(customTitle);
+
+    const videoName = sourceVideoFileName || projectVideoFileName;
+    if (videoName) return sanitizeDownloadFileName(stripFileExtension(videoName));
+
+    return 'TextVideoEditer';
+  }
+
+  function serializeTelopToProjectLine(t) {
+    const startTc = formatSubtitleTimecode(Number(t.startTime) || 0);
+    const endTc = formatSubtitleTimecode(Math.max(Number(t.startTime) || 0, Number(t.endTime) || 0));
+    const text = String(t.text ?? '').replace(/\r?\n/g, ' ');
+    const font = String(t.fontFamily || DEFAULT_FONT_FAMILY);
+    const size = Number.isFinite(Number(t.fontSize)) ? Number(t.fontSize) : DEFAULT_FONT_SIZE;
+    const grad1 = normalizeHexColor(t.gradColor1 || t.colorPreset?.grad1 || DEFAULT_GRAD_COLOR1, DEFAULT_GRAD_COLOR1);
+    const grad2 = normalizeHexColor(t.gradColor2 || t.colorPreset?.grad2 || DEFAULT_GRAD_COLOR2, DEFAULT_GRAD_COLOR2);
+    const inAnim = String(t.inAnimType || DEFAULT_IN_ANIM);
+    const loopAnim = String(t.loopAnimType || DEFAULT_LOOP_ANIM);
+    const edge = normalizeHexColor(t.strokeColor || DEFAULT_EDGE_COLOR, DEFAULT_EDGE_COLOR);
+    const line = Number.isFinite(Number(t.strokeWidth)) ? Number(t.strokeWidth) : DEFAULT_STROKE_WIDTH;
+    const x = Number.isFinite(Number(t.x)) ? Number(t.x) : 0;
+    const y = Number.isFinite(Number(t.y)) ? Number(t.y) : 0;
+    const slope = Number.isFinite(Number(t.rotation)) ? Number(t.rotation) : 0;
+    return `[${startTc}-${endTc}] text:${text} | font:${font} | size:${size} | grad1:${grad1} | grad2:${grad2} | in:${inAnim} | loop:${loopAnim} | edge:${edge} | line:${line} | x:${x} | y:${y} | slope:${slope}`;
+  }
+
+  function serializeAudioToProjectLine(a) {
+    const start = Number.isFinite(Number(a.startTime)) ? Math.max(0, Number(a.startTime)) : 0;
+    const fallbackEnd = start + (a.buffer ? a.buffer.duration : 0);
+    const end = Number.isFinite(Number(a.endTime)) ? Math.max(start, Number(a.endTime)) : fallbackEnd;
+    const volume = Number.isFinite(Number(a.volume)) ? Math.max(0, Math.min(1, Number(a.volume))) : 1;
+    return `[${formatTimecode(start)}-${formatTimecode(end)}] | ${String(a.name || '')} | ${volume.toFixed(1)}`;
+  }
+
+  function parseSubtitleLine(line, index) {
+    const allowedInAnims = new Set(['none', 'pop', 'fade', 'slideUp', 'bounce', 'drop']);
+    const allowedLoopAnims = new Set(['none', 'subtleShake', 'hardShake', 'glitch', 'pulse', 'float']);
+    const rangeMatch = line.match(/^\[([\d:.]+)\s*-\s*([\d:.]+)\]\s*text:(.*)$/i);
+    const startOnlyMatch = line.match(/^\[([\d:.]+)\]\s*text:(.*)$/i);
+    if (!rangeMatch && !startOnlyMatch) return null;
+
+    let startTime = 0;
+    let endTimeFromFile = null;
+    let payload = '';
+    if (rangeMatch) {
+      startTime = parseTimecode(rangeMatch[1]);
+      endTimeFromFile = parseTimecode(rangeMatch[2]);
+      payload = rangeMatch[3];
+    } else {
+      startTime = parseTimecode(startOnlyMatch[1]);
+      payload = startOnlyMatch[2];
+    }
+
+    const parts = payload.split('|').map(v => v.trim());
+    const textValue = String(parts.shift() ?? '').trim();
+    let fontFamily = DEFAULT_FONT_FAMILY;
+    let size = DEFAULT_FONT_SIZE;
+    let gradColor1 = DEFAULT_GRAD_COLOR1;
+    let gradColor2 = DEFAULT_GRAD_COLOR2;
+    let inAnim = DEFAULT_IN_ANIM;
+    let loopAnim = DEFAULT_LOOP_ANIM;
+    let edgeColor = DEFAULT_EDGE_COLOR;
+    let lineWidth = DEFAULT_STROKE_WIDTH;
+    let x = 0, y = 0, rotation = 0;
+
+    for (const part of parts) {
+      if (!part) continue;
+      let match = part.match(/^font\s*:\s*(.*?)$/i);
+      if (match) { fontFamily = String(match[1] || '').trim() || DEFAULT_FONT_FAMILY; continue; }
+      match = part.match(/^size\s*:\s*(.*?)$/i);
+      if (match) { const n = Number.parseInt(match[1], 10); if (Number.isFinite(n)) size = Math.max(10, Math.min(200, n)); continue; }
+      match = part.match(/^grad1\s*:\s*(.*?)$/i);
+      if (match) { gradColor1 = normalizeHexColor(match[1], DEFAULT_GRAD_COLOR1); continue; }
+      match = part.match(/^grad2\s*:\s*(.*?)$/i);
+      if (match) { gradColor2 = normalizeHexColor(match[1], DEFAULT_GRAD_COLOR2); continue; }
+      match = part.match(/^in\s*:\s*(.*?)$/i);
+      if (match) { const c = String(match[1] || '').trim(); inAnim = c && allowedInAnims.has(c) ? c : DEFAULT_IN_ANIM; continue; }
+      match = part.match(/^loop\s*:\s*(.*?)$/i);
+      if (match) { const c = String(match[1] || '').trim(); loopAnim = c && allowedLoopAnims.has(c) ? c : DEFAULT_LOOP_ANIM; continue; }
+      match = part.match(/^edge\s*:\s*(.*?)$/i);
+      if (match) { edgeColor = normalizeHexColor(match[1], DEFAULT_EDGE_COLOR); continue; }
+      match = part.match(/^line\s*:\s*(.*?)$/i);
+      if (match) { const n = parseFloat(match[1]); if (Number.isFinite(n)) lineWidth = Math.max(0, n); continue; }
+      match = part.match(/^x\s*:\s*(.*?)$/i);
+      if (match) { const n = parseFloat(match[1]); if (Number.isFinite(n)) x = n; continue; }
+      match = part.match(/^y\s*:\s*(.*?)$/i);
+      if (match) { const n = parseFloat(match[1]); if (Number.isFinite(n)) y = n; continue; }
+      match = part.match(/^slope\s*:\s*(.*?)$/i);
+      if (match) { const n = parseFloat(match[1]); if (Number.isFinite(n)) rotation = Math.max(-180, Math.min(180, n)); continue; }
+      match = part.match(/^angle\s*:\s*(.*?)$/i);
+      if (match) { const n = parseFloat(match[1]); if (Number.isFinite(n)) rotation = Math.max(-180, Math.min(180, n)); }
+    }
+
+    return {
+      id: index + 1,
+      text: textValue,
+      startTime: Number.isFinite(startTime) ? Math.max(0, startTime) : 0,
+      endTime: endTimeFromFile !== null ? Math.max(0, endTimeFromFile) : 0,
+      fontFamily,
+      fontSize: size,
+      x, y, rotation,
+      useGradient: true,
+      gradColor1, gradColor2,
+      gradAngle: 45,
+      strokeColor: edgeColor,
+      colorPreset: DEFAULT_COLOR_PRESET,
+      strokeWidth: lineWidth,
+      shadowColor: 'rgba(0, 0, 0, 0.8)',
+      shadowBlur: 8,
+      shadowOffsetX: 3,
+      shadowOffsetY: 3,
+      inAnimType: inAnim,
+      inAnimDuration: 0.5,
+      loopAnimType: loopAnim,
+      loopSpeed: 1.0,
+      loopIntensity: 1.0,
+      _hasExplicitEndTime: endTimeFromFile !== null
+    };
+  }
+
+  function parseSubtitleLines(text) {
+    const parsed = [];
+    for (const [index, rawLine] of String(text || '').split(/\r?\n/).entries()) {
+      const line = rawLine.trim();
+      if (!line) continue;
+      const item = parseSubtitleLine(line, index);
+      if (item) parsed.push(item);
+    }
+    if (!parsed.length) return parsed;
+
+    // リスト順は一切変更せず、旧形式だけ終了時間を時間的に補完する。
+    const legacyStartTimes = parsed
+      .filter(t => !t._hasExplicitEndTime && Number.isFinite(Number(t.startTime)))
+      .map(t => Number(t.startTime));
+    parsed.forEach(t => {
+      if (t._hasExplicitEndTime) {
+        t.endTime = Math.max(t.startTime, t.endTime);
+        return;
+      }
+      const nextStartTime = legacyStartTimes
+        .filter(start => start > t.startTime)
+        .reduce((min, start) => Math.min(min, start), Infinity);
+      t.endTime = Number.isFinite(nextStartTime)
+        ? Math.max(t.startTime + 0.1, nextStartTime)
+        : t.startTime + 4.0;
+    });
+    parsed.forEach(t => delete t._hasExplicitEndTime);
+    return parsed;
+  }
+
+  function serializeProjectText() {
+    const customTitle = String(customTitleInput?.value || '').trim();
+    const videoFileName = sourceVideoFileName || projectVideoFileName || '';
+    const subtitleLines = telopList.map(serializeTelopToProjectLine);
+    const audioLines = audioList.map(serializeAudioToProjectLine);
+    return [
+      PROJECT_FORMAT_HEADER,
+      '[Project]',
+      `customTitle: ${JSON.stringify(customTitle)}`,
+      `videoFileName: ${JSON.stringify(videoFileName)}`,
+      '',
+      '[Subtitles]',
+      ...subtitleLines,
+      '',
+      '[Audio]',
+      ...audioLines,
+      ''
+    ].join('\n');
+  }
+
+  function parseProjectV2(text) {
+    const lines = String(text || '').split(/\r?\n/);
+    const projectIndex = lines.findIndex(line => line.trim() === '[Project]');
+    const subtitlesIndex = lines.findIndex(line => line.trim() === '[Subtitles]');
+    const audioIndex = lines.findIndex(line => line.trim() === '[Audio]');
+    if (projectIndex < 0 || subtitlesIndex < 0 || audioIndex < 0 || subtitlesIndex <= projectIndex || audioIndex <= subtitlesIndex) {
+      throw new Error('プロジェクトtxtのセクション構成が正しくありません。');
+    }
+
+    let customTitle = '';
+    let videoFileName = '';
+    for (const line of lines.slice(projectIndex + 1, subtitlesIndex)) {
+      const m = line.match(/^\s*(customTitle|videoFileName)\s*:\s*(.*)\s*$/i);
+      if (!m) continue;
+      let value = m[2].trim();
+      try { value = JSON.parse(value); } catch (_) { value = value.replace(/^['\"]|['\"]$/g, ''); }
+      if (m[1].toLowerCase() === 'customtitle') customTitle = String(value ?? '');
+      else videoFileName = String(value ?? '');
+    }
+
+    const subtitleText = lines.slice(subtitlesIndex + 1, audioIndex).join('\n');
+    const audioText = lines.slice(audioIndex + 1).join('\n');
+    const subtitles = parseSubtitleLines(subtitleText);
+    const importedAudioTracks = [];
+    for (const [index, rawLine] of audioText.split(/\r?\n/).entries()) {
+      const line = rawLine.trim();
+      if (!line) continue;
+      const match = line.match(/^\[([\d:.]+)-([\d:.]+)\]\s*\|\s*(.*?)\s*\|\s*([\d.]+)/);
+      if (!match) continue;
+      const startTime = parseTimecode(match[1]);
+      const endTime = parseTimecode(match[2]);
+      const name = match[3].trim();
+      const parsedVolume = parseFloat(match[4]);
+      importedAudioTracks.push({
+        _index: index,
+        name,
+        startTime: Number.isFinite(startTime) ? Math.max(0, startTime) : 0,
+        endTime: Number.isFinite(endTime) ? Math.max(Number.isFinite(startTime) ? Math.max(0, startTime) : 0, endTime) : undefined,
+        volume: Number.isFinite(parsedVolume) ? Math.max(0, Math.min(1, parsedVolume)) : 1
+      });
+    }
+    return { customTitle, videoFileName, subtitles, audioTracks: importedAudioTracks };
+  }
+
+  exportProjectBtn.addEventListener('click', () => {
+    const content = serializeProjectText();
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${getProjectDownloadBaseName()}.TextVidoEditer.txt`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    statusText.textContent = '字幕・音声・カスタムタイトルを既存形式ベースのプロジェクトtxtに書き出しました';
+  });
+
+  importProjectBtn.addEventListener('click', () => projectTxtInput.click());
+
+  projectTxtInput.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      let data;
+
+      if (text.startsWith(PROJECT_FORMAT_HEADER)) {
+        data = parseProjectV2(text);
+      } else if (text.startsWith(LEGACY_PROJECT_FORMAT_HEADER)) {
+        // 旧v1(JSON)も後方互換で読み込む。
+        const jsonText = text.slice(LEGACY_PROJECT_FORMAT_HEADER.length).trim();
+        const legacy = JSON.parse(jsonText);
+        if (legacy?.format !== LEGACY_PROJECT_FORMAT_HEADER || Number(legacy?.version) !== 1) {
+          throw new Error('対応していない旧プロジェクト形式です。');
+        }
+        data = {
+          customTitle: String(legacy.customTitle || ''),
+          videoFileName: String(legacy.videoFileName || ''),
+          subtitles: Array.isArray(legacy.subtitles) ? legacy.subtitles : [],
+          audioTracks: Array.isArray(legacy.audioTracks) ? legacy.audioTracks : []
+        };
+      } else {
+        throw new Error('TextVidoEditerのプロジェクトtxtではありません。');
+      }
+
+      telopList = (Array.isArray(data.subtitles) ? data.subtitles : []).map((t, index) => ({
+        ...t,
+        id: Date.now() + index + Math.random(),
+        startTime: Number.isFinite(Number(t.startTime)) ? Math.max(0, Number(t.startTime)) : 0,
+        endTime: Number.isFinite(Number(t.endTime))
+          ? Math.max(Number(t.startTime) || 0, Number(t.endTime))
+          : (Number(t.startTime) || 0) + 4,
+        text: String(t.text ?? ''),
+        fontFamily: String(t.fontFamily || DEFAULT_FONT_FAMILY),
+        fontSize: Number.isFinite(Number(t.fontSize)) ? Number(t.fontSize) : DEFAULT_FONT_SIZE
+      }));
+
+      const importedAudioTracks = Array.isArray(data.audioTracks) ? data.audioTracks : [];
+      const resolvedAudioTracks = [];
+      const unavailableAudioNames = [];
+      for (const track of importedAudioTracks) {
+        const name = String(track.name || '').trim();
+        let buffer = null;
+        const pooled = loadedAudioPool.find(a => a.name === name && a.buffer);
+        const existing = audioList.find(a => a.name === name && a.buffer);
+        if (pooled) buffer = pooled.buffer;
+        else if (existing) buffer = existing.buffer;
+        else {
+          unavailableAudioNames.push(name || '(名前なし)');
+          continue;
+        }
+
+        const startTime = Number.isFinite(Number(track.startTime)) ? Math.max(0, Number(track.startTime)) : 0;
+        const fallbackEnd = startTime + buffer.duration;
+        const rawEnd = Number.isFinite(Number(track.endTime)) ? Number(track.endTime) : fallbackEnd;
+        resolvedAudioTracks.push({
+          id: Date.now() + resolvedAudioTracks.length + Math.random(),
+          name,
+          buffer,
+          startTime,
+          endTime: Math.max(startTime, rawEnd),
+          volume: Number.isFinite(Number(track.volume)) ? Math.max(0, Math.min(1, Number(track.volume))) : 1
+        });
+      }
+
+      audioList = resolvedAudioTracks;
+      selectedTelopId = telopList.length ? telopList[0].id : null;
+      selectedAudioId = audioList.length ? audioList[0].id : null;
+
+      customTitleInput.value = String(data.customTitle || '');
+      projectVideoFileName = String(data.videoFileName || projectVideoFileName || '');
+      updateBrowserTabTitle();
+      renderTelopListUI();
+      updateTelopFormValues();
+      renderAudioListUI();
+      updateAudioFormValues();
+      if (telopList.length) drawPreviewAtTime(telopList[0].startTime);
+
+      let message = `プロジェクトを読み込みました（字幕 ${telopList.length}件 / 音声 ${audioList.length}件）`;
+      if (unavailableAudioNames.length) {
+        const uniqueNames = [...new Set(unavailableAudioNames)];
+        message += `。音声ファイル未ロード: ${uniqueNames.join(' / ')}`;
+      }
+      statusText.textContent = message;
+      if (unavailableAudioNames.length) {
+        alert(`プロジェクトは読み込めましたが、次の音声ファイルが未ロードのため音声トラックを復元できませんでした。\n\n${[...new Set(unavailableAudioNames)].join('\n')}\n\n先に元の音声ファイルをロードしてから、プロジェクトtxtを再度読み込んでください。`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert(`プロジェクトtxtの読み込みに失敗しました。\n${err.message || err}`);
+      statusText.textContent = 'プロジェクトtxt読み込みエラー';
+    } finally {
+      e.target.value = '';
+    }
+  });
+
+  // テキストエクスポート/インポート
+  document.getElementById('exportTxtBtn').addEventListener('click', () => {
+    if (telopList.length === 0) {
+      alert('書き出す字幕がありません。');
+      return;
+    }
+
+    const lines = telopList.map(serializeTelopToProjectLine);
+
+    const blob = new Blob([lines.join('\n')], {
+      type: 'text/plain;charset=utf-8'
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'subtitles.txt';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('importTxtBtn').addEventListener('click', () => document.getElementById('txtInput').click());
+
+  document.getElementById('sortTelopBtn').addEventListener('click', () => {
+    // 明示的に押したときだけ開始秒で並び替える。
+    telopList = [...telopList].sort((a, b) => {
+      const diff = (Number(a.startTime) || 0) - (Number(b.startTime) || 0);
+      return diff !== 0 ? diff : 0;
+    });
+    renderTelopListUI();
+    updateTelopFormValues();
+    statusText.textContent = '字幕を開始秒順に並び替えました';
+  });
+
+  document.getElementById('txtInput').addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = parseSubtitleLines(text);
+      if (!parsed.length) {
+        alert('有効な字幕データが見つかりませんでした。');
+        return;
+      }
+      telopList = parsed;
+      selectedTelopId = telopList[0].id;
+      renderTelopListUI();
+      updateTelopFormValues();
+      drawPreviewAtTime(telopList[0].startTime);
+      statusText.textContent = `${telopList.length}件の字幕をインポートしました（フォント・位置・角度・終了時間を保持）`;
+    } catch (err) {
+      console.error(err);
+      alert('字幕txtの読み込みに失敗しました。');
+      statusText.textContent = '字幕txt読み込みエラー';
+    } finally {
+      e.target.value = '';
+    }
+  });
+
+  exportAudioTxtBtn.addEventListener('click', () => {
+    if (audioList.length === 0) { alert('書き出す音声トラックがありません。'); return; }
+    const lines = [...audioList].map(a => {
+      const startTc = formatTimecode(a.startTime);
+      const fallbackEnd = (Number(a.startTime) || 0) + (a.buffer ? a.buffer.duration : 0);
+      const endTime = Number.isFinite(Number(a.endTime)) ? Math.max(Number(a.startTime) || 0, Number(a.endTime)) : fallbackEnd;
+      const endTc = formatTimecode(endTime);
+      return `[${startTc}-${endTc}] | ${a.name} | ${Number(a.volume).toFixed(1)}`;
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = 'audio_tracks.txt'; link.click(); URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('sortAudioBtn').addEventListener('click', () => {
+    // 明示的に押したときだけ開始秒で並び替える。
+    audioList = [...audioList].sort((a, b) => {
+      const diff = (Number(a.startTime) || 0) - (Number(b.startTime) || 0);
+      return diff !== 0 ? diff : 0;
+    });
+    renderAudioListUI();
+    updateAudioFormValues();
+    statusText.textContent = '効果音を開始秒順に並び替えました';
+  });
+
+  importAudioTxtBtn.addEventListener('click', () => audioTxtInput.click());
+  audioTxtInput.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    try {
+      const text = await file.text(); const loadedTracks = [];
+      for (const [index, rawLine] of text.split(/\r?\n/).entries()) {
+        const line = rawLine.trim(); if (!line) continue;
+        const match = line.match(/^\[([\d:.]+)-([\d:.]+)\]\s*\|\s*(.*?)\s*\|\s*([\d.]+)/); if (!match) continue;
+        const startTime = parseTimecode(match[1]); const fileName = match[3].trim(); const parsedVolume = parseFloat(match[4]);
+        const volumeVal = Number.isFinite(parsedVolume) ? Math.max(0, Math.min(1, parsedVolume)) : 1.0;
+        let buffer = null; const pooled = loadedAudioPool.find(a => a.name === fileName && a.buffer);
+        const existing = audioList.find(a => a.name === fileName && a.buffer);
+        if (pooled) buffer = pooled.buffer; else if (existing) buffer = existing.buffer;
+        else throw new Error(`音声ファイル「${fileName}」が未ロードです。先に音声ファイルを読み込んでください。`);
+        loadedTracks.push({ id: Date.now() + index + Math.random(), name: fileName, buffer, startTime, endTime: parseTimecode(match[2]), volume: volumeVal });
+      }
+      if (!loadedTracks.length) { alert('有効な音声データが見つかりませんでした。'); return; }
+      audioList = audioList.concat(loadedTracks); selectedAudioId = loadedTracks[0].id; renderAudioListUI(); updateAudioFormValues(); statusText.textContent = `${loadedTracks.length}件の音声トラックをインポートしました`;
+    } catch (err) { console.error(err); alert('音声txtの読み込みに失敗しました。'); statusText.textContent = '音声txt読み込みエラー'; } finally { audioTxtInput.value = ''; }
+  });
+
+  function renderAudioListUI() {
+    audioListContainer.innerHTML = '';
+    if (audioList.length === 0) { audioListContainer.innerHTML = '<div style="font-size: 12px; color: var(--muted-text); padding: 8px;">音声トラックがありません。</div>'; return; }
+    audioList.forEach((a) => {
+      const duration = a.buffer ? a.buffer.duration : 0;
+      const fallbackEnd = (Number(a.startTime) || 0) + duration;
+      const endTime = Number.isFinite(Number(a.endTime)) ? Math.max(Number(a.startTime) || 0, Number(a.endTime)) : fallbackEnd;
+      const item = document.createElement('div'); item.className = `item-row ${a.id === selectedAudioId ? 'active' : ''}`;
+      item.innerHTML = `<div class="item-info"><span class="item-title">${a.name}</span><span class="item-sub">[${formatTimecode(a.startTime)}-${formatTimecode(endTime)}] / 音量: ${Math.round(a.volume * 100)}%</span></div>`;
+      item.addEventListener('click', () => { selectedAudioId = a.id; renderAudioListUI(); updateAudioFormValues(); });
+      audioListContainer.appendChild(item);
+    });
+  }
+
+  function updateAudioFormValues() {
+    const target = audioList.find(a => a.id === selectedAudioId);
+    if (!target) {
+      editAudioName.value = ''; editAudioStartTime.value = 0; editAudioEndTime.value = 0; editAudioVolume.value = 1.0; return;
+    }
+    const fallbackEnd = (Number(target.startTime) || 0) + (target.buffer ? target.buffer.duration : 0);
+    if (!Number.isFinite(Number(target.endTime))) target.endTime = fallbackEnd;
+    editAudioName.value = target.name; editAudioStartTime.value = target.startTime; editAudioEndTime.value = target.endTime; editAudioVolume.value = target.volume;
+  }
+  [editAudioStartTime, editAudioEndTime, editAudioVolume].forEach(elem => {
+    elem.addEventListener('input', () => {
+      const target = audioList.find(a => a.id === selectedAudioId); if (!target) return;
+      const start = Math.max(0, parseFloat(editAudioStartTime.value) || 0);
+      const end = Math.max(start, parseFloat(editAudioEndTime.value) || 0);
+      target.startTime = start; target.endTime = end; target.volume = Math.max(0, Math.min(1, parseFloat(editAudioVolume.value) || 0)); renderAudioListUI();
+    });
+  });
+  function getCurrentVideoTimeForInput() {
+    const duration = getVideoDuration();
+    const current = Number.isFinite(sourceVideo.currentTime) ? Math.max(0, sourceVideo.currentTime) : 0;
+    return duration > 0 ? Math.min(current, duration) : current;
+  }
+
+  function setNumberInputToCurrentTime(input, options = {}) {
+    const current = getCurrentVideoTimeForInput();
+    input.value = current.toFixed(1);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    if (options.status) statusText.textContent = `現在時刻 ${current.toFixed(1)} 秒を入力しました`;
+  }
+
+  setTelopStartNowBtn.addEventListener('click', () => {
+    setNumberInputToCurrentTime(editStartTime);
+    const target = telopList.find(t => t.id === selectedTelopId);
+    if (target && target.endTime < target.startTime) {
+      editEndTime.value = target.startTime.toFixed(1);
+      editEndTime.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  });
+
+  setTelopEndNowBtn.addEventListener('click', () => {
+    setNumberInputToCurrentTime(editEndTime);
+    const target = telopList.find(t => t.id === selectedTelopId);
+    if (target && target.startTime > target.endTime) {
+      editStartTime.value = target.endTime.toFixed(1);
+      editStartTime.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  });
+
+  setAudioStartNowBtn.addEventListener('click', () => {
+    const current = getCurrentVideoTimeForInput();
+    editAudioStartTime.value = current.toFixed(1);
+    const target = audioList.find(a => a.id === selectedAudioId);
+    if (target) {
+      const oldDuration = Math.max(0, (Number(target.endTime) || 0) - (Number(target.startTime) || 0));
+      const minimumEnd = current + Math.min(oldDuration, target.buffer ? target.buffer.duration : oldDuration);
+      if (!Number.isFinite(Number(target.endTime)) || Number(target.endTime) < current) {
+        editAudioEndTime.value = minimumEnd.toFixed(1);
+      }
+    }
+    editAudioStartTime.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+
+  setAudioEndNowBtn.addEventListener('click', () => {
+    setNumberInputToCurrentTime(editAudioEndTime);
+  });
+
+  deleteAudioBtn.addEventListener('click', () => {
+    if (!selectedAudioId) return; audioList = audioList.filter(a => a.id !== selectedAudioId);
+    selectedAudioId = audioList.length > 0 ? audioList[0].id : null; renderAudioListUI(); updateAudioFormValues();
+  });
+
+  duplicateAudioBtn.addEventListener('click', () => {
+    const target = audioList.find(a => a.id === selectedAudioId);
+    if (!target) return;
+    const newId = audioList.length > 0 ? Math.max(...audioList.map(a => a.id)) + 1 : 1;
+    const newStart = Math.max(0, Number(target.endTime) || 0);
+    const duplicated = {
+      ...target,
+      id: newId,
+      startTime: newStart,
+      endTime: newStart + 1.0
+    };
+    audioList.push(duplicated);
+    selectedAudioId = newId;
+    renderAudioListUI();
+    updateAudioFormValues();
+  });
+
+  function stopAllActiveAudioSources() { activeAudioSources.forEach(src => { try { src.stop(); src.disconnect(); } catch (e) {} }); activeAudioSources = []; }
+  function scheduleAudioPreview(currentVideoTime) {
+    stopAllActiveAudioSources(); if (!isPreviewPlaying) return;
+    const ctx = getAudioContext(); const now = ctx.currentTime;
+    audioList.forEach(a => {
+      if (!a.buffer) return;
+      const startTime = Math.max(0, Number(a.startTime) || 0);
+      const fullDuration = a.buffer.duration;
+      const endTime = Number.isFinite(Number(a.endTime)) ? Math.max(startTime, Number(a.endTime)) : startTime + fullDuration;
+      const playDuration = Math.min(fullDuration, Math.max(0, endTime - startTime));
+      if (playDuration <= 0 || currentVideoTime >= endTime) return;
+      const source = ctx.createBufferSource(); source.buffer = a.buffer;
+      const gainNode = ctx.createGain(); gainNode.gain.value = a.volume;
+      source.connect(gainNode); gainNode.connect(ctx.destination);
+      if (currentVideoTime >= startTime) {
+        const offset = Math.min(fullDuration, currentVideoTime - startTime);
+        const remaining = Math.min(playDuration - (currentVideoTime - startTime), fullDuration - offset);
+        if (remaining > 0) source.start(now, offset, remaining);
+      } else {
+        source.start(now + (startTime - currentVideoTime), 0, playDuration);
+      }
+      activeAudioSources.push(source);
+    });
+  }
+
+  // 動画の実時間を基準にしたシークバー管理。
+  // range要素自体の固定的な上限には依存せず、実際の動画長へ常に追従させる。
+  const SEEKBAR_RANGE_MAX = 1000000;
+
+  function getVideoDuration() {
+    const d = Number(sourceVideo.duration);
+    return Number.isFinite(d) && d > 0 ? d : 0;
+  }
+
+  function syncSeekBarToVideoDuration() {
+    const duration = getVideoDuration();
+    if (!duration) return;
+    // シークバー内部は0〜1000000の割合で管理し、
+    // 240秒など特定の秒数を上限として扱わない。
+    seekBar.min = 0;
+    seekBar.max = SEEKBAR_RANGE_MAX;
+    const current = Math.max(0, Math.min(sourceVideo.currentTime || 0, duration));
+    seekBar.value = String((current / duration) * SEEKBAR_RANGE_MAX);
+  }
+
+  function updateTimeDisplay() {
+    const current = Number.isFinite(sourceVideo.currentTime) ? Math.max(0, sourceVideo.currentTime) : 0;
+    const duration = getVideoDuration();
+    timeDisplay.textContent = `${current.toFixed(1)} / ${duration > 0 ? duration.toFixed(1) : '0.0'}`;
+    if (duration > 0) syncSeekBarToVideoDuration();
+  }
+
+  function videoTrainedDraw() {
+    drawVideoToCanvas(ctx, canvas);
+  }
+
+  function renderPreviewLoop() {
+    if (!sourceVideo.src || sourceVideo.paused || sourceVideo.ended) { if(sourceVideo.ended) { isPreviewPlaying = false; btnPlayPause.innerHTML = '▶ 再生'; stopAllActiveAudioSources(); } return; }
+    updateTimeDisplay(); videoTrainedDraw(); const nowMs = performance.now();
+    telopList.forEach(t => drawSingleTelop(ctx, canvas, t, sourceVideo.currentTime, nowMs));
+    if (isPreviewPlaying) { previewAnimationFrame = requestAnimationFrame(renderPreviewLoop); }
+  }
+
+  btnPlayPause.addEventListener('click', () => {
+    if (!sourceVideo.src) return;
+    if (isPreviewPlaying) { sourceVideo.pause(); isPreviewPlaying = false; btnPlayPause.innerHTML = '▶ 再生'; cancelAnimationFrame(previewAnimationFrame); stopAllActiveAudioSources(); }
+    else { getAudioContext(); sourceVideo.play(); isPreviewPlaying = true; btnPlayPause.innerHTML = '⏸ 一時停止'; scheduleAudioPreview(sourceVideo.currentTime); renderPreviewLoop(); }
+  });
+
+  btnStop.addEventListener('click', () => {
+    if (!sourceVideo.src) return; sourceVideo.pause(); isPreviewPlaying = false; btnPlayPause.innerHTML = '▶ 再生';
+    cancelAnimationFrame(previewAnimationFrame); stopAllActiveAudioSources(); drawPreviewAtTime(0);
+  });
+
+  function skipTime(offset) {
+    if (!sourceVideo.src) return;
+    const duration = getVideoDuration();
+    const base = Number.isFinite(sourceVideo.currentTime) ? sourceVideo.currentTime : 0;
+    drawPreviewAtTime(Math.max(0, Math.min(base + offset, duration || base + offset)));
+  }
+  btnRewind.addEventListener('click', () => skipTime(-5));
+  btnForward.addEventListener('click', () => skipTime(5));
+  btnStart.addEventListener('click', () => drawPreviewAtTime(0));
+  btnEnd.addEventListener('click', () => {
+    const duration = getVideoDuration();
+    drawPreviewAtTime(Math.max(0, duration - 0.1));
+  });
+  seekBar.addEventListener('input', (e) => {
+    if (!sourceVideo.src) return;
+    const duration = getVideoDuration();
+    if (!duration) return;
+    const ratio = Math.max(0, Math.min(1, Number(e.target.value) / SEEKBAR_RANGE_MAX));
+    drawPreviewAtTime(ratio * duration);
+  });
+
+  // キーボードショートカット
+  // Space: 再生 / 一時停止
+  // Ctrl + ← / →: 最初 / 最後へジャンプ
+  // Shift + ← / →: 5秒戻る / 5秒進む
+  document.addEventListener('keydown', (e) => {
+    const target = e.target;
+    const tagName = target && target.tagName ? target.tagName.toLowerCase() : '';
+    const isEditable = !!(target && (target.isContentEditable || tagName === 'input' || tagName === 'textarea' || tagName === 'select'));
+
+    // 入力欄では通常の文字入力・カーソル移動を優先する。
+    if (isEditable) return;
+
+    if (e.code === 'Space' && !e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) {
+      e.preventDefault();
+      if (!sourceVideo.src) return;
+      btnPlayPause.click();
+      return;
+    }
+
+    if (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        btnStart.click();
+        return;
+      }
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        btnEnd.click();
+        return;
+      }
+    }
+
+    if (e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        skipTime(-5);
+        return;
+      }
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        skipTime(5);
+        return;
+      }
+    }
+  });
+
+  // メディア側でdurationが更新された場合も、即座にシークバーへ反映する。
+  sourceVideo.addEventListener('durationchange', () => {
+    syncSeekBarToVideoDuration();
+    updateTimeDisplay();
+  });
+
+  function drawPreviewAtTime(timeSec) {
+    if (!sourceVideo.src) return;
+    const targetTime = Math.max(0, Math.min(Number(timeSec) || 0, Number.isFinite(sourceVideo.duration) ? sourceVideo.duration : (Number(timeSec) || 0)));
+    sourceVideo.onseeked = () => {
+      const actualTime = getTimelineTime(); updateTimeDisplay(); videoTrainedDraw(); const now = performance.now();
+      telopList.forEach(t => drawSingleTelop(ctx, canvas, t, actualTime, now));
+      if (isPreviewPlaying) scheduleAudioPreview(actualTime); else stopAllActiveAudioSources();
+      sourceVideo.onseeked = null;
+    };
+    sourceVideo.currentTime = targetTime;
+  }
+
+  function getTimelineTime() { return Number.isFinite(sourceVideo.currentTime) ? Math.max(0, sourceVideo.currentTime) : 0; }
+  function isTelopActiveAtTime(t, timeSec) {
+    const start = Math.max(0, Number(t.startTime) || 0); const end = Math.max(start, Number(t.endTime) || start); return timeSec >= start && timeSec < end;
+  }
+
+  function drawSingleTelop(ctx, canvas, t, currentVideoTime, nowMs) {
+    currentVideoTime = Number.isFinite(currentVideoTime) ? Math.max(0, currentVideoTime) : 0;
+    const startTime = Math.max(0, Number(t.startTime) || 0);
+    const endTime = Math.max(startTime, Number(t.endTime) || startTime);
+    if (currentVideoTime < startTime || currentVideoTime > endTime) return;
+
+    // 表示開始からの経過時間。出現アニメーションとループアニメーションは
+    // 同じフレーム内で独立して計算し、どちらも表示開始時点から動作させる。
+    const timeSinceStart = Math.max(0, currentVideoTime - startTime);
+
+    // -----------------------------
+    // 1. 出現アニメーション（旧版と同じ式）
+    // -----------------------------
+    let inAlpha = 1.0;
+    let inScaleX = 1.0;
+    let inScaleY = 1.0;
+    let inOffsetX = 0;
+    let inOffsetY = 0;
+
+    const inDuration = Math.max(0, Number(t.inAnimDuration) || 0);
+    if (inDuration > 0 && t.inAnimType !== 'none' && timeSinceStart < inDuration) {
+      const progress = Math.min(timeSinceStart / inDuration, 1.0);
+      const easeP = easeOutCubic(progress);
+
+      switch (t.inAnimType) {
+        case 'fade':
+          inAlpha *= easeP;
+          break;
+        case 'pop':
+          inScaleX *= (0.2 + easeP * 0.8);
+          inScaleY *= (0.2 + easeP * 0.8);
+          inAlpha *= Math.min(progress * 2, 1.0);
+          break;
+        case 'slideUp':
+          inOffsetY += (1.0 - easeP) * 60;
+          inAlpha *= easeP;
+          break;
+        case 'bounce':
+          inOffsetY -= (1.0 - easeOutBounce(progress)) * 90;
+          inAlpha *= Math.min(progress * 3, 1.0);
+          break;
+        case 'drop':
+          inOffsetY -= (1.0 - easeP) * 150;
+          inScaleY *= (1.0 + (1.0 - easeP) * 0.5);
+          inAlpha *= easeP;
+          break;
+      }
+    }
+
+    // -----------------------------
+    // 2. ループアニメーション（旧版の式を完全維持）
+    //    出現アニメーション終了を待たない。
+    // -----------------------------
+    let loopOffsetX = 0;
+    let loopOffsetY = 0;
+    let loopScaleX = 1.0;
+    let loopScaleY = 1.0;
+    let loopRotation = 0;
+    let loopAlpha = 1.0;
+
+    const loopTime = (Number.isFinite(nowMs) ? nowMs : performance.now()) / 1000
+      * (Number.isFinite(Number(t.loopSpeed)) ? Number(t.loopSpeed) : 1.0);
+    const intensity = Number.isFinite(Number(t.loopIntensity)) ? Number(t.loopIntensity) : 1.0;
+
+    if (t.loopAnimType !== 'none' && intensity > 0) {
+      switch (t.loopAnimType) {
+        case 'subtleShake':
+          loopOffsetX += (
+            Math.sin(loopTime * 15) * 1.5 + (Math.random() - 0.5) * 1.2
+          ) * intensity;
+          loopOffsetY += (
+            Math.cos(loopTime * 18) * 1.5 + (Math.random() - 0.5) * 1.2
+          ) * intensity;
+          loopRotation += Math.sin(loopTime * 10) * 0.015 * intensity;
+          break;
+
+        case 'hardShake':
+          loopOffsetX += ((Math.random() - 0.5) * 8) * intensity;
+          loopOffsetY += ((Math.random() - 0.5) * 8) * intensity;
+          loopRotation += ((Math.random() - 0.5) * 0.08) * intensity;
+          break;
+
+        case 'glitch':
+          if (Math.random() < 0.12 * intensity) {
+            loopOffsetX += (Math.random() - 0.5) * 20 * intensity;
+            loopAlpha *= 0.6 + Math.random() * 0.4;
+          }
+          break;
+
+        case 'float':
+          loopOffsetY += Math.sin(loopTime * 2.5) * 8 * intensity;
+          loopRotation += Math.cos(loopTime * 1.8) * 0.02 * intensity;
+          break;
+
+        case 'pulse': {
+          const pulseFactor = 1.0 + (Math.sin(loopTime * 4) * 0.05) * intensity;
+          loopScaleX *= pulseFactor;
+          loopScaleY *= pulseFactor;
+          break;
+        }
+      }
+    }
+
+    // -----------------------------
+    // 3. 同一フレームで合成
+    // -----------------------------
+    const offsetX = inOffsetX + loopOffsetX;
+    const offsetY = inOffsetY + loopOffsetY;
+    const scaleX = inScaleX * loopScaleX;
+    const scaleY = inScaleY * loopScaleY;
+    const alpha = inAlpha * loopAlpha;
+
+    const canvasX = (canvas.width / 2) + ((t.x + offsetX) * (canvas.width / 480));
+    const canvasY = (canvas.height / 2) - ((t.y + offsetY) * (canvas.height / 360));
+
+    const textRotationDeg = Number.isFinite(Number(t.rotation)) ? Number(t.rotation) : 0;
+    const rotation = (textRotationDeg * Math.PI / 180) + loopRotation;
+
+    ctx.save();
+    ctx.translate(canvasX, canvasY);
+    ctx.rotate(rotation);
+    ctx.scale(scaleX, scaleY);
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+
+    const scaleFactor = canvas.width / 480;
+    ctx.font = `700 ${t.fontSize * scaleFactor}px "${t.fontFamily}", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    if (t.shadowBlur > 0) {
+      ctx.shadowColor = t.shadowColor;
+      ctx.shadowBlur = t.shadowBlur * scaleFactor;
+      ctx.shadowOffsetX = t.shadowOffsetX * scaleFactor;
+      ctx.shadowOffsetY = t.shadowOffsetY * scaleFactor;
+    }
+    if (t.strokeWidth > 0) {
+      ctx.strokeStyle = t.strokeColor;
+      ctx.lineWidth = t.strokeWidth * 2 * scaleFactor;
+      ctx.lineJoin = 'round';
+      ctx.strokeText(t.text, 0, 0);
+    }
+
+    ctx.shadowColor = 'transparent';
+    if (t.useGradient) {
+      const tw = ctx.measureText(t.text).width || 100;
+      const th = t.fontSize * scaleFactor;
+      const rad = t.gradAngle * (Math.PI / 180);
+      const gradient = ctx.createLinearGradient(
+        -Math.cos(rad) * (tw / 2),
+        -Math.sin(rad) * (th / 2),
+        Math.cos(rad) * (tw / 2),
+        Math.sin(rad) * (th / 2)
+      );
+      gradient.addColorStop(0, t.gradColor1);
+      gradient.addColorStop(1, t.gradColor2);
+      ctx.fillStyle = gradient;
+    } else {
+      ctx.fillStyle = t.fillColor;
+    }
+    ctx.fillText(t.text, 0, 0);
+    ctx.restore();
+  }
+
+  // エンコード処理
+  exportBtn.addEventListener('click', async () => {
+    if (!sourceVideo.src || !Number.isFinite(sourceVideo.duration) || sourceVideo.duration <= 0) {
+      alert('先に動画ファイルを読み込んでください。');
+      return;
+    }
+    if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
+      alert('このブラウザは対応していません。');
+      return;
+    }
+
+    // iOS Safariではユーザー操作から時間が空いた後のplay()/resume()が拒否される場合があるため、
+    // 書き出しボタンの同期処理直下で再生許可を先に確保する。
+    let iosPrimedPlay = null;
+    if (isIOS) {
+      try {
+        const primeCtx = getAudioContext();
+        primeCtx.resume().catch(() => {});
+      } catch (e) {
+        console.warn('iOS AudioContext 初期化を継続します:', e);
+      }
+      try {
+        iosPrimedPlay = sourceVideo.play().catch(() => null);
+      } catch (e) {
+        iosPrimedPlay = null;
+      }
+    }
+
+    if (isPreviewPlaying) btnPlayPause.click();
+    stopAllActiveAudioSources();
+
+    exportBtn.disabled = true;
+    exportBtn.textContent = '合成エンコード中... 0%';
+    statusText.textContent = '高解像度Canvasを準備中...';
+
+    let mediaRecorder = null;
+    let exportCanvasStream = null;
+    let audioDest = null;
+    let exportAudioSourceNodes = [];
+    let mimeType = '';
+    let stoppedByVideoEnd = false;
+    let exportProgressTimer = null;
+    let exportStage = '準備中';
+    let dataChunkCount = 0;
+    let totalRecordedBytes = 0;
+
+    const setExportStage = (stage, detail = '') => {
+      exportStage = stage;
+      const suffix = detail ? ` — ${detail}` : '';
+      statusText.textContent = `エンコード: ${stage}${suffix}`;
+      exportBtn.textContent = `合成エンコード中... ${stage}`;
+    };
+    const yieldToBrowser = () => new Promise(resolve => requestAnimationFrame(() => resolve()));
+
+    try {
+      setExportStage('準備中', isIOS ? 'iOS/Safari互換モード' : '標準互換モード');
+      if (isIOS) {
+        try {
+          await Promise.race([
+            document.fonts?.ready || Promise.resolve(),
+            new Promise(resolve => setTimeout(resolve, 3000))
+          ]);
+        } catch (e) {
+          console.warn('iOSでdocument.fonts.readyを待機できませんでした。描画を継続します。', e);
+        }
+      } else {
+        await document.fonts.ready;
+      }
+
+      const exportDimensions = getExportCanvasDimensions();
+      ensureExportCanvas();
+      statusText.textContent = `書き出し解像度: ${exportDimensions.width}×${exportDimensions.height}`;
+
+      const actx = getAudioContext();
+      await actx.resume();
+      audioDest = actx.createMediaStreamDestination();
+
+      if (!mediaElementSourceNode) {
+        mediaElementSourceNode = actx.createMediaElementSource(sourceVideo);
+      }
+      mediaElementSourceNode.disconnect();
+      mediaElementSourceNode.connect(audioDest);
+      mediaElementSourceNode.connect(actx.destination);
+
+      setExportStage(
+        '録画ストリーム作成中',
+        `高解像度Canvas ${exportDimensions.width}×${exportDimensions.height}`
+      );
+
+      // プレビューCanvasではなく、書き出し専用1080p級CanvasをcaptureStreamする。
+      exportCanvasStream = exportCanvas.captureStream(30);
+
+      const videoTracks = exportCanvasStream.getVideoTracks();
+      const audioTracks = audioDest.stream.getAudioTracks();
+      if (!videoTracks.length || !audioTracks.length) {
+        throw new Error('録画用のトラックを作成できませんでした。');
+      }
+
+      const combinedStream = new MediaStream([...videoTracks, ...audioTracks]);
+
+      // iOSだけMP4(H.264/AAC)を優先。それ以外は従来どおりWebMを優先。
+      const mimeCandidates = isIOS
+        ? [
+            'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+            'video/mp4',
+            'video/webm;codecs=vp9,opus',
+            'video/webm;codecs=vp8,opus',
+            'video/webm'
+          ]
+        : [
+            'video/webm;codecs=vp9,opus',
+            'video/webm;codecs=vp8,opus',
+            'video/webm',
+            'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+            'video/mp4'
+          ];
+      const supportedMimeTypes = mimeCandidates.filter(c => {
+        try { return MediaRecorder.isTypeSupported(c); } catch (e) { return false; }
+      });
+      mimeType = supportedMimeTypes[0] || '';
+      if (!mimeType) {
+        throw new Error(isIOS
+          ? 'iOS/Safariで利用可能な録画形式がありません。Safariを最新版に更新してください。'
+          : '対応形式なし');
+      }
+
+      setExportStage(
+        'MediaRecorder生成中',
+        `採用形式: ${mimeType} / 映像: 12Mbps`
+      );
+
+      const recorderOptions = {
+        mimeType,
+        videoBitsPerSecond: 12_000_000,
+        audioBitsPerSecond: 192_000
+      };
+
+      try {
+        mediaRecorder = new MediaRecorder(combinedStream, recorderOptions);
+      } catch (e) {
+        // 一部ブラウザで特定オプションが拒否された場合の段階的フォールバック。
+        try {
+          mediaRecorder = new MediaRecorder(combinedStream, { mimeType });
+        } catch (e2) {
+          mediaRecorder = new MediaRecorder(combinedStream);
+        }
+        mimeType = mediaRecorder.mimeType || mimeType;
+      }
+
+      await yieldToBrowser();
+
+      const chunks = [];
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          chunks.push(e.data);
+          dataChunkCount++;
+          totalRecordedBytes += e.data.size;
+        }
+      };
+
+      const finished = new Promise((resolve, reject) => {
+        mediaRecorder.addEventListener('stop', () => resolve(), { once: true });
+        mediaRecorder.addEventListener('error', (e) => reject(e.error || e), { once: true });
+      });
+
+      setExportStage('動画を先頭へ移動中');
+      sourceVideo.pause();
+      sourceVideo.currentTime = 0;
+      await yieldToBrowser();
+
+      await new Promise((resolve, reject) => {
+        if (sourceVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+          resolve();
+          return;
+        }
+        sourceVideo.addEventListener('loadeddata', resolve, { once: true });
+        sourceVideo.addEventListener('error', reject, { once: true });
+      });
+
+      for (const telop of telopList) {
+        await ensureFontLoaded(telop.fontFamily);
+      }
+      renderExportFrame(0, performance.now());
+      await yieldToBrowser();
+
+      const preRoll = 0.08;
+      const exportStartAudioTime = actx.currentTime + preRoll;
+
+      mediaRecorder.start(100);
+      await yieldToBrowser();
+
+      audioList.forEach(a => {
+        if (!a.buffer) return;
+        const startOffset = Math.max(0, Number(a.startTime) || 0);
+        const fullDuration = a.buffer.duration;
+        const fallbackEnd = startOffset + fullDuration;
+        const endTime = Number.isFinite(Number(a.endTime)) ? Math.max(startOffset, Number(a.endTime)) : fallbackEnd;
+        const playDuration = Math.min(fullDuration, Math.max(0, endTime - startOffset));
+        if (playDuration <= 0 || startOffset >= sourceVideo.duration) return;
+
+        const srcNode = actx.createBufferSource();
+        const gainNode = actx.createGain();
+        srcNode.buffer = a.buffer;
+        gainNode.gain.value = Math.max(0, Math.min(1, Number(a.volume) || 0));
+        srcNode.connect(gainNode);
+        gainNode.connect(audioDest);
+        gainNode.connect(actx.destination);
+        srcNode.start(exportStartAudioTime + startOffset, 0, Math.min(playDuration, Math.max(0, sourceVideo.duration - startOffset)));
+        exportAudioSourceNodes.push(srcNode);
+      });
+
+      if (isIOS && iosPrimedPlay) {
+        try { await iosPrimedPlay; } catch (e) {}
+      }
+      try {
+        await sourceVideo.play();
+      } catch (playErr) {
+        if (isIOS) {
+          const wasMuted = sourceVideo.muted;
+          try {
+            sourceVideo.muted = true;
+            await sourceVideo.play();
+            sourceVideo.muted = wasMuted;
+          } catch (retryErr) {
+            sourceVideo.muted = wasMuted;
+            throw playErr;
+          }
+        } else {
+          throw playErr;
+        }
+      }
+      await yieldToBrowser();
+      await new Promise(requestAnimationFrame);
+
+      const exportProgressStart = performance.now();
+
+      const stopRecorder = () => {
+        if (stoppedByVideoEnd) return;
+        stoppedByVideoEnd = true;
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          try { mediaRecorder.requestData(); } catch (e) {}
+          mediaRecorder.stop();
+        }
+      };
+
+      sourceVideo.addEventListener('ended', stopRecorder, { once: true });
+
+      function updateExportProgress(timelineTime, forceComplete = false) {
+        const dur = Number(sourceVideo.duration);
+        if (!(dur > 0)) return;
+
+        const elapsed = Math.max(0, (performance.now() - exportProgressStart) / 1000);
+        const safeTime = forceComplete
+          ? dur
+          : Math.min(dur, Math.max(timelineTime, elapsed));
+
+        const progress = Math.max(
+          0,
+          Math.min(100, Math.round((safeTime / dur) * 1000) / 10)
+        );
+
+        exportBtn.textContent = `合成エンコード中... ${progress.toFixed(1)}%`;
+        statusText.textContent =
+          `高画質書き出し中... ${progress.toFixed(1)}% / ${exportDimensions.width}×${exportDimensions.height}`;
+      }
+
+      exportProgressTimer = setInterval(() => {
+        if (!stoppedByVideoEnd) updateExportProgress(getTimelineTime());
+      }, 100);
+
+      function renderLoop() {
+        if (stoppedByVideoEnd) return;
+
+        if (!sourceVideo.ended && !sourceVideo.paused) {
+          const tTime = Math.min(
+            Math.max(getTimelineTime(), 0),
+            sourceVideo.duration
+          );
+
+          updateExportProgress(tTime);
+          renderExportFrame(tTime, performance.now());
+          requestAnimationFrame(renderLoop);
+        } else {
+          updateExportProgress(sourceVideo.duration, true);
+          stopRecorder();
+        }
+      }
+
+      renderLoop();
+      await finished;
+
+      sourceVideo.pause();
+
+      const blob = new Blob(chunks, { type: mimeType });
+      const videoURL = URL.createObjectURL(blob);
+
+      if (outputVideo.src) URL.revokeObjectURL(outputVideo.src);
+      outputVideo.src = videoURL;
+      outputVideo.style.display = 'block';
+      outputVideo.load();
+
+      const extension = mimeType.includes('mp4') ? 'mp4' : 'webm';
+      const fileName = `mixed_video_${exportDimensions.width}x${exportDimensions.height}.${extension}`;
+
+      if (isIOS) {
+        // iOS Safariでは非同期処理後の download 属性クリックが無視される場合がある。
+        // 自動開始を試しつつ、確実に再操作できる保存リンクを画面に残す。
+        const downloadLink = document.createElement('a');
+        downloadLink.href = videoURL;
+        downloadLink.download = fileName;
+        downloadLink.textContent = `⬇ 動画を保存 (${fileName})`;
+        downloadLink.target = '_self';
+        downloadLink.rel = 'noopener';
+        downloadLink.style.display = 'inline-block';
+        downloadLink.style.marginTop = '10px';
+        downloadLink.style.padding = '10px 16px';
+        downloadLink.style.borderRadius = '20px';
+        downloadLink.style.background = '#0284c7';
+        downloadLink.style.color = '#fff';
+        downloadLink.style.fontWeight = 'bold';
+        downloadLink.style.textDecoration = 'none';
+        downloadLink.setAttribute('aria-label', `動画を保存: ${fileName}`);
+        document.body.appendChild(downloadLink);
+
+        try {
+          downloadLink.click();
+        } catch (downloadErr) {
+          console.warn('iOS自動ダウンロードを開始できませんでした。保存リンクを使用してください。', downloadErr);
+        }
+
+        // iOSではBlob URLをすぐに解放しない。
+        setTimeout(() => {
+          try { URL.revokeObjectURL(videoURL); } catch (e) {}
+          try { downloadLink.remove(); } catch (e) {}
+        }, 5 * 60 * 1000);
+
+        statusText.textContent =
+          `書き出し完了！ iOSでは自動保存されない場合があります。表示された「動画を保存」をタップしてください。 (${mimeType}) — ${exportDimensions.width}×${exportDimensions.height} — ${(blob.size / (1024 * 1024)).toFixed(2)} MB`;
+      } else {
+        // iOS以外は従来どおり、自動ダウンロードして一時リンクを即時破棄。
+        const downloadLink = document.createElement('a');
+        downloadLink.href = videoURL;
+        downloadLink.download = fileName;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        downloadLink.remove();
+        URL.revokeObjectURL(videoURL);
+
+        statusText.textContent =
+          `書き出し完了！ (${mimeType}) — ${exportDimensions.width}×${exportDimensions.height} — ${(blob.size / (1024 * 1024)).toFixed(2)} MB`;
+      }
+    } catch (err) {
+      console.error(err);
+      alert(`書き出しに失敗しました：${err.message || err}`);
+      statusText.textContent = `書き出しエラー: ${err.message || err}`;
+    } finally {
+      if (exportProgressTimer) clearInterval(exportProgressTimer);
+
+      exportAudioSourceNodes.forEach(src => {
+        try { src.stop(); src.disconnect(); } catch (e) {}
+      });
+      exportAudioSourceNodes = [];
+
+      if (mediaElementSourceNode) {
+        try { mediaElementSourceNode.disconnect(); } catch (e) {}
+      }
+
+      if (exportCanvasStream) {
+        exportCanvasStream.getTracks().forEach(track => track.stop());
+      }
+
+      exportBtn.disabled = false;
+      exportBtn.textContent = '動画を再生・合成・書き出し';
+    }
+  });
+
+  renderTelopListUI(); updateTelopFormValues();
+  renderAudioListUI(); updateAudioPoolSelectUI();
+</script>
+</body>
+</html>
