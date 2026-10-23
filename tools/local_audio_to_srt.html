@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>音声文字起こし → SRT</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    body { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; line-height: 1.6; }
+    h1 { font-size: 1.65rem; margin-bottom: 8px; }
+    .note { color: #777; font-size: .94rem; }
+    .panel { border: 1px solid #8886; border-radius: 14px; padding: 18px; margin: 18px 0; }
+    input[type="file"] { display: block; max-width: 100%; margin: 10px 0 16px; }
+    button { border: 0; border-radius: 9px; padding: 10px 16px; margin: 6px 8px 6px 0; font-size: 1rem; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    #run { background: #2563eb; color: white; }
+    #download { background: #15803d; color: white; }
+    #status { white-space: pre-wrap; margin: 14px 0; min-height: 1.5em; }
+    progress { width: 100%; height: 12px; }
+    audio { width: 100%; margin: 10px 0; }
+    textarea { width: 100%; min-height: 250px; box-sizing: border-box; padding: 12px; border-radius: 9px; font: 13px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .small { font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <h1>音声文字起こし → SRT</h1>
+  <p>Whisperモデルをブラウザー内で動かして文字起こしし、字幕ファイル（.srt）を作成します。</p>
+  <p class="note">APIキー不要。音声ファイルは外部の文字起こしAPIには送信しません。初回はライブラリと音声認識モデルをインターネットからダウンロードします。</p>
+
+  <section class="panel">
+    <label for="audioFile"><strong>1. 音声ファイルを選択</strong></label>
+    <input id="audioFile" type="file" accept="audio/*,.wav,.mp3,.m4a,.ogg,.flac,.webm">
+    <audio id="player" controls hidden></audio>
+    <button id="run" disabled>文字起こしを開始</button>
+    <button id="download" disabled>SRTをダウンロード</button>
+    <progress id="progress" value="0" max="100" hidden></progress>
+    <div id="status" role="status" aria-live="polite">音声ファイルを選択してください。</div>
+  </section>
+
+  <section class="panel">
+    <strong>2. SRTプレビュー（必要なら編集できます）</strong>
+    <p class="small note">タイムスタンプ付きの認識結果を表示します。変換精度は音声やモデルにより異なるため、書き出し前に確認してください。</p>
+    <textarea id="result" spellcheck="false" placeholder="文字起こし結果がここに表示されます。"></textarea>
+  </section>
+
+  <script type="module">
+    import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1";
+
+    const fileInput = document.querySelector("#audioFile");
+    const player = document.querySelector("#player");
+    const runButton = document.querySelector("#run");
+    const downloadButton = document.querySelector("#download");
+    const status = document.querySelector("#status");
+    const progress = document.querySelector("#progress");
+    const resultBox = document.querySelector("#result");
+
+    let transcriber = null;
+    let currentAudioUrl = null;
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files?.[0];
+      runButton.disabled = !file;
+      downloadButton.disabled = true;
+      resultBox.value = "";
+      if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
+      currentAudioUrl = null;
+      if (!file) {
+        player.hidden = true;
+        status.textContent = "音声ファイルを選択してください。";
+        return;
+      }
+      currentAudioUrl = URL.createObjectURL(file);
+      player.src = currentAudioUrl;
+      player.hidden = false;
+      status.textContent = `選択中: ${file.name}\nサイズ: ${(file.size / 1024 / 1024).toFixed(1)} MB`;
+    });
+
+    function toSrtTime(seconds) {
+      const safeSeconds = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
+      let ms = Math.round(safeSeconds * 1000);
+      const hours = Math.floor(ms / 3600000); ms %= 3600000;
+      const minutes = Math.floor(ms / 60000); ms %= 60000;
+      const secs = Math.floor(ms / 1000); ms %= 1000;
+      return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")},${String(ms).padStart(3, "0")}`;
+    }
+
+    async function getDuration(url) {
+      return new Promise((resolve) => {
+        const audio = new Audio();
+        audio.preload = "metadata";
+        audio.onloadedmetadata = () => resolve(Number.isFinite(audio.duration) ? audio.duration : 5);
+        audio.onerror = () => resolve(5);
+        audio.src = url;
+      });
+    }
+
+    function makeSrt(chunks, duration, fullText) {
+      let usable = Array.isArray(chunks)
+        ? chunks.filter((c) => typeof c?.text === "string" && c.text.trim())
+        : [];
+
+      // If the model did not return timestamped chunks, preserve the text in one cue.
+      if (usable.length === 0 && fullText?.trim()) {
+        usable = [{ timestamp: [0, duration || 5], text: fullText.trim() }];
+      }
+
+      let lastEnd = 0;
+      const cues = usable.map((chunk, i) => {
+        const ts = Array.isArray(chunk.timestamp) ? chunk.timestamp : [];
+        let start = Number(ts[0]);
+        let end = Number(ts[1]);
+        if (!Number.isFinite(start)) start = lastEnd;
+        if (!Number.isFinite(end) || end <= start) end = start + 2;
+        start = Math.max(0, start);
+        end = Math.max(start + 0.25, end);
+        lastEnd = end;
+        return `${i + 1}\n${toSrtTime(start)} --> ${toSrtTime(end)}\n${chunk.text.trim()}`;
+      });
+      return cues.join("\n\n");
+    }
+
+    runButton.addEventListener("click", async () => {
+      const file = fileInput.files?.[0];
+      if (!file || !currentAudioUrl) return;
+
+      runButton.disabled = true;
+      downloadButton.disabled = true;
+      progress.hidden = false;
+      progress.removeAttribute("value");
+      status.textContent = "準備中… 初回はモデルのダウンロードに時間がかかる場合があります。";
+
+      try {
+        if (!transcriber) {
+          transcriber = await pipeline(
+            "automatic-speech-recognition",
+            "onnx-community/whisper-tiny",
+            { dtype: "q8" }
+          );
+        }
+
+        status.textContent = "音声を解析しています。音声の長さや端末の性能によって時間がかかります…";
+        const duration = await getDuration(currentAudioUrl);
+        const output = await transcriber(currentAudioUrl, {
+          language: "japanese",
+          task: "transcribe",
+          return_timestamps: true,
+          chunk_length_s: 30,
+          stride_length_s: 5
+        });
+
+        resultBox.value = makeSrt(output.chunks, duration, output.text);
+        if (!resultBox.value.trim()) {
+          throw new Error("文字起こし結果が空でした。音声ファイルや形式を確認してください。");
+        }
+        downloadButton.disabled = false;
+        status.textContent = "完了しました。SRTプレビューを確認し、ダウンロードしてください。";
+      } catch (error) {
+        console.error(error);
+        status.textContent = `エラー: ${error?.message || error}\n\n音声形式、インターネット接続、ブラウザーのメモリーを確認してください。`;
+      } finally {
+        runButton.disabled = !fileInput.files?.[0];
+        progress.hidden = true;
+        progress.setAttribute("value", "0");
+      }
+    });
+
+    downloadButton.addEventListener("click", () => {
+      const srt = resultBox.value.trim();
+      if (!srt) return;
+      const blob = new Blob(["\uFEFF", srt, "\n"], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const originalName = fileInput.files?.[0]?.name || "transcript";
+      a.href = url;
+      a.download = originalName.replace(/\.[^.]+$/, "") + ".srt";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>
