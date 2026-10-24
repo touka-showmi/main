@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>立ち絵・表情タイムラインスタジオ（配置プリセット対応）</title>
+<style>
+:root{--bg:#111318;--panel:#1b1e26;--panel2:#232733;--line:#353b49;--text:#eef1f7;--muted:#aab2c2;--accent:#8bb5ff;--accent2:#5d8fe9;--good:#9dd9b0;--warn:#ffd18a;--danger:#ff9f9f;--radius:14px;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}button,input,select,textarea{font:inherit}button{cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:9px 12px;border-radius:9px}button:hover{border-color:var(--accent)}button.primary{background:var(--accent2);border-color:var(--accent2);color:#fff;font-weight:650}button.danger{color:var(--danger)}button:disabled{opacity:.45;cursor:not-allowed}input[type=text],input[type=number],input[type=file],select,textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;background:#101219;color:var(--text);min-width:0}input[type=range]{width:100%;accent-color:var(--accent)}input[type=checkbox]{accent-color:var(--accent)}label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}.app{max-width:1500px;margin:auto;padding:18px clamp(10px,2vw,28px) 40px}.top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}.brand h1{font-size:clamp(19px,2.3vw,28px);margin:0 0 3px;letter-spacing:.01em}.sub{color:var(--muted);font-size:12px}.tag{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;padding:4px 9px;color:var(--muted);font-size:11px;margin:2px}.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:15px 0}.tab{padding:9px 14px;border-radius:10px}.tab.active{background:#273957;border-color:#5479b6;color:#fff}.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:15px;min-width:0}.panel h2{font-size:16px;margin:0 0 12px}.panel h3{font-size:14px;margin:0 0 10px}.grid{display:grid;grid-template-columns:minmax(260px,330px) minmax(0,1fr);gap:14px;align-items:start}.grid>.stack:first-child{display:contents}.grid>.stack:first-child>.panel:first-child{grid-column:1;grid-row:1;min-width:0}.grid>.stack:first-child>.panel:nth-child(2){grid-column:2;grid-row:1;min-width:0;width:100%}.grid>.stack:nth-child(2){grid-column:1/-1;grid-row:2;min-width:0}.grid .panel,.grid .side-card{min-width:0}.grid .stage-wrap,.grid .stage{min-width:0;width:100%}.grid .row.wrap{align-items:center}.stack{display:grid;gap:14px}.row{display:flex;gap:8px;align-items:center}.row>*{min-width:0}.row.wrap{flex-wrap:wrap}.row.between{justify-content:space-between}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.muted{color:var(--muted)}.small{font-size:12px}.tiny{font-size:11px;color:var(--muted)}.help{font-size:12px;color:var(--muted);margin:8px 0 0}.notice{background:#26251f;border:1px solid #665638;color:#f4d9a7;border-radius:10px;padding:10px 12px;font-size:12px}.notice.good{background:#1d2a24;border-color:#355943;color:#bee7ca}.notice.error{background:#302020;border-color:#6a3b3b;color:#ffc3c3}.stage-wrap{position:relative;width:100%;max-width:100%;margin:auto;background:#08090c;border:1px solid #3b414e;border-radius:10px;overflow:hidden}.preview-size-control{border:1px solid var(--line);background:#171a22;border-radius:10px;padding:10px 12px;margin:0 0 12px}.preview-size-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.preview-size-head label{margin:0}.preview-size-value{font-size:12px;font-weight:650;color:var(--text);font-variant-numeric:tabular-nums;white-space:nowrap}.preview-size-slider{display:grid;grid-template-columns:minmax(0,1fr) 82px;align-items:center;gap:10px;margin-top:8px}.preview-size-presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.preview-size-presets button{font-size:11px;padding:5px 9px}.preview-size-presets button.active{border-color:var(--accent);background:#273957;color:#fff}.preview-size-help{font-size:11px;color:var(--muted);margin:7px 0 0}.stage{position:relative;aspect-ratio:16/9;width:100%;overflow:hidden;background:repeating-conic-gradient(#262a32 0% 25%,#1d2027 0% 50%) 50%/22px 22px}.stage video{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:fill}.stage .overlay{position:absolute;left:20%;top:71%;height:58%;width:auto;max-height:none;max-width:none;object-fit:contain;pointer-events:none;user-select:none;filter:none;transform:translate(-50%,-50%) rotate(0deg);transform-origin:center center}.stage .empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#777f90;padding:20px}.scrub{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:9px;align-items:center;margin-top:9px}.time{font-variant-numeric:tabular-nums;font-size:12px;color:var(--muted);white-space:nowrap}.asset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;margin-top:10px}.asset{background:#14171e;border:1px solid var(--line);border-radius:10px;padding:7px;min-width:0}.thumb{height:115px;background:repeating-conic-gradient(#292d36 0% 25%,#1b1e25 0% 50%) 50%/14px 14px;border-radius:7px;display:grid;place-items:center;overflow:hidden;margin-bottom:7px}.thumb img{max-width:100%;max-height:100%;object-fit:contain}.asset .assetname{font-size:11px;word-break:break-word;margin-bottom:6px}.asset .actions{display:flex;gap:5px}.asset .actions button{font-size:11px;padding:5px 7px;flex:1}.expression-block{border:1px solid var(--line);border-radius:10px;padding:11px;margin-top:10px}.expression-head{display:flex;justify-content:space-between;align-items:center;gap:8px}.expression-head strong{font-size:13px}.side-layout{display:grid;grid-template-columns:1fr 1fr;gap:12px}.side-card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}.side-card h3{display:flex;gap:7px;align-items:center}.dot{width:8px;height:8px;border-radius:99px;background:var(--accent);display:inline-block}.dot.right{background:#d4a4ff}.cue-table-wrap{overflow:auto;max-height:580px;border:1px solid var(--line);border-radius:9px}.cue-table{border-collapse:collapse;width:100%;min-width:800px;font-size:12px}.cue-table th,.cue-table td{border-bottom:1px solid var(--line);padding:7px;text-align:left;vertical-align:top}.cue-table th{position:sticky;top:0;background:#272c37;z-index:1;color:#c6cedb}.cue-table td select{font-size:11px;padding:6px;min-width:125px}.cue-text{max-width:320px;white-space:pre-wrap;overflow-wrap:anywhere}.pill{display:inline-block;border-radius:99px;padding:2px 7px;background:#2c3443;color:#c9d9f7;font-size:10px}.timeline-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px}.bar{height:7px;border-radius:20px;background:#343a48;overflow:hidden;margin-top:9px}.bar span{display:block;height:100%;width:0;background:var(--accent2);transition:width .2s}.workflow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}.workflow-step{display:flex;gap:9px;align-items:flex-start;background:#151820;border:1px solid var(--line);border-radius:10px;padding:10px}.workflow-step>b{display:grid;place-items:center;flex:0 0 25px;height:25px;border-radius:50%;background:#314568;color:#fff}.workflow-step strong{display:block;font-size:12px;margin-bottom:4px}.workflow-step span{display:block;font-size:11px;line-height:1.45;color:var(--muted)}.ai-column{min-width:0;border:1px solid var(--line);border-radius:10px;padding:11px;background:#171a22}.ai-column h3{margin:0 0 10px}.ai-column .json-area{min-height:265px}.ai-column .help{margin-top:9px}.hidden{display:none!important}.json-area{min-height:160px;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre;tab-size:2}.footer{margin-top:18px;color:var(--muted);font-size:11px}.metric{display:flex;gap:8px;flex-wrap:wrap}.metric span{border:1px solid var(--line);border-radius:8px;padding:5px 8px;color:var(--muted);font-size:11px}.sep{border:0;border-top:1px solid var(--line);margin:14px 0}.output-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}.file-button{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center}.file-button input{position:absolute;inset:0;opacity:0;cursor:pointer}.checkbox-row{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}.checkbox-row input{width:auto}.status{font-size:12px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}.status strong{color:var(--text)}#page-workspace .panel{min-width:0}#page-workspace .scrub>*{min-width:0}#page-workspace #videoInfo{overflow-wrap:anywhere}#page-workspace .side-card .fields>div{min-width:0}#page-workspace .side-card .row input[type=range]{flex:1 1 80px;width:1%;min-width:40px}#page-workspace .side-card .row input[type=number]{flex:0 0 82px;width:82px;max-width:82px}@media(max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}.grid>.stack:first-child>.panel:first-child,.grid>.stack:first-child>.panel:nth-child(2),.grid>.stack:nth-child(2){grid-column:auto;grid-row:auto}.side-layout,.output-grid{grid-template-columns:1fr}.workflow{grid-template-columns:repeat(2,minmax(0,1fr))}.stage{min-height:0}.cue-table-wrap{max-height:470px}}@media(max-width:520px){.workflow{grid-template-columns:1fr}.app{padding:10px 8px 28px}.panel{padding:11px}.fields{grid-template-columns:1fr}.top{align-items:flex-start}.tab{flex:1;padding:8px 7px;font-size:12px}.asset-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.thumb{height:130px}.row button{padding:8px}.scrub{grid-template-columns:1fr;gap:4px}.scrub .time:last-child{text-align:right}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand"><h1>立ち絵・表情タイムラインスタジオ</h1><div class="sub">透過立ち絵管理 / SRT表情推定 / JSONプロジェクト / フレーム保持を優先した書き出し</div></div>
+    <div><span class="tag">ローカル処理中心</span><span class="tag">PNG透過対応</span><span class="tag">左右独立</span></div>
+  </header>
+  <div class="notice" id="globalNotice">AI連携はコピペ方式です。ソフト内でプロンプト生成 → 外部AIへ貼り付け → AIのJSON返答をこのソフトへ貼り付け → 検証して反映します。APIキーやAIサービスへの直接接続は不要です。動画出力エンジンは初回書き出し時にCDNから取得します。</div>
+  <nav class="tabs" aria-label="編集ページ">
+    <button class="tab active" data-tab="workspace">1. 素材・プレビュー</button>
+    <button class="tab" data-tab="timeline">2. 字幕・表情タイムライン</button>
+    <button class="tab" data-tab="export">3. 保存・映像出力</button>
+  </nav>
+
+  <main>
+    <section id="page-workspace" class="page">
+      <div class="grid">
+        <div class="stack">
+          <div class="panel">
+            <h2>入力素材</h2>
+            <div class="stack">
+              <div><label for="videoFile">元動画（任意：プレビュー・最終合成用）</label><input id="videoFile" type="file" accept="video/*"></div>
+              <div><label for="srtFile">字幕ファイル（SRT）</label><input id="srtFile" type="file" accept=".srt,text/plain,application/x-subrip"></div>
+              <div class="row wrap"><button id="loadSrtText">SRTテキストを貼り付け</button><button id="clearCues">タイムラインをクリア</button></div>
+            </div>
+            <p class="help">SRTは文字起こしを元に表情の候補を作るために使います。SRT自体のタイムコードはそのまま保持します。</p>
+          </div>
+          <div class="panel">
+            <h2>プレビュー操作</h2>
+            <div class="preview-size-control" aria-label="プレビュー表示サイズ調整">
+              <div class="preview-size-head"><label for="previewSize">プレビュー表示サイズ</label><span class="preview-size-value" id="previewSizeValue">70%</span></div>
+              <div class="preview-size-slider"><input id="previewSize" type="range" min="35" max="100" step="1" value="70" aria-label="プレビュー表示幅"><input id="previewSizeNum" type="number" min="35" max="100" step="1" value="70" aria-label="プレビュー表示幅（数値・%）"></div>
+              <div class="preview-size-presets" aria-label="プレビューサイズのプリセット"><button type="button" data-preview-size="50">小さめ 50%</button><button type="button" data-preview-size="70" class="active">標準 70%</button><button type="button" data-preview-size="80">大きめ 80%</button><button type="button" data-preview-size="100">全幅 100%</button><button type="button" id="previewSizeReset">初期値に戻す</button></div>
+              <p class="preview-size-help">ここで変わるのは操作画面のプレビュー表示幅だけです。立ち絵のズーム設定や書き出す動画の解像度には影響しません。設定はこのブラウザーに保存されます。</p>
+            </div>
+            <div class="stage-wrap" id="stageWrap">
+              <div class="stage" id="stage">
+                <video id="videoPreview" playsinline preload="metadata" class="hidden"></video>
+                <img id="leftPreview" class="overlay left hidden" alt="左の立ち絵">
+                <img id="rightPreview" class="overlay right hidden" alt="右の立ち絵">
+                <div id="stageEmpty" class="empty">動画を読み込むと、実際の画面上で<br>左右の表情切り替えを確認できます。</div>
+              </div>
+            </div>
+            <div class="scrub"><span class="time" id="currentTime">00:00.000</span><input id="seek" type="range" min="0" max="1000" value="0" aria-label="動画位置"><span class="time" id="totalTime">00:00.000</span></div>
+            <div class="row wrap" style="margin-top:9px"><button id="playPause">再生</button><button id="stepBack">−1フレーム相当</button><button id="stepNext">+1フレーム相当</button><span class="tiny" id="videoInfo">動画未読み込み</span></div>
+            <hr class="sep">
+            <div class="side-layout">
+              <div class="side-card">
+                <h3><span class="dot"></span>左の配置・変形</h3>
+                <div style="margin-bottom:10px"><label for="leftPlacement">配置場所</label><select id="leftPlacement"><option value="left-bottom">左下</option><option value="center-bottom">中央下</option><option value="center">画面中央</option><option value="right-bottom">右下</option><option value="custom">手動（X/Yで調整）</option></select></div>
+                <div class="fields">
+                  <div><label for="leftScale">ズーム（画面高さ比）</label><div class="row"><input id="leftScale" type="range" min="10" max="200" value="58"><input id="leftScaleNum" type="number" min="10" max="200" step="1" value="58" style="max-width:82px"></div><div class="tiny" id="leftScaleVal">58%</div></div>
+                  <div><label for="leftAngle">角度（度）</label><div class="row"><input id="leftAngle" type="range" min="-180" max="180" value="0"><input id="leftAngleNum" type="number" min="-180" max="180" step="1" value="0" style="max-width:82px"></div><div class="tiny" id="leftAngleVal">0°</div></div>
+                  <div><label for="leftX">X位置（画面幅比・中心）</label><div class="row"><input id="leftX" type="range" min="-100" max="200" value="18"><input id="leftXNum" type="number" min="-100" max="200" step="1" value="18" style="max-width:82px"></div><div class="tiny" id="leftXVal">18%</div></div>
+                  <div><label for="leftY">Y位置（画面高さ比・中心）</label><div class="row"><input id="leftY" type="range" min="-100" max="200" value="71"><input id="leftYNum" type="number" min="-100" max="200" step="1" value="71" style="max-width:82px"></div><div class="tiny" id="leftYVal">71%</div></div>
+                </div>
+              </div>
+              <div class="side-card">
+                <h3><span class="dot right"></span>右の配置・変形</h3>
+                <div style="margin-bottom:10px"><label for="rightPlacement">配置場所</label><select id="rightPlacement"><option value="left-bottom">左下</option><option value="center-bottom">中央下</option><option value="center">画面中央</option><option value="right-bottom">右下</option><option value="custom">手動（X/Yで調整）</option></select></div>
+                <div class="fields">
+                  <div><label for="rightScale">ズーム（画面高さ比）</label><div class="row"><input id="rightScale" type="range" min="10" max="200" value="58"><input id="rightScaleNum" type="number" min="10" max="200" step="1" value="58" style="max-width:82px"></div><div class="tiny" id="rightScaleVal">58%</div></div>
+                  <div><label for="rightAngle">角度（度）</label><div class="row"><input id="rightAngle" type="range" min="-180" max="180" value="0"><input id="rightAngleNum" type="number" min="-180" max="180" step="1" value="0" style="max-width:82px"></div><div class="tiny" id="rightAngleVal">0°</div></div>
+                  <div><label for="rightX">X位置（画面幅比・中心）</label><div class="row"><input id="rightX" type="range" min="-100" max="200" value="82"><input id="rightXNum" type="number" min="-100" max="200" step="1" value="82" style="max-width:82px"></div><div class="tiny" id="rightXVal">82%</div></div>
+                  <div><label for="rightY">Y位置（画面高さ比・中心）</label><div class="row"><input id="rightY" type="range" min="-100" max="200" value="71"><input id="rightYNum" type="number" min="-100" max="200" step="1" value="71" style="max-width:82px"></div><div class="tiny" id="rightYVal">71%</div></div>
+                </div>
+              </div>
+            </div>
+            <p class="help">配置場所は左右の立ち絵ごとに選択できます。「中央下」は横方向の中央で下寄り（X=50%、Y=71%）、「画面中央」は映像の中央（X=50%、Y=50%）です。プリセットを選ぶとX・Yも自動設定されます。X/Yを手動で変更すると「手動」に切り替わります。画面外の値も設定でき、ズーム・角度の調整も引き続き利用できます。</p>
+          </div>
+        </div>
+        <div class="stack">
+          <div class="panel">
+            <div class="timeline-head"><h2 style="margin:0">立ち絵・表情差分</h2><span class="tiny">透過画像のアルファチャンネルを維持</span></div>
+            <div class="side-layout">
+              <div class="side-card">
+                <h3><span class="dot"></span>左の立ち絵</h3>
+                <label for="leftName">キャラクター名</label><input id="leftName" type="text" value="左キャラクター" maxlength="80">
+                <label for="leftFiles" style="margin-top:9px">表情画像をまとめて追加</label><input id="leftFiles" type="file" accept="image/png,image/webp,image/jpeg,image/gif" multiple>
+                <label for="leftDefault" style="margin-top:9px">標準表情</label><select id="leftDefault"><option value="">画像を追加してください</option></select>
+                <div id="leftAssets" class="asset-grid"></div>
+              </div>
+              <div class="side-card">
+                <h3><span class="dot right"></span>右の立ち絵</h3>
+                <label for="rightName">キャラクター名</label><input id="rightName" type="text" value="右キャラクター" maxlength="80">
+                <label for="rightFiles" style="margin-top:9px">表情画像をまとめて追加</label><input id="rightFiles" type="file" accept="image/png,image/webp,image/jpeg,image/gif" multiple>
+                <label for="rightDefault" style="margin-top:9px">標準表情</label><select id="rightDefault"><option value="">画像を追加してください</option></select>
+                <div id="rightAssets" class="asset-grid"></div>
+              </div>
+            </div>
+            <p class="help">ファイル名から表情名を仮設定します。各画像の表情名は後から変更できます。PNG/WebPの透明部分は背景として塗りつぶしません。</p>
+          </div>
+          <div class="panel">
+            <h2>素材の登録に関する注意</h2>
+            <div class="metric"><span>PNG / 透過WebP：推奨</span><span>JPEG：透過非対応</span><span>元画像を保持</span></div>
+            <p class="help">同じキャラクターの表情差分は、顔の位置・キャンバス寸法を揃えると切り替え時の揺れを抑えられます。画像ファイルそのものを自動で描き換える処理は行いません。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-timeline" class="page hidden">
+      <div class="stack">
+        <div class="panel">
+          <div class="timeline-head"><h2 style="margin:0">SRTと表情タイムライン</h2><div class="row wrap"><button id="heuristicBtn">字幕から仮推定</button><button id="promptBtn" class="primary">1. AI用プロンプトを生成</button></div></div>
+          <p class="help">SRTの各字幕区間に、左・右それぞれの表情IDを割り当てます。「字幕から仮推定」は端末内の単純なキーワード判定です。より文脈に沿った判断にはAI用プロンプトを使用してください。</p>
+          <div class="metric" id="timelineStats"><span>字幕 0件</span><span>AI適用 0件</span></div>
+          <div class="cue-table-wrap" style="margin-top:12px"><table class="cue-table"><thead><tr><th># / 時刻</th><th>字幕本文</th><th>左の表情</th><th>右の表情</th><th>出典・理由</th></tr></thead><tbody id="cueRows"><tr><td colspan="5" class="muted">SRTファイルを読み込んでください。</td></tr></tbody></table></div>
+        </div>
+        <div class="panel">
+          <h2>AIコピペ連携</h2>
+          <div class="notice">このソフトはAIサービスに直接接続しません。下の手順で、使いたいAIと手動でデータを受け渡します。画像ファイルそのものをAIへ送らず、登録済みの表情名・ID・SRT字幕・時刻を使って選択させます。</div>
+          <div class="workflow" aria-label="AIコピペ手順">
+            <div class="workflow-step"><b>1</b><div><strong>プロンプトを生成</strong><span>SRT・左右キャラクター・使用可能な表情IDからAIへの指示文を作ります。</span></div></div>
+            <div class="workflow-step"><b>2</b><div><strong>AIに貼り付ける</strong><span>プロンプトをコピーし、普段使っているAIのチャットへ貼り付けて送信します。</span></div></div>
+            <div class="workflow-step"><b>3</b><div><strong>AIのJSON返答を戻す</strong><span>AIが返したJSONをコピーし、右側の入力欄へ貼り付けます。JSONファイルからの読み込みもできます。</span></div></div>
+            <div class="workflow-step"><b>4</b><div><strong>検証して反映</strong><span>字幕数・時刻・表情IDを検証し、問題がなければ左右の表情タイムラインへ反映します。</span></div></div>
+          </div>
+          <div class="fields" style="margin-top:12px">
+            <div class="ai-column">
+              <h3>ステップ1・2：AIに渡す指示文</h3>
+              <label for="aiPrompt">生成されたプロンプト</label>
+              <textarea id="aiPrompt" class="json-area" placeholder="「1. AI用プロンプトを生成」を押してください。SRTと使用可能な表情IDが指示文に含まれます。"></textarea>
+              <div class="row wrap" style="margin-top:7px"><button id="makePromptAgain" class="primary">プロンプトを生成／更新</button><button id="copyPrompt">プロンプトをコピー</button><button id="savePrompt">TXTで保存</button></div>
+              <p class="help">コピー後、外部AIの入力欄に貼り付けて送信してください。表情画像をAIが直接見ているわけではないため、表情名は「笑顔」「驚き」「困惑」など意味が分かる名前にしておくと推定精度が上がります。</p>
+            </div>
+            <div class="ai-column">
+              <h3>ステップ3・4：AIの返答を取り込む</h3>
+              <label for="aiJson">AIが返したJSONを貼り付け</label>
+              <textarea id="aiJson" class="json-area" placeholder="AIの返答をここへ貼り付けてください。```json のコードフェンス付き返答にも対応します。"></textarea>
+              <div class="row wrap" style="margin-top:7px"><button id="applyAi" class="primary">JSONを検証して反映</button><label class="file-button" style="margin:0"><button type="button">JSONファイルを読み込む</button><input id="aiJsonFile" type="file" accept=".json,application/json" aria-label="AIのJSONファイルを選択"></label><button id="clearAiJson">返答欄をクリア</button></div>
+              <div class="row wrap" style="margin-top:7px"><button id="downloadMap">表情切り替えJSONを保存</button></div>
+              <p class="help">反映前に、字幕の全区間が含まれるか、時刻が元SRTと一致するか、左右それぞれの表情IDが登録済みかを確認します。検証に失敗した場合、既存タイムラインは変更しません。</p>
+            </div>
+          </div>
+          <div id="aiStatus" class="status" style="margin-top:9px"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-export" class="page hidden">
+      <div class="stack">
+        <div class="output-grid">
+          <div class="panel">
+            <h2>プロジェクト保存・復元</h2>
+            <p class="help">設定JSONには表情差分、左右の標準表情、配置、SRT字幕、表情タイムラインを保存できます。画像をJSONに埋め込むと単一ファイルで復元できますが、ファイル容量は大きくなります。</p>
+            <label class="checkbox-row" style="margin:12px 0"><input id="embedAssets" type="checkbox" checked> 画像データもJSONに埋め込む（移行しやすいが大容量）</label>
+            <div class="row wrap"><button id="exportProject" class="primary">プロジェクトJSONを保存</button><label class="file-button" style="margin:0"><button type="button">JSONから復元</button><input id="importProject" type="file" accept=".json,application/json" aria-label="プロジェクトJSONを選択"></label></div>
+            <div style="margin-top:12px"><label for="mapJsonPreview">表情マップJSON（確認用）</label><textarea id="mapJsonPreview" class="json-area" readonly placeholder="JSONを保存するときに内容を生成します。"></textarea></div>
+          </div>
+          <div class="panel">
+            <h2>合成動画を書き出す</h2>
+            <div class="notice good">リアルタイム録画ではなく、元動画をオフラインで処理します。フレームの表示速度に合わせたキャプチャは行わず、元動画のタイムスタンプを維持する方式です。書き出しが処理能力に追いつかない場合、低画質化して続行するのではなくエラーとして停止させます。</div>
+            <p class="help">書き出しには初回のみインターネット経由でFFmpeg WebAssemblyを読み込みます。動画や立ち絵をサーバーにアップロードする処理は行いません。大容量の動画はブラウザのメモリ上限で失敗する可能性があります。</p>
+            <div class="row wrap" style="margin-top:12px"><button id="exportVideo" class="primary">フレーム保持優先で合成出力</button><button id="cancelExport" disabled>中止</button></div>
+            <div class="bar"><span id="exportProgress"></span></div>
+            <div id="exportStatus" class="status" style="margin-top:9px">動画ファイルを読み込み、表情差分とタイムラインを設定してから開始してください。</div>
+            <div id="downloadOutput" style="margin-top:10px"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>画質・フレームレートの保証方針</h2>
+          <ul class="small muted" style="padding-left:20px;margin-bottom:0">
+            <li>プレビューのフレーム落ちを最終動画へ転写しません。出力は元動画をタイムスタンプ順にオフライン処理します。</li>
+            <li>一般的な8-bit YUV 4:2:0 / 4:2:2 / 4:4:4入力に対し、対応する場合はH.264のCRF 0（可逆エンコード）を使用し、元の映像フレームレートへの変換フィルターを挿入しません。</li>
+            <li>元動画の画素形式がこの出力経路で安全に扱えない場合は、劣化する設定へ自動変更せず、出力を中止します。</li>
+            <li>立ち絵の合成自体は意図した画素変更です。コーデック、色形式、ブラウザ、FFmpegビルドに依存するため、あらゆる動画で「絶対に画質劣化ゼロ」を保証することはできません。元動画ファイルのビット列を完全に維持したまま画面へ立ち絵を追加することもできません。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="footer">ローカル編集ツール試作版。AI推定の結果は必ずタイムラインで確認してください。映像出力は端末・ブラウザ・入力形式による制約があります。</footer>
+</div>
+
+<dialog id="srtDialog" style="max-width:750px;width:calc(100% - 24px);background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:16px">
+  <form method="dialog"><div class="row between"><h2 style="margin:0;font-size:16px">SRTテキストを貼り付け</h2><button value="cancel">閉じる</button></div><p class="help">字幕のSRT本文をそのまま貼り付けます。</p><textarea id="srtTextInput" class="json-area" style="width:100%;min-height:260px" placeholder="1\n00:00:01,000 --> 00:00:03,000\nこんにちは。\n"></textarea><div class="row wrap" style="margin-top:9px"><button id="parseSrtText" value="ok" class="primary">字幕として読み込む</button></div></form>
+</dialog>
+
+<script type="module">
+const $ = id => document.getElementById(id);
+const state = {
+  videoFile:null, videoUrl:null, durationMs:0, videoWidth:1920, videoHeight:1080,
+  sides:{left:{name:'左キャラクター',assets:[],defaultId:'',placementPreset:'left-bottom',scale:58,x:18,y:71,angle:0,margin:2},right:{name:'右キャラクター',assets:[],defaultId:'',placementPreset:'right-bottom',scale:58,x:82,y:71,angle:0,margin:2}},
+  cues:[], srtText:'', ffmpeg:null, ffmpegLoading:null, exportAbort:false, outputUrl:null
+};
+const uid = prefix => prefix+'_'+Math.random().toString(36).slice(2,9)+'_'+Date.now().toString(36);
+const esc = s => String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function fmt(ms){ms=Math.max(0,Math.round(ms||0));const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000),x=ms%1000;return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(x).padStart(3,'0')}`}
+function timeMs(t){const m=String(t).trim().match(/^(\d{1,3}):(\d{2}):(\d{2})[,.](\d{1,3})$/);if(!m)return NaN;return (+m[1]*3600+ +m[2]*60+ +m[3])*1000+ +(m[4]+'00').slice(0,3)}
+function safeFileName(s){return String(s||'asset').replace(/[^\p{L}\p{N}._-]+/gu,'_').slice(0,80)||'asset'}
+function dlBlob(blob,name){const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000)}
+function setStatus(id,msg,kind=''){const el=$(id);el.textContent=msg;el.className='status'+(kind?' '+kind:'')}
+function setTab(name){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('hidden',p.id!==`page-${name}`));if(name==='timeline')renderCues();if(name==='export')updateMapPreview()}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
+const PREVIEW_SIZE_STORAGE_KEY='portrait-expression-studio-preview-width-v1';
+function readPreviewSize(){try{const saved=Number(localStorage.getItem(PREVIEW_SIZE_STORAGE_KEY));if(Number.isFinite(saved)&&saved>=35&&saved<=100)return Math.round(saved)}catch(_){}return 70}
+function setPreviewSize(raw,save=true){
+  let n=Number(raw);if(!Number.isFinite(n))return;
+  n=Math.max(35,Math.min(100,Math.round(n)));
+  const wrap=$('stageWrap');if(!wrap)return;
+  wrap.style.width=n+'%';wrap.style.maxWidth='100%';
+  $('previewSize').value=String(n);$('previewSizeNum').value=String(n);$('previewSizeValue').textContent=n+'%';
+  document.querySelectorAll('[data-preview-size]').forEach(btn=>btn.classList.toggle('active',Number(btn.dataset.previewSize)===n));
+  if(save){try{localStorage.setItem(PREVIEW_SIZE_STORAGE_KEY,String(n))}catch(_){}}
+}
+$('previewSize').addEventListener('input',e=>setPreviewSize(e.target.value));
+$('previewSizeNum').addEventListener('change',e=>setPreviewSize(e.target.value));
+$('previewSizeNum').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();setPreviewSize(e.target.value);e.target.blur()}});
+document.querySelectorAll('[data-preview-size]').forEach(btn=>btn.addEventListener('click',()=>setPreviewSize(btn.dataset.previewSize)));
+$('previewSizeReset').addEventListener('click',()=>setPreviewSize(70));
+setPreviewSize(readPreviewSize(),false);
+function assetLabel(filename){return filename.replace(/\.[^.]+$/,'').replace(/[_.-]+/g,' ').trim()||'表情'}
+function sideLabel(side){return side==='left'?'左':'右'}
+function assets(side){return state.sides[side].assets}
+function getAsset(side,id){return assets(side).find(a=>a.id===id)||null}
+function defaultAsset(side){return getAsset(side,state.sides[side].defaultId)||assets(side)[0]||null}
+function setDefault(side,id){state.sides[side].defaultId=id||'';renderAssetControls(side);renderCues();renderPreview();updateMapPreview()}
+async function addImages(side, files){
+  for(const file of files){
+    if(!file.type.startsWith('image/'))continue;
+    const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)});
+    const im=new Image(); im.src=dataUrl; await im.decode().catch(()=>{});
+    const item={id:uid(side),label:assetLabel(file.name),fileName:file.name,mime:file.type||'image/png',dataUrl,width:im.naturalWidth||0,height:im.naturalHeight||0};
+    state.sides[side].assets.push(item);
+    if(!state.sides[side].defaultId)state.sides[side].defaultId=item.id;
+  }
+  renderAssetControls(side); renderCues(); renderPreview(); updateMapPreview();
+}
+function renderAssetControls(side){
+  const wrap=$(side+'Assets');wrap.replaceChildren();
+  const sel=$(side+'Default');sel.replaceChildren();
+  if(!assets(side).length){const op=document.createElement('option');op.value='';op.textContent='画像を追加してください';sel.append(op);sel.disabled=true}else{
+    sel.disabled=false;
+    assets(side).forEach(a=>{const op=document.createElement('option');op.value=a.id;op.textContent=a.label;sel.append(op)});
+    if(!assets(side).some(a=>a.id===state.sides[side].defaultId))state.sides[side].defaultId=assets(side)[0].id;
+    sel.value=state.sides[side].defaultId;
+  }
+  assets(side).forEach((a,index)=>{
+    const card=document.createElement('div');card.className='asset';
+    const th=document.createElement('div');th.className='thumb';const im=document.createElement('img');im.src=a.dataUrl;im.alt=a.label;th.append(im);card.append(th);
+    const name=document.createElement('input');name.type='text';name.value=a.label;name.maxLength=80;name.setAttribute('aria-label','表情名');name.style.fontSize='11px';name.style.padding='6px';name.addEventListener('change',()=>{a.label=name.value.trim()||'表情';renderAssetControls(side);renderCues();updateMapPreview()});card.append(name);
+    const m=document.createElement('div');m.className='tiny';m.textContent=`${a.width}×${a.height}`;card.append(m);
+    const actions=document.createElement('div');actions.className='actions';const def=document.createElement('button');def.textContent=state.sides[side].defaultId===a.id?'標準':'標準にする';def.addEventListener('click',()=>setDefault(side,a.id));
+    const del=document.createElement('button');del.textContent='削除';del.className='danger';del.addEventListener('click',()=>{state.sides[side].assets=assets(side).filter(x=>x.id!==a.id);if(state.sides[side].defaultId===a.id)state.sides[side].defaultId=assets(side)[0]?.id||'';state.cues.forEach(c=>{if(c[side+'ExpressionId']===a.id)c[side+'ExpressionId']=state.sides[side].defaultId});renderAssetControls(side);renderCues();renderPreview();updateMapPreview()});actions.append(def,del);card.append(actions);wrap.append(card);
+  });
+}
+const PLACEMENT_PRESETS={
+  'left-bottom':{x:18,y:71},
+  'center-bottom':{x:50,y:71},
+  'center':{x:50,y:50},
+  'right-bottom':{x:82,y:71}
+};
+function inferPlacementPreset(x,y){
+  for(const [key,p] of Object.entries(PLACEMENT_PRESETS))if(Math.abs(Number(x)-p.x)<0.01&&Math.abs(Number(y)-p.y)<0.01)return key;
+  return 'custom';
+}
+function syncTransformField(side,prop,value){
+  const suffix=prop==='scale'?'Scale':prop==='angle'?'Angle':prop==='x'?'X':'Y';
+  const label=prop==='angle'?`${value}°`:`${value}%`;
+  $(side+suffix).value=String(value);$(side+suffix+'Num').value=String(value);$(side+suffix+'Val').textContent=label;
+}
+function setPlacementPreset(side,preset,applyCoordinates=true){
+  if(!['left-bottom','center-bottom','center','right-bottom','custom'].includes(preset))preset='custom';
+  const cfg=state.sides[side];cfg.placementPreset=preset;
+  const select=$(side+'Placement');if(select)select.value=preset;
+  if(applyCoordinates&&PLACEMENT_PRESETS[preset]){
+    cfg.x=PLACEMENT_PRESETS[preset].x;cfg.y=PLACEMENT_PRESETS[preset].y;
+    syncTransformField(side,'x',cfg.x);syncTransformField(side,'y',cfg.y);
+  }
+  renderPreview();updateMapPreview();
+}
+function bindTransformControl(side,prop,rangeSuffix,numberSuffix,min,max,format){
+  const range=$(side+rangeSuffix),number=$(side+numberSuffix),val=$(side+(prop==='scale'?'ScaleVal':prop==='angle'?'AngleVal':prop==='x'?'XVal':'YVal'));
+  const labelValue=n=>format==='angle'?`${n}°`:`${n}%`;
+  const update=(raw,manual=false)=>{let n=Number(raw);if(!Number.isFinite(n))return;n=Math.min(max,Math.max(min,n));state.sides[side][prop]=n;range.value=String(n);number.value=String(n);val.textContent=labelValue(n);if(manual&&(prop==='x'||prop==='y')){state.sides[side].placementPreset='custom';$(side+'Placement').value='custom'}renderPreview();updateMapPreview()};
+  range.addEventListener('input',e=>update(e.target.value,true));
+  number.addEventListener('input',e=>{if(e.target.value!==''&&Number.isFinite(Number(e.target.value)))update(e.target.value,true)});
+  update(state.sides[side][prop]);
+}
+['left','right'].forEach(side=>{
+  $(side+'Files').addEventListener('change',async e=>{try{await addImages(side,[...e.target.files])}catch(err){alert('画像を読み込めませんでした: '+err.message)}e.target.value=''});
+  $(side+'Default').addEventListener('change',e=>setDefault(side,e.target.value));
+  $(side+'Name').addEventListener('input',e=>{state.sides[side].name=e.target.value;updateMapPreview()});
+  $(side+'Placement').addEventListener('change',e=>setPlacementPreset(side,e.target.value,true));
+  bindTransformControl(side,'scale','Scale','ScaleNum',10,200,'percent');
+  bindTransformControl(side,'x','X','XNum',-100,200,'percent');
+  bindTransformControl(side,'y','Y','YNum',-100,200,'percent');
+  bindTransformControl(side,'angle','Angle','AngleNum',-180,180,'angle');
+});
+
+$('videoFile').addEventListener('change',e=>{
+  const file=e.target.files?.[0];if(!file)return;
+  if(state.videoUrl)URL.revokeObjectURL(state.videoUrl);state.videoFile=file;state.videoUrl=URL.createObjectURL(file);
+  const v=$('videoPreview');v.src=state.videoUrl;v.classList.remove('hidden');$('stageEmpty').classList.add('hidden');
+  v.onloadedmetadata=()=>{state.durationMs=Math.round(v.duration*1000);state.videoWidth=v.videoWidth||1920;state.videoHeight=v.videoHeight||1080;$('stage').style.aspectRatio=`${state.videoWidth}/${state.videoHeight}`;$('seek').max=String(Math.max(1,state.durationMs));$('seek').value='0';$('totalTime').textContent=fmt(state.durationMs);$('videoInfo').textContent=`${state.videoWidth}×${state.videoHeight} / ${file.name}`;renderPreview();};
+  v.onerror=()=>alert('ブラウザでプレビューできない動画形式です。別の動画形式で試してください。');
+});
+$('seek').addEventListener('input',()=>{const v=$('videoPreview');if(v.duration){v.currentTime=+ $('seek').value/1000;renderPreview()}});
+$('videoPreview').addEventListener('timeupdate',()=>{const v=$('videoPreview');$('currentTime').textContent=fmt(v.currentTime*1000);if(! $('seek').matches(':active'))$('seek').value=String(Math.round(v.currentTime*1000));renderPreview()});
+$('playPause').addEventListener('click',async()=>{const v=$('videoPreview');if(!state.videoFile)return; if(v.paused){try{await v.play();$('playPause').textContent='一時停止'}catch(e){setStatus('exportStatus','プレビュー再生に失敗しました: '+e.message)}}else{v.pause();$('playPause').textContent='再生'}});
+$('videoPreview').addEventListener('pause',()=>$('playPause').textContent='再生');$('videoPreview').addEventListener('play',()=>$('playPause').textContent='一時停止');
+function seekByFrame(dir){const v=$('videoPreview');if(!v.duration)return;const approximateFrame=1/30;v.pause();v.currentTime=Math.min(v.duration,Math.max(0,v.currentTime+dir*approximateFrame))}
+$('stepBack').addEventListener('click',()=>seekByFrame(-1));$('stepNext').addEventListener('click',()=>seekByFrame(1));
+function activeCue(ms){return state.cues.filter(c=>ms>=c.startMs&&ms<c.endMs).sort((a,b)=>b.startMs-a.startMs)[0]||null}
+function renderPreview(){
+  const ms=($('videoPreview').currentTime||0)*1000;const cue=activeCue(ms);
+  for(const side of ['left','right']){const im=$(side+'Preview'),cfg=state.sides[side];const id=cue?.[side+'ExpressionId']||cfg.defaultId;const a=getAsset(side,id)||defaultAsset(side);if(a){if(im.dataset.assetId!==a.id||im.getAttribute('src')!==a.dataUrl){im.src=a.dataUrl;im.dataset.assetId=a.id}im.alt=`${sideLabel(side)}：${a.label}`;im.classList.remove('hidden');im.style.height=cfg.scale+'%';im.style.width='auto';im.style.maxHeight='none';im.style.maxWidth='none';im.style.left=cfg.x+'%';im.style.top=cfg.y+'%';im.style.right='auto';im.style.bottom='auto';im.style.transform=`translate(-50%,-50%) rotate(${cfg.angle}deg)`;}else{im.classList.add('hidden');im.removeAttribute('src');delete im.dataset.assetId}}
+}
+function parseSrt(text){
+  const normalized=String(text).replace(/^\uFEFF/,'').replace(/\r/g,'').trim();if(!normalized)return [];
+  const blocks=normalized.split(/\n\s*\n+/);const out=[];
+  for(const block of blocks){const lines=block.split('\n');let ti=lines.findIndex(l=>l.includes('-->'));if(ti<0)continue;const pair=lines[ti].split('-->');if(pair.length<2)continue;
+    const startMs=timeMs(pair[0].trim().split(/\s+/)[0]),endMs=timeMs(pair[1].trim().split(/\s+/)[0]);const text=lines.slice(ti+1).join('\n').replace(/<[^>]*>/g,'').trim();
+    if(Number.isFinite(startMs)&&Number.isFinite(endMs)&&endMs>startMs)out.push({cueIndex:out.length+1,startMs,endMs,text,leftExpressionId:state.sides.left.defaultId,rightExpressionId:state.sides.right.defaultId,reason:'標準表情（未推定）',confidence:null,source:'default'});
+  }
+  return out.sort((a,b)=>a.startMs-b.startMs);
+}
+$('srtFile').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{state.srtText=await f.text();state.cues=parseSrt(state.srtText);renderCues();renderPreview();updateMapPreview();setStatus('aiStatus',`SRTを読み込みました：字幕 ${state.cues.length} 件`);setTab('timeline')}catch(err){alert('SRTを読み込めませんでした: '+err.message)}e.target.value=''});
+$('loadSrtText').addEventListener('click',()=>{$('srtTextInput').value=state.srtText;$('srtDialog').showModal()});
+$('parseSrtText').addEventListener('click',e=>{e.preventDefault();state.srtText=$('srtTextInput').value;state.cues=parseSrt(state.srtText);renderCues();renderPreview();updateMapPreview();$('srtDialog').close();setTab('timeline')});
+$('clearCues').addEventListener('click',()=>{if(confirm('字幕・表情タイムラインを空にしますか？')){state.cues=[];state.srtText='';renderCues();renderPreview();updateMapPreview()}});
+function optionsFor(side,selected){const all=assets(side);const list=all.map(a=>`<option value="${esc(a.id)}" ${a.id===selected?'selected':''}>${esc(a.label)} — ${esc(a.id)}</option>`).join('');return `<option value="">（標準表情）</option>${list}`}
+function renderCues(){
+  const body=$('cueRows');body.replaceChildren();
+  if(!state.cues.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=5;td.className='muted';td.textContent='SRTファイルを読み込んでください。';tr.append(td);body.append(tr)}
+  state.cues.forEach((c,i)=>{
+    const tr=document.createElement('tr');const td1=document.createElement('td');td1.innerHTML=`<span class="pill">${i+1}</span><br><span class="time">${fmt(c.startMs)}</span><br><span class="time">${fmt(c.endMs)}</span>`;tr.append(td1);
+    const td2=document.createElement('td');td2.className='cue-text';td2.textContent=c.text||'（字幕なし）';tr.append(td2);
+    for(const side of ['left','right']){const td=document.createElement('td'),sel=document.createElement('select');sel.innerHTML=optionsFor(side,c[side+'ExpressionId']);sel.addEventListener('change',()=>{c[side+'ExpressionId']=sel.value||state.sides[side].defaultId;c.source='manual';c.reason='手動で指定';c.confidence=null;renderPreview();updateMapPreview();updateTimelineStats()});td.append(sel);tr.append(td)}
+    const td5=document.createElement('td');const src=document.createElement('span');src.className='pill';src.textContent=c.source==='ai'?'AI':c.source==='heuristic'?'仮推定':c.source==='manual'?'手動':'未推定';td5.append(src);const reason=document.createElement('div');reason.className='small muted';reason.textContent=(c.reason||'')+(c.confidence!=null?` (${Math.round(c.confidence*100)}%)`:'');td5.append(reason);tr.append(td5);body.append(tr);
+  });updateTimelineStats();
+}
+function updateTimelineStats(){const ai=state.cues.filter(c=>c.source==='ai').length;$('timelineStats').replaceChildren();for(const t of [`字幕 ${state.cues.length}件`,`AI適用 ${ai}件`,`左右別に表情を管理`]){const s=document.createElement('span');s.textContent=t;$('timelineStats').append(s)}}
+$('heuristicBtn').addEventListener('click',()=>{if(!state.cues.length){alert('先にSRTファイルを読み込んでください。');return}for(const c of state.cues){const guess=emotionGuess(c.text);const pref=guess.left||guess.main;const rguess=guess.right||guess.main;c.leftExpressionId=matchAsset('left',pref)?.id||state.sides.left.defaultId;c.rightExpressionId=matchAsset('right',rguess)?.id||state.sides.right.defaultId;c.reason=guess.reason;c.confidence=guess.confidence;c.source='heuristic'}renderCues();renderPreview();updateMapPreview();setStatus('aiStatus','キーワードベースの仮推定を適用しました。文脈理解ではないため、最終出力前に必ず確認してください。')});
+function matchAsset(side,keywords){const arr=assets(side);if(!arr.length)return null;const terms=Array.isArray(keywords)?keywords:[keywords];for(const term of terms){if(!term)continue;const a=arr.find(x=>x.label.toLowerCase().includes(String(term).toLowerCase())||x.fileName.toLowerCase().includes(String(term).toLowerCase()));if(a)return a}return null}
+function emotionGuess(text){const t=String(text||'');let main=['通常','普通','neutral'];let reason='感情語が明確でないため標準表情';let confidence=.42;
+  const rules=[
+    {terms:/驚|びっくり|まさか|えっ|え!?|本当[？?！!]|なんだって|うそ[！!？?]/i,keys:['驚き','びっくり','驚','困惑'],reason:'驚き・予想外の表現',confidence:.79},
+    {terms:/怒|ふざけ|許さない|最悪|なんでだよ|いい加減|むかつ|ちょっと！/i,keys:['怒り','怒','不満'],reason:'怒り・不満を示す語句',confidence:.76},
+    {terms:/悲し|寂し|さみし|つらい|辛い|泣|残念|ごめん|失敗した|落ち込/i,keys:['悲しみ','悲しい','泣き','しょんぼり'],reason:'悲しみ・謝罪を示す語句',confidence:.75},
+    {terms:/笑|ｗ{2,}|www|草|うれし|嬉し|やった|ありがとう|最高|楽しい|好き！/i,keys:['笑顔','喜び','笑','嬉しい','にこ'],reason:'喜び・笑いを示す語句',confidence:.72},
+    {terms:/えーと|うーん|どうしよう|どうして|なぜ|考え|なるほど|たぶん|もしかして/i,keys:['考え','困惑','疑問','通常'],reason:'思考・疑問を示す語句',confidence:.63},
+    {terms:/!?[！？]{1,}|[！!]{2,}/,keys:['驚き','興奮','笑顔'],reason:'強い感嘆符を含む表現',confidence:.53}
+  ];for(const r of rules){if(r.terms.test(t)){main=r.keys;reason=r.reason;confidence=r.confidence;break}}
+  let left=main,right=main;const leftSpeaker=/^(?:\[?左\]?|左側|left)\s*[:：]/i.test(t),rightSpeaker=/^(?:\[?右\]?|右側|right)\s*[:：]/i.test(t);if(leftSpeaker)right=['通常','neutral'];if(rightSpeaker)left=['通常','neutral'];return {main,left,right,reason,confidence}}
+function getExpressionList(side){return assets(side).map(a=>({id:a.id,label:a.label,fileName:a.fileName}))}
+function createAiPrompt(){
+  if(!state.cues.length){setStatus('aiStatus','先にSRTファイルを読み込んでください。','error');alert('先にSRTファイルを読み込んでください。');return false}
+  if(!assets('left').length&&!assets('right').length){setStatus('aiStatus','表情画像がまだ登録されていません。少なくとも使いたい側の表情画像を追加してください。','error');alert('表情画像がまだ登録されていません。少なくとも使いたい側の表情画像を追加してください。');return false}
+  const payload={schemaVersion:1,task:'subtitle_expression_assignment',instructions:'SRT各区間に対して左右の立ち絵の表情を独立して選択する。提供された表情ID以外は使用しない。',expectedCueCount:state.cues.length,expressions:{left:{character:state.sides.left.name,defaultExpressionId:state.sides.left.defaultId,available:getExpressionList('left')},right:{character:state.sides.right.name,defaultExpressionId:state.sides.right.defaultId,available:getExpressionList('right')}},cues:state.cues.map((c,i)=>({cueIndex:i+1,startMs:c.startMs,endMs:c.endMs,text:c.text,currentLeftExpressionId:c.leftExpressionId,currentRightExpressionId:c.rightExpressionId}))};
+  const rules = [
+    'あなたは日本語動画の表情演出アシスタントです。下の入力JSONを分析し、字幕の意味、文脈、会話の流れ、感情の強さ、話者と聞き手の反応を考慮して、左右それぞれの立ち絵に最適な表情を割り当ててください。',
+    '', '【必須ルール】',
+    '1. 左キャラクターと右キャラクターを別々に判断してください。片方が話者でも、もう片方の相づち・驚き・困惑などのリアクションが自然なら設定して構いません。話者位置が不明な場合、字幕だけで断定しないでください。',
+    '2. 左は expressions.left.available に記載されたIDだけ、右は expressions.right.available に記載されたIDだけを使用してください。表情IDを作成・改名・推測してはいけません。',
+    '3. 登録画像のlabelは表情の意味を示すメタデータです。画像そのものを見たと仮定せず、labelとfileNameから意味を判断してください。',
+    '4. 入力 cues の各区間について、1件ずつ出力してください。件数を変えず、省略・追加・統合・分割・並べ替えをしないでください。',
+    '5. cueIndex、startMs、endMs、字幕本文は入力値を完全に維持してください。時刻の単位はミリ秒です。新しい時刻を計算しないでください。',
+    '6. 表情に確信が持てない場合は、そのキャラクターの defaultExpressionId を使ってください。defaultExpressionId が空文字の場合は expressionId も空文字にしてください。',
+    '7. reasonは短い日本語で選択理由を示してください。confidenceは0から1の数値です。',
+    '8. 最終出力はJSONオブジェクトだけにしてください。前置き、説明、Markdown、```json のコードフェンスを付けないでください。',
+    '', '【出力形式】以下と同じキー構造にし、cuesには全字幕を含めてください。',
+    JSON.stringify({schemaVersion:1,cues:[{cueIndex:1,startMs:1000,endMs:2500,leftExpressionId:'左の利用可能ID',rightExpressionId:'右の利用可能ID',reason:'左は驚き、右は落ち着いて聞いている',confidence:0.8}]},null,2),
+    '', '【入力JSON】', JSON.stringify(payload,null,2)
+  ];
+  $('aiPrompt').value=rules.join('\n');
+  setStatus('aiStatus',`プロンプトを生成しました。字幕 ${state.cues.length} 件、左の表情 ${assets('left').length} 種、右の表情 ${assets('right').length} 種。コピーして外部AIへ貼り付けてください。`,'good');
+  return true;
+}
+$('promptBtn').addEventListener('click',createAiPrompt);
+$('makePromptAgain').addEventListener('click',createAiPrompt);
+async function copyTextWithFallback(text, textarea){
+  try{await navigator.clipboard.writeText(text);return true}catch(_){
+    textarea.focus();textarea.select();
+    try{return document.execCommand('copy')}catch(__){return false}
+  }
+}
+$('copyPrompt').addEventListener('click',async()=>{
+  if(!$('aiPrompt').value&&!createAiPrompt())return;
+  const ok=await copyTextWithFallback($('aiPrompt').value,$('aiPrompt'));
+  setStatus('aiStatus',ok?'プロンプトをコピーしました。外部AIのチャット欄に貼り付けてください。':'自動コピーできませんでした。選択されたプロンプトを手動でコピーしてください。',ok?'good':'');
+});
+$('savePrompt').addEventListener('click',()=>{if(!$('aiPrompt').value&&!createAiPrompt())return;dlBlob(new Blob([$('aiPrompt').value],{type:'text/plain;charset=utf-8'}),'expression_ai_prompt.txt')});
+$('clearAiJson').addEventListener('click',()=>{$('aiJson').value='';setStatus('aiStatus','AI返答欄をクリアしました。')});
+$('aiJsonFile').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{$('aiJson').value=await f.text();setStatus('aiStatus',`AI返答JSONを読み込みました：${f.name}。内容を検証してから反映してください。`)}catch(err){setStatus('aiStatus','JSONファイルを読み込めませんでした: '+err.message,'error')}e.target.value=''});
+function parseAiJsonText(raw){
+  let text=String(raw||'').trim();
+  if(!text)throw new Error('AI返答JSONを貼り付けてください。');
+  text=text.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'').trim();
+  try{return JSON.parse(text)}catch(firstError){
+    const first=text.indexOf('{'),last=text.lastIndexOf('}');
+    if(first>=0&&last>first){try{return JSON.parse(text.slice(first,last+1))}catch(_){}}
+    throw new Error('JSONとして解析できません。AIに「JSONのみを出力し、説明文を付けない」と伝えて再生成してください。');
+  }
+}
+function applyAiData(data){
+  if(!data||!Array.isArray(data.cues))throw new Error('返答JSONに cues 配列がありません。');
+  if(data.schemaVersion!==undefined&&data.schemaVersion!==1)throw new Error('対応していない schemaVersion です。');
+  if(data.cues.length!==state.cues.length)throw new Error(`字幕件数が一致しません（元SRT ${state.cues.length} 件 / AI返答 ${data.cues.length} 件）。全区間を含めたJSONを再生成してください。既存タイムラインは変更していません。`);
+  const byIndex=new Map(state.cues.map((c,i)=>[i+1,c]));const seen=new Set();const plan=[];
+  for(const item of data.cues){
+    if(!item||!Number.isInteger(Number(item.cueIndex)))throw new Error('cueIndex が整数でない字幕があります。');
+    const idx=Number(item.cueIndex);if(seen.has(idx))throw new Error(`cueIndex ${idx} が重複しています。`);seen.add(idx);
+    const target=byIndex.get(idx);if(!target)throw new Error(`範囲外の cueIndex です: ${idx}`);
+    if(Number(item.startMs)!==target.startMs||Number(item.endMs)!==target.endMs)throw new Error(`字幕 ${idx} の時刻が元SRTと一致しません。タイムコードを変更せず再生成してください。`);
+    const li=String(item.leftExpressionId??'');const ri=String(item.rightExpressionId??'');
+    if(li&&!getAsset('left',li))throw new Error(`登録されていない左の表情IDです: ${li}`);
+    if(ri&&!getAsset('right',ri))throw new Error(`登録されていない右の表情IDです: ${ri}`);
+    if(!li&&!state.sides.left.defaultId&&assets('left').length)throw new Error('左の標準表情が未設定で、AI返答の表情IDも空です。');
+    if(!ri&&!state.sides.right.defaultId&&assets('right').length)throw new Error('右の標準表情が未設定で、AI返答の表情IDも空です。');
+    const confidence=Number.isFinite(Number(item.confidence))?Math.min(1,Math.max(0,Number(item.confidence))):null;
+    plan.push({target,leftExpressionId:li||state.sides.left.defaultId,rightExpressionId:ri||state.sides.right.defaultId,reason:String(item.reason||'AIによる推定'),confidence});
+  }
+  if(seen.size!==state.cues.length)throw new Error('AI返答に含まれていない字幕区間があります。全区間を含めたJSONを再生成してください。既存タイムラインは変更していません。');
+  // Validation completed before any mutation: apply transactionally.
+  for(const p of plan){p.target.leftExpressionId=p.leftExpressionId;p.target.rightExpressionId=p.rightExpressionId;p.target.reason=p.reason;p.target.confidence=p.confidence;p.target.source='ai'}
+  renderCues();renderPreview();updateMapPreview();setStatus('aiStatus',`AI JSONを検証して反映しました。${plan.length}区間 / 左右の表情ID・時刻・字幕数を確認済みです。結果をタイムラインで確認してください。`,'good');
+}
+$('applyAi').addEventListener('click',()=>{try{const d=parseAiJsonText($('aiJson').value);applyAiData(d)}catch(e){setStatus('aiStatus','反映できません: '+e.message,'error');alert('AI JSONを反映できませんでした。\n'+e.message)}});
+$('downloadMap').addEventListener('click',()=>{const obj=makeMapObject();dlBlob(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}),'expression_timeline.json');updateMapPreview()});
+function makeMapObject(){return {schemaVersion:1,projectType:'portrait-expression-timeline',createdAt:new Date().toISOString(),video:{fileName:state.videoFile?.name||null,width:state.videoWidth,height:state.videoHeight,durationMs:state.durationMs},characters:Object.fromEntries(['left','right'].map(side=>[side,{name:state.sides[side].name,defaultExpressionId:state.sides[side].defaultId,layout:{placementPreset:state.sides[side].placementPreset||inferPlacementPreset(state.sides[side].x,state.sides[side].y),zoomPercent:state.sides[side].scale,scalePercent:state.sides[side].scale,xPercent:state.sides[side].x,yPercent:state.sides[side].y,angleDeg:state.sides[side].angle,marginPercent:state.sides[side].margin},expressions:getExpressionList(side)}])),cues:state.cues.map((c,i)=>({cueIndex:i+1,startMs:c.startMs,endMs:c.endMs,text:c.text,leftExpressionId:c.leftExpressionId||state.sides.left.defaultId,rightExpressionId:c.rightExpressionId||state.sides.right.defaultId,source:c.source||'manual',reason:c.reason||'',confidence:c.confidence??null}))}}
+function updateMapPreview(){if($('mapJsonPreview'))$('mapJsonPreview').value=JSON.stringify(makeMapObject(),null,2)}
+$('exportProject').addEventListener('click',()=>{const embed=$('embedAssets').checked;const proj={...makeMapObject(),srtText:state.srtText,characters:{}};for(const side of ['left','right'])proj.characters[side]={...makeMapObject().characters[side],expressions:assets(side).map(a=>embed?({...a}):({id:a.id,label:a.label,fileName:a.fileName,mime:a.mime,width:a.width,height:a.height}))};dlBlob(new Blob([JSON.stringify(proj,null,2)],{type:'application/json'}),'portrait_expression_project.json')});
+$('importProject').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{const p=JSON.parse(await f.text());if(p.schemaVersion!==1||!p.characters?.left||!p.characters?.right)throw new Error('対応していないプロジェクトJSONです。');for(const side of ['left','right']){const ch=p.characters[side];state.sides[side].name=ch.name||sideLabel(side)+'キャラクター';state.sides[side].defaultId=ch.defaultExpressionId||'';state.sides[side].scale=ch.layout?.zoomPercent??ch.layout?.scalePercent??58;state.sides[side].margin=ch.layout?.marginPercent??2;state.sides[side].x=ch.layout?.xPercent??(side==='left'?18:82);state.sides[side].y=ch.layout?.yPercent??(100-state.sides[side].scale/2);state.sides[side].angle=ch.layout?.angleDeg??0;state.sides[side].placementPreset=ch.layout?.placementPreset||inferPlacementPreset(state.sides[side].x,state.sides[side].y);state.sides[side].assets=(ch.expressions||[]).filter(a=>a.dataUrl).map(a=>({...a}));$(side+'Name').value=state.sides[side].name;$(side+'Placement').value=state.sides[side].placementPreset;['scale','x','y','angle'].forEach(prop=>{const suffix=prop==='scale'?'Scale':prop==='angle'?'Angle':prop==='x'?'X':'Y';const v=state.sides[side][prop];$(side+suffix).value=String(v);$(side+suffix+'Num').value=String(v);$(side+suffix+'Val').textContent=prop==='angle'?`${v}°`:`${v}%`});renderAssetControls(side)}if((p.cues||[]).length)state.cues=p.cues.map((c,i)=>({...c,cueIndex:i+1}));else state.cues=[];state.srtText=p.srtText||'';if(state.srtText)$('srtTextInput').value=state.srtText;renderCues();renderPreview();updateMapPreview();setStatus('aiStatus','プロジェクトを復元しました。'+(Object.values(state.sides).some(s=>s.assets.length===0)?' 画像データがないJSONの場合は、画像を再登録してください。':''));alert('プロジェクトを読み込みました。画像をJSONに含めていない場合、表情画像は別途再登録が必要です。');setTab('workspace')}catch(err){alert('JSONを復元できませんでした: '+err.message)}e.target.value=''});
+
+function intervalsFor(side,durationMs){
+  const dur=Math.max(0,durationMs);if(dur<=0)return [];
+  const cues=state.cues.filter(c=>c.endMs>c.startMs).map(c=>({...c,startMs:Math.max(0,c.startMs),endMs:Math.min(dur,c.endMs)})).filter(c=>c.endMs>c.startMs).sort((a,b)=>a.startMs-b.startMs);
+  const points=new Set([0,dur]);cues.forEach(c=>{points.add(c.startMs);points.add(c.endMs)});const p=[...points].sort((a,b)=>a-b);const seg=[];
+  for(let i=0;i<p.length-1;i++){const startMs=p[i],endMs=p[i+1];if(endMs<=startMs)continue;const mid=(startMs+endMs)/2;const active=cues.filter(c=>mid>=c.startMs&&mid<c.endMs).sort((a,b)=>b.startMs-a.startMs)[0];const id=(active?.[side+'ExpressionId'])||state.sides[side].defaultId||assets(side)[0]?.id||'';const last=seg[seg.length-1];if(last&&last.id===id&&last.endMs===startMs)last.endMs=endMs;else seg.push({id,startMs,endMs});}
+  return seg.filter(s=>s.id&&getAsset(side,s.id));
+}
+function ffmpegEnable(segments){return segments.map(s=>`gte(t\\,${(s.startMs/1000).toFixed(6)})*lt(t\\,${(s.endMs/1000).toFixed(6)})`).join('+')||'0'}
+function mimeExt(asset){const m=asset.mime||asset.dataUrl?.slice(5).split(';')[0]||'image/png';return ({'image/png':'png','image/webp':'webp','image/jpeg':'jpg','image/gif':'gif','image/avif':'avif'})[m]||'png'}
+function dataUrlBytes(dataUrl){const b64=dataUrl.split(',')[1]||'';const bin=atob(b64);const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);return arr}
+async function getFFmpeg(){
+  if(state.ffmpeg)return state.ffmpeg;if(state.ffmpegLoading)return state.ffmpegLoading;
+  state.ffmpegLoading=(async()=>{
+    setStatus('exportStatus','FFmpeg WebAssemblyをCDNから読み込んでいます…');
+    const ffmpegBase='https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm';
+    const {FFmpeg}=await import(ffmpegBase+'/index.js');
+    const {toBlobURL}=await import('https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js');
+    const ff=new FFmpeg();
+    ff.on('log',({message})=>{if(message&&/Video:|Stream #|Error|error|Output #|frame=/.test(message))$('exportStatus').textContent=message});
+    ff.on('progress',({progress})=>{if(Number.isFinite(progress))$('exportProgress').style.width=Math.min(100,Math.max(0,progress*100))+'%'});
+    const coreBase='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm';
+    // The wrapper normally creates ./worker.js relative to its imported module URL.
+    // For a local HTML file, that cross-origin worker URL is blocked by browsers. Create a
+    // blob-backed module worker and rewrite its relative imports to absolute CDN module URLs.
+    const workerResp=await fetch(ffmpegBase+'/worker.js');if(!workerResp.ok)throw new Error('FFmpeg workerファイルを取得できませんでした。ネットワーク制限の可能性があります。');
+    let workerSource=await workerResp.text();
+    workerSource=workerSource.replace(/(["'])\.\/([^"']+\.js)\1/g, (_m,q,path)=>q+ffmpegBase+'/'+path+q);
+    const classWorkerURL=URL.createObjectURL(new Blob([workerSource],{type:'text/javascript'}));
+    const coreURL=await toBlobURL(coreBase+'/ffmpeg-core.js','text/javascript');
+    const wasmURL=await toBlobURL(coreBase+'/ffmpeg-core.wasm','application/wasm');
+    try{await ff.load({classWorkerURL,coreURL,wasmURL})}finally{URL.revokeObjectURL(classWorkerURL)}
+    state.ffmpeg=ff;return ff;
+  })();
+  try{return await state.ffmpegLoading}finally{state.ffmpegLoading=null}
+}
+function parseFFmpegMetadata(lines){const videoLine=lines.find(s=>/Stream #\d+:\d+.*Video:/.test(s));if(!videoLine)return null;const fm=videoLine.match(/Video:.*?,\s*(yuv[0-9a-z]+|gbrp[0-9a-z]*|rgb24|rgba|bgra)\s*(?:\(|,)/i);const dm=videoLine.match(/(\d{2,5})x(\d{2,5})(?:\s|,)/);return {line:videoLine,pixFmt:fm?.[1]?.toLowerCase()||null,width:dm?+dm[1]:null,height:dm?+dm[2]:null}}
+async function ffmpegRunChecked(ff,args){const code=await ff.exec(args);if(code!==0)throw new Error(`FFmpegが終了コード ${code} で停止しました。低画質設定への自動切り替えは行いません。`)}
+async function exportCompositedVideo(){
+  if(!state.videoFile){alert('最初に元動画を読み込んでください。');return}if(!state.cues.length){if(!confirm('字幕タイムラインがありません。左右の標準表情のみで全編を合成しますか？'))return}
+  if(!assets('left').length&&!assets('right').length){alert('立ち絵を少なくとも片側へ登録してください。');return}
+  $('exportVideo').disabled=true;$('cancelExport').disabled=false;state.exportAbort=false;$('exportProgress').style.width='0%';$('downloadOutput').replaceChildren();
+  let ff=null, inputName='input_video', outName='portrait_expression_lossless.mkv';
+  const logLines=[];
+  try{
+    ff=await getFFmpeg();if(state.exportAbort)throw new Error('ユーザーにより中止されました。');
+    ff.on('log',({message})=>{if(message)logLines.push(message)});
+    setStatus('exportStatus','元動画を読み込み、映像ストリーム情報を確認しています…');
+    inputName='input_video.'+(state.videoFile.name.split('.').pop().match(/^[a-z0-9]{1,8}$/i)?.[0]||'mp4');
+    await ff.writeFile(inputName,new Uint8Array(await state.videoFile.arrayBuffer()));
+    try{await ff.exec(['-hide_banner','-i',inputName])}catch(_){}
+    if(state.exportAbort)throw new Error('ユーザーにより中止されました。');
+    const meta=parseFFmpegMetadata(logLines);
+    if(!meta)throw new Error('元動画の映像形式を解析できませんでした。安全性を確認できないため出力を中止しました。');
+    const supported=['yuv420p','yuv422p','yuv444p'];
+    if(!supported.includes(meta.pixFmt))throw new Error(`入力の画素形式は ${meta.pixFmt||'不明'} です。このHTMLの可逆出力経路は ${supported.join(', ')} のみ対応します。画質を落とす自動変換はせず、出力を中止しました。`);
+    if(meta.width&&meta.height&&(meta.width!==state.videoWidth||meta.height!==state.videoHeight))throw new Error(`動画の表示寸法 (${state.videoWidth}×${state.videoHeight}) と映像ストリーム寸法 (${meta.width}×${meta.height}) が異なります。回転メタデータなどの可能性があるため、誤配置を防いで出力を中止しました。`);
+    const W=meta.width||state.videoWidth,H=meta.height||state.videoHeight;
+    const graph=[], overlayInputs=[];let nextInput=1, layerNo=0,current='[0:v]';
+    for(const side of ['left','right']){
+      const byId=new Map();for(const s of intervalsFor(side,state.durationMs)){if(!byId.has(s.id))byId.set(s.id,[]);byId.get(s.id).push(s)}
+      for(const [id,segs] of byId){
+        if(state.exportAbort)throw new Error('ユーザーにより中止されました。');
+        const a=getAsset(side,id);if(!a)continue;
+        const ext=mimeExt(a);const assetPath=`asset_${side}_${nextInput}.${ext}`;
+        await ff.writeFile(assetPath,dataUrlBytes(a.dataUrl));overlayInputs.push(assetPath);
+        const cfg=state.sides[side];const targetH=Math.max(2,Math.round(H*cfg.scale/100));
+        const imgLabel=`img${layerNo}`,rotLabel=`rot${layerNo}`,outLabel=`v${layerNo}`;
+        graph.push(`[${nextInput}:v]scale=-2:${targetH}:flags=lanczos[${imgLabel}]`);
+        graph.push(`[${imgLabel}]rotate=${(cfg.angle*Math.PI/180).toFixed(10)}:ow=rotw(iw):oh=roth(ih):c=none[${rotLabel}]`);
+        const x=`${(W*cfg.x/100).toFixed(3)}-w/2`,y=`${(H*cfg.y/100).toFixed(3)}-h/2`;
+        const enable=ffmpegEnable(segs);
+        graph.push(`${current}[${rotLabel}]overlay=x='${x}':y='${y}':enable='${enable}':format=auto:eof_action=repeat:shortest=0[${outLabel}]`);
+        current=`[${outLabel}]`;nextInput++;layerNo++;
+      }
+    }
+    if(layerNo===0){throw new Error('出力に使える表情画像がありません。標準表情を設定してください。')}
+    const filter=graph.join(';');const args=['-hide_banner','-i',inputName];for(const p of overlayInputs)args.push('-i',p);
+    args.push('-filter_complex',filter,'-map',current,'-map','0:a?','-map_metadata','0','-c:v','libx264','-crf','0','-preset','ultrafast','-pix_fmt',meta.pixFmt,'-fps_mode','passthrough','-c:a','copy','-max_muxing_queue_size','2048',outName);
+    setStatus('exportStatus',`合成中です。入力画素形式: ${meta.pixFmt} / ${W}×${H}。元フレームのタイムスタンプを維持し、可逆エンコードを試行します。端末性能により時間がかかる場合があります。`);
+    await ffmpegRunChecked(ff,args);if(state.exportAbort)throw new Error('ユーザーにより中止されました。');
+    setStatus('exportStatus','出力ファイルを読み出しています…');const data=await ff.readFile(outName);const blob=new Blob([data.buffer],{type:'video/x-matroska'});if(state.outputUrl)URL.revokeObjectURL(state.outputUrl);state.outputUrl=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=state.outputUrl;a.download=outName;a.textContent=`合成動画を保存（${(blob.size/1024/1024).toFixed(1)} MB）`;a.className='primary';a.style.display='inline-block';a.style.textDecoration='none';a.style.padding='10px 13px';a.style.borderRadius='8px';$('downloadOutput').append(a);
+    $('exportProgress').style.width='100%';setStatus('exportStatus',`処理が完了しました。解像度 ${W}×${H}、画素形式 ${meta.pixFmt}。fps変換フィルターは使用していません。出力はH.264 CRF 0・MKV、音声はコピーです。ファイルを保存後、映像の長さ・音ズレ・表情切り替え位置を確認してください。`,'good');
+    for(const p of overlayInputs){try{await ff.deleteFile(p)}catch(_){}}try{await ff.deleteFile(inputName);await ff.deleteFile(outName)}catch(_){}
+  }catch(err){setStatus('exportStatus','出力を完了できませんでした。\n'+(err?.message||String(err))+'\n品質やフレームレートを自動で落として続行していません。動画が大容量の場合は、PC上での処理または動画形式の変換前確認が必要です。','error');alert('映像出力を完了できませんでした。\n'+(err?.message||String(err)))}finally{$('exportVideo').disabled=false;$('cancelExport').disabled=true}
+}
+$('exportVideo').addEventListener('click',exportCompositedVideo);$('cancelExport').addEventListener('click',()=>{state.exportAbort=true;setStatus('exportStatus','中止を要求しました。実行中のFFmpeg処理は呼び出し単位の停止に時間がかかる場合があります。')});
+$('mapJsonPreview').addEventListener('focus',updateMapPreview);
+// Initial UI state
+for(const side of ['left','right'])renderAssetControls(side);renderCues();updateMapPreview();
+</script>
+</body>
+</html>
