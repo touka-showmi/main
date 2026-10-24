@@ -6,93 +6,479 @@
 <meta name="color-scheme" content="dark light">
 <title>Face Follow Green Studio</title>
 <style>
-:root{--bg:#0b1020;--panel:#121a2d;--panel2:#18233b;--line:#2a3854;--text:#edf3ff;--muted:#9eacc7;--accent:#6d8cff;--accent2:#8a6cff;--good:#69dbad;--warn:#ffd27b;--danger:#ff8b9b;--radius:18px;}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(900px 500px at 15% -10%,#1d2b51 0%,transparent 65%),var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;}
-button,input,select{font:inherit}button{cursor:pointer;border:1px solid var(--line);background:#202d49;color:var(--text);border-radius:12px;padding:10px 14px;transition:transform .12s,border-color .12s,background .12s}button:hover{border-color:#728cff;background:#2a3a60}button:active{transform:translateY(1px)}button:disabled{opacity:.45;cursor:not-allowed;transform:none}.primary{background:linear-gradient(135deg,#5275ff,#7758ef);border-color:transparent;font-weight:700}.primary:hover{background:linear-gradient(135deg,#6383ff,#896bff)}.success{border-color:#34785e;background:#173c34}.danger{border-color:#744051;background:#3a2030}
-header{max-width:1500px;margin:auto;padding:24px 24px 14px;display:flex;align-items:center;justify-content:space-between;gap:16px}h1{font-size:clamp(22px,3vw,32px);line-height:1.15;margin:0;letter-spacing:-.04em}.subtitle{color:var(--muted);margin:8px 0 0;font-size:13px}.brand{display:flex;align-items:center;gap:13px}.brand-mark{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#5c7cff,#9062ff);box-shadow:0 7px 30px #526dff35;font-size:22px}.status{flex-shrink:0;border:1px solid var(--line);background:#151f34;border-radius:999px;padding:8px 12px;color:var(--muted);font-size:12px;max-width:340px}.status[data-state="good"]{color:var(--good);border-color:#356c5c}.status[data-state="warn"]{color:var(--warn);border-color:#6f5c37}.status[data-state="error"]{color:var(--danger);border-color:#744051}
-main{max-width:1500px;margin:auto;padding:0 24px 28px;display:grid;grid-template-columns:minmax(0,1.65fr) minmax(310px,.85fr);gap:18px;align-items:start}.panel{min-width:0;background:linear-gradient(180deg,#131d32,#10182a);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:0 16px 50px #0002}.panel-head{padding:17px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}.panel-head h2{margin:0;font-size:15px}.eyebrow{color:var(--muted);font-size:11px;letter-spacing:.11em;text-transform:uppercase}.preview-wrap{padding:14px}.canvas-shell{position:relative;display:grid;place-items:center;background:#070b13;border:1px solid #30405c;border-radius:14px;overflow:hidden;min-height:250px;background-image:linear-gradient(45deg,#151b29 25%,transparent 25%),linear-gradient(-45deg,#151b29 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#151b29 75%),linear-gradient(-45deg,transparent 75%,#151b29 75%);background-size:22px 22px;background-position:0 0,0 11px,11px -11px,-11px 0;}
-canvas{width:100%;height:auto;display:block;max-height:72vh;object-fit:contain} .empty-state{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--muted);pointer-events:none}.empty-state strong{display:block;color:var(--text);font-size:17px;margin-bottom:7px}.empty-icon{font-size:36px;margin-bottom:8px}.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-top:12px}.seek-area{display:grid;grid-template-columns:auto minmax(60px,1fr) auto;align-items:center;gap:10px;margin-top:12px;color:var(--muted);font-size:12px}.seek-area input{width:100%}input[type=range]{accent-color:var(--accent);cursor:pointer}.preview-note{color:var(--muted);font-size:12px;margin:10px 2px 0}.right-col{display:grid;gap:18px}.content{padding:16px 18px}.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.upload-tile{border:1px dashed #52617e;border-radius:14px;padding:13px;background:#111b2d;min-width:0}.upload-tile label{font-weight:700;display:block;margin-bottom:7px}.upload-tile small{display:block;color:var(--muted);font-size:11px;margin-top:6px;overflow-wrap:anywhere}.upload-tile input{width:100%;font-size:12px;color:var(--muted)}input[type=file]::file-selector-button{border:0;border-radius:8px;padding:7px 9px;background:#2a3958;color:#eaf0ff;margin-right:7px;cursor:pointer}
-.field{padding:12px 0;border-bottom:1px solid #243149}.field:last-child{border-bottom:0;padding-bottom:0}.field-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}.field label,.field .field-label{font-size:13px;font-weight:650}.value{font-size:12px;color:#b8c7ff;font-variant-numeric:tabular-nums;white-space:nowrap}.field input[type=range]{width:100%;display:block}.field select{width:100%;border:1px solid #354563;background:#0f1728;color:var(--text);border-radius:10px;padding:10px}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}.checkline{display:flex;align-items:flex-start;gap:9px;color:#dbe4fb;font-size:13px;padding:9px 0}.checkline input{accent-color:var(--accent);margin-top:4px}.checkline span small{display:block;color:var(--muted);font-size:11px;margin-top:2px}.section-title{font-size:11px;color:#9cadd0;letter-spacing:.12em;font-weight:800;text-transform:uppercase;margin:3px 0 8px}.action-stack{display:grid;grid-template-columns:1fr 1fr;gap:9px}.action-stack button{min-height:44px}.export-info{font-size:12px;color:var(--muted);margin:12px 0 0}.privacy{padding:12px 14px;border:1px solid #2c4d47;border-radius:12px;color:#b9dfd4;background:#102b28;font-size:12px;margin-top:12px}.tips{color:var(--muted);font-size:12px;margin:0;padding-left:17px}.tips li{margin:6px 0}.hidden-video{position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;pointer-events:none}.foot{max-width:1500px;margin:auto;padding:0 24px 28px;color:#8290aa;font-size:11px}.pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#202b42;color:#c4d1eb;font-size:11px;margin-left:6px}.btn-row{display:flex;gap:8px;flex-wrap:wrap}
-@media(max-width:980px){main{grid-template-columns:1fr}.right-col{grid-template-columns:1fr 1fr;align-items:start}.right-col .settings-panel{grid-column:1/-1}canvas{max-height:none}}
-@media(max-width:640px){header{padding:18px 14px 12px;align-items:flex-start;flex-direction:column}.status{max-width:100%}main{padding:0 12px 20px;gap:12px}.right-col{grid-template-columns:1fr}.right-col .settings-panel{grid-column:auto}.panel-head{padding:14px}.content{padding:14px}.preview-wrap{padding:9px}.canvas-shell{min-height:210px}.upload-grid{grid-template-columns:1fr}.two-col{gap:9px}.action-stack{grid-template-columns:1fr} .foot{padding:0 14px 20px}}
+:root {
+  --bg:#0b1020;
+  --panel:#121a2d;
+  --line:#2a3854;
+  --text:#edf3ff;
+  --muted:#9eacc7;
+  --accent:#6d8cff;
+  --good:#69dbad;
+  --warn:#ffd27b;
+  --danger:#ff8b9b;
+  --radius:18px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:radial-gradient(900px 500px at 15% -10%,#1d2b51 0%,transparent 65%),var(--bg);
+  color:var(--text);
+  font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif
+}
+button,input,select{font:inherit}
+button{
+  cursor:pointer;
+  border:1px solid var(--line);
+  background:#202d49;
+  color:var(--text);
+  border-radius:12px;
+  padding:10px 14px;
+  transition:background .12s,border-color .12s
+}
+button:hover{border-color:#728cff;background:#2a3a60}
+button:disabled{opacity:.45;cursor:not-allowed}
+.primary{
+  background:linear-gradient(135deg,#5275ff,#7758ef);
+  border-color:transparent;
+  font-weight:700
+}
+.danger{border-color:#744051;background:#3a2030}
+header{
+  max-width:1500px;
+  margin:auto;
+  padding:24px 24px 14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px
+}
+h1{font-size:clamp(22px,3vw,32px);line-height:1.15;margin:0}
+.subtitle{color:var(--muted);margin:8px 0 0;font-size:13px}
+.brand{display:flex;align-items:center;gap:13px}
+.brand-mark{
+  width:44px;height:44px;border-radius:14px;
+  display:grid;place-items:center;
+  background:linear-gradient(145deg,#5c7cff,#9062ff);
+  font-size:22px;flex-shrink:0
+}
+.status{
+  flex-shrink:0;
+  border:1px solid var(--line);
+  background:#151f34;
+  border-radius:999px;
+  padding:8px 12px;
+  color:var(--muted);
+  font-size:12px;
+  max-width:350px
+}
+.status[data-state="good"]{color:var(--good);border-color:#356c5c}
+.status[data-state="warn"]{color:var(--warn);border-color:#6f5c37}
+.status[data-state="error"]{color:var(--danger);border-color:#744051}
+main{
+  max-width:1500px;
+  margin:auto;
+  padding:0 24px 28px;
+  display:grid;
+  grid-template-columns:minmax(0,1.65fr) minmax(310px,.85fr);
+  gap:18px;
+  align-items:start
+}
+.panel{
+  min-width:0;
+  background:linear-gradient(180deg,#131d32,#10182a);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+  box-shadow:0 16px 50px #0002
+}
+.panel-head{
+  padding:17px 18px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px
+}
+.panel-head h2{margin:0;font-size:15px}
+.eyebrow{color:var(--muted);font-size:11px;letter-spacing:.11em}
+.pill{
+  display:inline-block;
+  padding:4px 8px;
+  border-radius:999px;
+  background:#202b42;
+  color:#c4d1eb;
+  font-size:11px
+}
+.preview-wrap{padding:14px}
+.canvas-shell{
+  position:relative;
+  display:grid;
+  place-items:center;
+  background:#070b13;
+  border:1px solid #30405c;
+  border-radius:14px;
+  overflow:hidden;
+  min-height:250px
+}
+canvas{
+  width:100%;
+  height:auto;
+  display:block;
+  max-height:72vh
+}
+.empty-state{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:24px;
+  color:var(--muted);
+  pointer-events:none
+}
+.empty-state strong{
+  display:block;color:var(--text);
+  font-size:17px;margin-bottom:7px
+}
+.empty-icon{font-size:36px;margin-bottom:8px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-top:12px}
+.seek-area{
+  display:grid;
+  grid-template-columns:auto minmax(60px,1fr) auto;
+  align-items:center;gap:10px;
+  margin-top:12px;
+  color:var(--muted);
+  font-size:12px
+}
+.seek-area input{width:100%}
+input[type=range]{accent-color:var(--accent);cursor:pointer}
+.preview-note{color:var(--muted);font-size:12px;margin:10px 2px 0}
+.right-col{display:grid;gap:18px}
+.content{padding:16px 18px}
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.upload-tile{
+  border:1px dashed #52617e;
+  border-radius:14px;
+  padding:13px;
+  background:#111b2d;
+  min-width:0
+}
+.upload-tile label{font-weight:700;display:block;margin-bottom:7px}
+.upload-tile small{
+  display:block;color:var(--muted);
+  font-size:11px;margin-top:6px;overflow-wrap:anywhere
+}
+.upload-tile input{width:100%;font-size:12px;color:var(--muted)}
+input[type=file]::file-selector-button{
+  border:0;border-radius:8px;padding:7px 9px;
+  background:#2a3958;color:#eaf0ff;margin-right:7px;cursor:pointer
+}
+.field{padding:12px 0;border-bottom:1px solid #243149}
+.field:last-child{border-bottom:0;padding-bottom:0}
+.field-top{
+  display:flex;align-items:center;
+  justify-content:space-between;gap:12px;margin-bottom:8px
+}
+.field label,.field-label{font-size:13px;font-weight:650}
+.value{font-size:12px;color:#b8c7ff;white-space:nowrap}
+.field input[type=range]{width:100%;display:block}
+.field select{
+  width:100%;border:1px solid #354563;
+  background:#0f1728;color:var(--text);
+  border-radius:10px;padding:10px
+}
+.color-code-row{
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr);
+  gap:9px;align-items:center
+}
+.color-code-row input[type=color]{
+  width:48px;height:42px;padding:4px;
+  border:1px solid #354563;border-radius:10px;
+  background:#0f1728;cursor:pointer
+}
+.color-code-row input[type=text]{
+  width:100%;min-width:0;
+  border:1px solid #354563;background:#0f1728;
+  color:var(--text);border-radius:10px;padding:10px;
+  font-family:ui-monospace,SFMono-Regular,Consolas,monospace
+}
+.color-help{display:block;color:var(--muted);font-size:11px;margin-top:7px}
+.color-help[data-invalid="true"]{color:var(--danger)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.checkline{
+  display:flex;align-items:flex-start;gap:9px;
+  color:#dbe4fb;font-size:13px;padding:9px 0
+}
+.checkline input{accent-color:var(--accent);margin-top:4px}
+.checkline span small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.section-title{
+  font-size:11px;color:#9cadd0;letter-spacing:.12em;
+  font-weight:800;margin:3px 0 8px
+}
+.action-stack{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.action-stack button{min-height:44px}
+.export-info{font-size:12px;color:var(--muted);margin:12px 0 0}
+.privacy{
+  padding:12px 14px;border:1px solid #2c4d47;
+  border-radius:12px;color:#b9dfd4;
+  background:#102b28;font-size:12px;margin-top:12px
+}
+.tips{color:var(--muted);font-size:12px;margin:12px 0 0;padding-left:17px}
+.tips li{margin:6px 0}
+.hidden-media{
+  position:fixed;left:-9999px;top:0;
+  width:1px;height:1px;opacity:0;pointer-events:none
+}
+.foot{max-width:1500px;margin:auto;padding:0 24px 28px;color:#8290aa;font-size:11px}
+@media(max-width:980px){
+  main{grid-template-columns:1fr}
+  .right-col{grid-template-columns:1fr 1fr;align-items:start}
+  .right-col .settings-panel{grid-column:1/-1}
+  canvas{max-height:none}
+}
+@media(max-width:640px){
+  header{padding:18px 14px 12px;align-items:flex-start;flex-direction:column}
+  .status{max-width:100%}
+  main{padding:0 12px 20px;gap:12px}
+  .right-col{grid-template-columns:1fr}
+  .right-col .settings-panel{grid-column:auto}
+  .panel-head{padding:14px}
+  .content{padding:14px}
+  .preview-wrap{padding:9px}
+  .canvas-shell{min-height:210px}
+  .upload-grid{grid-template-columns:1fr}
+  .two-col{gap:9px}
+  .action-stack{grid-template-columns:1fr}
+  .foot{padding:0 14px 20px}
+}
 </style>
 </head>
 <body>
 <header>
-  <div class="brand"><div class="brand-mark">✦</div><div><h1>Face Follow <span style="color:#91a7ff">Green Studio</span></h1><p class="subtitle">動画内の顔を追跡して、立ち絵を動かすグリーンバック動画メーカー</p></div></div>
-  <div id="status" class="status" data-state="idle" role="status" aria-live="polite">動画と立ち絵を読み込んでください</div>
+  <div class="brand">
+    <div class="brand-mark">✦</div>
+    <div>
+      <h1>Face Follow <span style="color:#91a7ff">Green Studio</span></h1>
+      <p class="subtitle">動画内の顔を追跡して、立ち絵を動かす動画メーカー</p>
+    </div>
+  </div>
+  <div id="status" class="status" data-state="idle" role="status" aria-live="polite">
+    動画と立ち絵を読み込んでください
+  </div>
 </header>
+
 <main>
   <section class="panel">
-    <div class="panel-head"><div><div class="eyebrow">LIVE COMPOSITE</div><h2>プレビュー</h2></div><span class="pill" id="modePill">グリーンバック</span></div>
+    <div class="panel-head">
+      <div>
+        <div class="eyebrow">LIVE COMPOSITE</div>
+        <h2>プレビュー</h2>
+      </div>
+      <span class="pill" id="modePill">グリーンバック</span>
+    </div>
     <div class="preview-wrap">
       <div class="canvas-shell">
-        <canvas id="outputCanvas" width="1280" height="720" aria-label="立ち絵追従プレビュー"></canvas>
-        <div class="empty-state" id="emptyState"><div><div class="empty-icon">🎬</div><strong>動画と立ち絵を読み込んでください</strong>顔を検出すると、立ち絵が顔の位置に追従します。</div></div>
+        <canvas id="outputCanvas" width="1280" height="720"></canvas>
+        <div class="empty-state" id="emptyState">
+          <div>
+            <div class="empty-icon">🎬</div>
+            <strong>動画と立ち絵を読み込んでください</strong>
+            顔を検出すると、立ち絵が顔の位置に追従します。
+          </div>
+        </div>
       </div>
       <div class="toolbar">
         <button id="playBtn" disabled>▶ 再生</button>
         <button id="trackBtn" class="primary" disabled>顔追従を準備</button>
         <button id="centerBtn" disabled>位置をリセット</button>
       </div>
-      <div class="seek-area"><span id="currentTime">00:00</span><input id="seekBar" type="range" min="0" max="100" step="0.01" value="0" disabled aria-label="動画の再生位置"><span id="duration">00:00</span></div>
-      <p class="preview-note">プレビューは実時間で解析します。顔が一時的に隠れると、追跡位置を短時間保持してから立ち絵を非表示にします。</p>
+      <div class="seek-area">
+        <span id="currentTime">00:00</span>
+        <input id="seekBar" type="range" min="0" max="100" step="0.01" value="0" disabled>
+        <span id="duration">00:00</span>
+      </div>
+      <p class="preview-note">
+        顔を検出できなくなった場合も、最後に検出した位置で立ち絵を固定表示します。
+        顔を再検出すると、自動的に追従を再開します。
+      </p>
     </div>
   </section>
+
   <div class="right-col">
     <section class="panel">
-      <div class="panel-head"><div><div class="eyebrow">INPUT MEDIA</div><h2>素材を読み込む</h2></div><icon aria-hidden="true" style="display:none"></icon></div>
+      <div class="panel-head">
+        <div><div class="eyebrow">INPUT MEDIA</div><h2>素材を読み込む</h2></div>
+      </div>
       <div class="content">
         <div class="upload-grid">
-          <div class="upload-tile"><label for="videoFile">① 元動画</label><input id="videoFile" type="file" accept="video/*"><small id="videoName">顔を追跡するランニング動画</small></div>
-          <div class="upload-tile"><label for="avatarFile">② 立ち絵</label><input id="avatarFile" type="file" accept="image/*"><small id="avatarName">透過PNGがおすすめ</small></div>
+          <div class="upload-tile">
+            <label for="videoFile">① 元動画</label>
+            <input id="videoFile" type="file" accept="video/*">
+            <small id="videoName">顔を追跡するランニング動画</small>
+          </div>
+          <div class="upload-tile">
+            <label for="avatarFile">② 立ち絵</label>
+            <input id="avatarFile" type="file" accept="image/*">
+            <small id="avatarName">透過PNGがおすすめ</small>
+          </div>
         </div>
-        <div class="privacy">🔒 動画と画像はこのブラウザー内で処理します。顔追跡モデルの初回読み込みにはインターネット接続が必要です。</div>
+        <div class="privacy">
+          🔒 動画と画像はこのブラウザー内で処理します。
+          顔追跡モデルの初回読み込みにはインターネット接続が必要です。
+        </div>
       </div>
     </section>
+
     <section class="panel settings-panel">
-      <div class="panel-head"><div><div class="eyebrow">TRACK & COMPOSE</div><h2>追従・合成設定</h2></div></div>
+      <div class="panel-head">
+        <div><div class="eyebrow">TRACK & COMPOSE</div><h2>追従・合成設定</h2></div>
+      </div>
       <div class="content">
-        <div class="field"><div class="field-top"><label for="backgroundMode">背景モード</label></div><select id="backgroundMode"><option value="green">グリーンバック（立ち絵のみ）</option><option value="video">元動画＋立ち絵（確認用）</option></select></div>
-        <div class="field"><label class="checkline"><input id="mirrorVideo" type="checkbox"><span>元動画を左右反転<small>自撮りの鏡像で作業したい場合に使用</small></span></label><label class="checkline"><input id="tiltFollow" type="checkbox"><span>顔の傾きにも追従<small>立ち絵全体を少し回転させます</small></span></label></div>
-        <div class="section-title">立ち絵のサイズと基準点</div>
-        <div class="field"><div class="field-top"><label for="avatarScale">立ち絵の幅（顔幅に対して）</label><span class="value" id="avatarScaleVal">260%</span></div><input id="avatarScale" type="range" min="80" max="600" value="260" step="5"></div>
-        <div class="two-col">
-          <div class="field"><div class="field-top"><label for="anchorX">立ち絵の顔位置 X</label><span class="value" id="anchorXVal">50%</span></div><input id="anchorX" type="range" min="0" max="100" value="50"></div>
-          <div class="field"><div class="field-top"><label for="anchorY">立ち絵の顔位置 Y</label><span class="value" id="anchorYVal">16%</span></div><input id="anchorY" type="range" min="0" max="100" value="16"></div>
+        <div class="field">
+          <div class="field-top"><label for="backgroundMode">背景モード</label></div>
+          <select id="backgroundMode">
+            <option value="green">グリーンバック（立ち絵のみ）</option>
+            <option value="color">単色背景（#カラーコード）</option>
+            <option value="video">元動画＋立ち絵（確認用）</option>
+          </select>
         </div>
-        <p class="preview-note">「立ち絵の顔位置」は、画像のどこを実際の顔に重ねるかを指定します。全身絵なら通常は上の方に設定します。</p>
+
+        <div class="field" id="backgroundColorField" style="display:none">
+          <div class="field-top"><label for="backgroundHex">背景色（#で指定）</label></div>
+          <div class="color-code-row">
+            <input id="backgroundColor" type="color" value="#1E90FF" aria-label="背景色を選ぶ">
+            <input id="backgroundHex" type="text" value="#1E90FF"
+              inputmode="text" autocomplete="off" spellcheck="false"
+              maxlength="7" aria-label="背景色のカラーコード" placeholder="#1E90FF">
+          </div>
+          <small class="color-help" id="backgroundHexHelp">
+            例：#1E90FF、#FF69B4、#FFFFFF（#RRGGBB形式）
+          </small>
+        </div>
+
+        <div class="field">
+          <label class="checkline">
+            <input id="mirrorVideo" type="checkbox">
+            <span>元動画を左右反転
+              <small>自撮りの鏡像で作業したい場合に使用</small>
+            </span>
+          </label>
+          <label class="checkline">
+            <input id="tiltFollow" type="checkbox">
+            <span>顔の傾きにも追従
+              <small>立ち絵全体を少し回転させます</small>
+            </span>
+          </label>
+        </div>
+
+        <div class="section-title">立ち絵のサイズと基準点</div>
+        <div class="field">
+          <div class="field-top">
+            <label for="avatarScale">立ち絵の幅（顔幅に対して）</label>
+            <span class="value" id="avatarScaleVal">260%</span>
+          </div>
+          <input id="avatarScale" type="range" min="80" max="600" value="260" step="5">
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <div class="field-top">
+              <label for="anchorX">立ち絵の顔位置 X</label>
+              <span class="value" id="anchorXVal">50%</span>
+            </div>
+            <input id="anchorX" type="range" min="0" max="100" value="50">
+          </div>
+          <div class="field">
+            <div class="field-top">
+              <label for="anchorY">立ち絵の顔位置 Y</label>
+              <span class="value" id="anchorYVal">16%</span>
+            </div>
+            <input id="anchorY" type="range" min="0" max="100" value="16">
+          </div>
+        </div>
+        <p class="preview-note">
+          「立ち絵の顔位置」は、画像のどこを実際の顔に重ねるかを指定します。
+          全身絵なら通常は上の方に設定します。
+        </p>
+
         <div class="section-title" style="margin-top:16px">位置の微調整</div>
         <div class="two-col">
-          <div class="field"><div class="field-top"><label for="offsetX">左右オフセット</label><span class="value" id="offsetXVal">0%</span></div><input id="offsetX" type="range" min="-30" max="30" value="0"></div>
-          <div class="field"><div class="field-top"><label for="offsetY">上下オフセット</label><span class="value" id="offsetYVal">0%</span></div><input id="offsetY" type="range" min="-30" max="30" value="0"></div>
+          <div class="field">
+            <div class="field-top">
+              <label for="offsetX">左右オフセット</label>
+              <span class="value" id="offsetXVal">0%</span>
+            </div>
+            <input id="offsetX" type="range" min="-30" max="30" value="0">
+          </div>
+          <div class="field">
+            <div class="field-top">
+              <label for="offsetY">上下オフセット</label>
+              <span class="value" id="offsetYVal">0%</span>
+            </div>
+            <input id="offsetY" type="range" min="-30" max="30" value="0">
+          </div>
         </div>
-        <div class="field"><div class="field-top"><label for="smoothness">追従のなめらかさ</label><span class="value" id="smoothnessVal">65%</span></div><input id="smoothness" type="range" min="0" max="95" value="65"><p class="preview-note">値を大きくすると揺れがなめらかになりますが、追従に少し遅れが出ます。</p></div>
+
+        <div class="field">
+          <div class="field-top">
+            <label for="smoothness">追従のなめらかさ</label>
+            <span class="value" id="smoothnessVal">65%</span>
+          </div>
+          <input id="smoothness" type="range" min="0" max="95" value="65">
+          <p class="preview-note">
+            値を大きくすると揺れがなめらかになりますが、追従に少し遅れが出ます。
+          </p>
+        </div>
       </div>
     </section>
+
     <section class="panel">
-      <div class="panel-head"><div><div class="eyebrow">EXPORT</div><h2>動画を書き出す</h2></div></div>
+      <div class="panel-head">
+        <div><div class="eyebrow">EXPORT</div><h2>動画を書き出す</h2></div>
+      </div>
       <div class="content">
-        <label class="checkline"><input id="includeAudio" type="checkbox" checked><span>元動画の音声を含める<small>ブラウザーが音声トラックの取得に対応する場合</small></span></label>
-        <div class="action-stack"><button id="exportBtn" class="primary" disabled>● 書き出し開始</button><button id="stopExportBtn" class="danger" disabled>■ 停止して保存</button></div>
-        <p class="export-info" id="exportInfo">出力形式：WebM（グリーンバックは #00FF00）</p>
-        <ul class="tips"><li>グリーンバックモードでは、元動画を背景にせず立ち絵だけを書き出します。</li><li>透明部分のある立ち絵は透過PNGが最適です。背景付きの写真は長方形のまま表示されます。</li><li>書き出しは動画の再生速度に合わせた実時間処理です。元動画の終わりで自動保存します。</li></ul>
+        <label class="checkline">
+          <input id="includeAudio" type="checkbox" checked>
+          <span>元動画の音声を含める
+            <small>ブラウザーが音声トラックの取得に対応する場合</small>
+          </span>
+        </label>
+        <div class="action-stack">
+          <button id="exportBtn" class="primary" disabled>● 書き出し開始</button>
+          <button id="stopExportBtn" class="danger" disabled>■ 停止して保存</button>
+        </div>
+        <p class="export-info" id="exportInfo">
+          出力形式：WebM（背景モードに応じてグリーン／単色／元動画）
+        </p>
+        <ul class="tips">
+          <li>グリーンバックでは、元動画を背景にせず立ち絵だけを書き出します。</li>
+          <li>透明部分のある立ち絵は透過PNGがおすすめです。背景付きの写真は長方形のまま表示されます。</li>
+          <li>書き出しは実時間処理です。元動画の終わりで自動保存します。</li>
+        </ul>
       </div>
     </section>
   </div>
 </main>
-<div class="foot">Face Follow Green Studio · MediaPipe Face Landmarker を利用 · 推奨ブラウザー：最新の Chrome / Edge</div>
-<video id="sourceVideo" class="hidden-video" playsinline></video>
-<img id="avatarImage" class="hidden-video" alt="立ち絵">
+
+<div class="foot">
+  Face Follow Green Studio · MediaPipe Face Landmarker を利用 · 推奨ブラウザー：最新の Chrome / Edge
+</div>
+
+<video id="sourceVideo" class="hidden-media" playsinline></video>
+<img id="avatarImage" class="hidden-media" alt="立ち絵">
+
 <script>
 (() => {
   'use strict';
-  const $ = (id) => document.getElementById(id);
+
+  const $ = id => document.getElementById(id);
   const video = $('sourceVideo');
-  video.volume = 0; // プレビュー再生音を出さず、音声トラックは書き出し側で取得する
   const avatar = $('avatarImage');
   const canvas = $('outputCanvas');
-  const ctx = canvas.getContext('2d', { alpha: false });
+  const ctx = canvas.getContext('2d', { alpha:false });
+
   const status = $('status');
   const emptyState = $('emptyState');
   const videoFile = $('videoFile');
@@ -103,18 +489,25 @@ canvas{width:100%;height:auto;display:block;max-height:72vh;object-fit:contain} 
   const exportBtn = $('exportBtn');
   const stopExportBtn = $('stopExportBtn');
   const seekBar = $('seekBar');
-  const sourceName = $('videoName');
-  const avatarName = $('avatarName');
   const bgMode = $('backgroundMode');
+  const backgroundColorField = $('backgroundColorField');
+  const backgroundColorInput = $('backgroundColor');
+  const backgroundHexInput = $('backgroundHex');
+  const backgroundHexHelp = $('backgroundHexHelp');
   const mirrorInput = $('mirrorVideo');
   const tiltFollow = $('tiltFollow');
-  const sliderIds = ['avatarScale','anchorX','anchorY','offsetX','offsetY','smoothness'];
+
+  const sliderIds = [
+    'avatarScale','anchorX','anchorY',
+    'offsetX','offsetY','smoothness'
+  ];
+
   let faceLandmarker = null;
   let trackerLoading = false;
   let lastVideoTime = -1;
-  let latestFace = null;
   let smoothedFace = null;
   let lastFaceSeenAt = 0;
+  let faceLostNotified = false;
   let videoURL = null;
   let avatarURL = null;
   let recorder = null;
@@ -123,229 +516,402 @@ canvas{width:100%;height:auto;display:block;max-height:72vh;object-fit:contain} 
   let audioStream = null;
   let seeking = false;
 
-  function setStatus(message, state = 'idle') {
+  function setStatus(message, state='idle') {
     status.textContent = message;
     status.dataset.state = state;
   }
+
   function fmtTime(sec) {
     if (!Number.isFinite(sec) || sec < 0) sec = 0;
     const m = Math.floor(sec / 60);
     const s = Math.floor(sec % 60);
     const h = Math.floor(m / 60);
-    if (h) return `${h}:${String(m % 60).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if (h) {
+      return `${h}:${String(m % 60).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
     return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   }
+
   function updateReady() {
     const hasVideo = video.readyState >= 1 && video.videoWidth > 0;
     const hasAvatar = avatar.complete && avatar.naturalWidth > 0;
+
     playBtn.disabled = !hasVideo;
     trackBtn.disabled = !hasVideo || trackerLoading;
     centerBtn.disabled = !hasVideo || !hasAvatar;
     exportBtn.disabled = !hasVideo || !hasAvatar || !!recorder;
+
     emptyState.style.display = hasVideo && hasAvatar ? 'none' : 'flex';
-    if (hasVideo && hasAvatar && !faceLandmarker) {
-      setStatus('素材を読み込みました。顔追従を準備してください', 'warn');
+
+    if (hasVideo && hasAvatar && !faceLandmarker && !trackerLoading) {
+      setStatus('素材を読み込みました。顔追従を準備してください','warn');
     }
   }
+
   function canvasSizeFromVideo() {
     if (!video.videoWidth || !video.videoHeight) return;
-    const scale = Math.min(1, 1920 / Math.max(video.videoWidth, video.videoHeight));
-    canvas.width = Math.max(2, Math.round(video.videoWidth * scale));
-    canvas.height = Math.max(2, Math.round(video.videoHeight * scale));
+
+    const scale = Math.min(
+      1,
+      1920 / Math.max(video.videoWidth, video.videoHeight)
+    );
+
+    canvas.width = Math.max(2,Math.round(video.videoWidth * scale));
+    canvas.height = Math.max(2,Math.round(video.videoHeight * scale));
   }
+
   function updateSliderLabels() {
     for (const id of sliderIds) {
       const input = $(id);
-      const out = $(id + 'Val');
-      if (out) out.textContent = `${input.value}%`;
+      const output = $(id + 'Val');
+      if (output) output.textContent = `${input.value}%`;
     }
   }
+
   function updateTimeUI() {
-    if (!seeking && Number.isFinite(video.duration)) seekBar.value = video.currentTime || 0;
+    if (!seeking && Number.isFinite(video.duration)) {
+      seekBar.value = video.currentTime || 0;
+    }
     $('currentTime').textContent = fmtTime(video.currentTime);
     $('duration').textContent = fmtTime(video.duration);
   }
+
   function pointFromLandmarks(landmarks) {
     if (!landmarks || !landmarks.length) return null;
+
     let minX = 1, minY = 1, maxX = 0, maxY = 0;
+
     for (const p of landmarks) {
       if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
-      minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
-      maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
+      minX = Math.min(minX,p.x);
+      minY = Math.min(minY,p.y);
+      maxX = Math.max(maxX,p.x);
+      maxY = Math.max(maxY,p.y);
     }
-    const points = [landmarks[33], landmarks[263]];
+
+    const leftEye = landmarks[33];
+    const rightEye = landmarks[263];
     let angle = 0;
-    if (points[0] && points[1]) {
-      angle = Math.atan2(points[1].y - points[0].y, points[1].x - points[0].x) * 180 / Math.PI;
+
+    if (leftEye && rightEye) {
+      angle = Math.atan2(
+        rightEye.y - leftEye.y,
+        rightEye.x - leftEye.x
+      ) * 180 / Math.PI;
     }
+
     const mirrored = mirrorInput.checked;
-    const cx = (minX + maxX) * .5;
+    const cx = (minX + maxX) * 0.5;
+
     return {
-      x: (mirrored ? 1 - cx : cx) * canvas.width,
-      y: ((minY + maxY) * .5) * canvas.height,
-      width: Math.max(12, (maxX - minX) * canvas.width),
-      angle: mirrored ? -angle : angle
+      x:(mirrored ? 1-cx : cx) * canvas.width,
+      y:((minY + maxY) * 0.5) * canvas.height,
+      width:Math.max(12,(maxX-minX) * canvas.width),
+      angle:mirrored ? -angle : angle
     };
   }
+
   async function prepareTracker() {
     if (faceLandmarker) {
-      setStatus('顔追従の準備ができています', 'good');
+      setStatus('顔追従の準備ができています','good');
       return true;
     }
     if (trackerLoading) return false;
+
     trackerLoading = true;
     trackBtn.disabled = true;
-    setStatus('顔追跡モデルを読み込んでいます…', 'warn');
+    setStatus('顔追跡モデルを読み込んでいます…','warn');
+
     try {
-      const mp = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.mjs');
-      const vision = await mp.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm');
+      const mp = await import(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.mjs'
+      );
+
+      const vision = await mp.FilesetResolver.forVisionTasks(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
+      );
+
       const options = {
-        runningMode: 'VIDEO',
-        numFaces: 1,
-        minFaceDetectionConfidence: 0.45,
-        minFacePresenceConfidence: 0.45,
-        minTrackingConfidence: 0.45,
-        baseOptions: {
-          modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
-          delegate: 'GPU'
+        runningMode:'VIDEO',
+        numFaces:1,
+        minFaceDetectionConfidence:0.45,
+        minFacePresenceConfidence:0.45,
+        minTrackingConfidence:0.45,
+        baseOptions:{
+          modelAssetPath:
+            'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+          delegate:'GPU'
         }
       };
+
       try {
-        faceLandmarker = await mp.FaceLandmarker.createFromOptions(vision, options);
+        faceLandmarker = await mp.FaceLandmarker.createFromOptions(vision,options);
       } catch (gpuError) {
         options.baseOptions.delegate = 'CPU';
-        faceLandmarker = await mp.FaceLandmarker.createFromOptions(vision, options);
+        faceLandmarker = await mp.FaceLandmarker.createFromOptions(vision,options);
       }
-      setStatus('顔追従の準備ができています。動画を再生してください', 'good');
+
+      setStatus('顔追従の準備ができています。動画を再生してください','good');
       return true;
     } catch (error) {
       console.error(error);
-      setStatus('顔追跡を読み込めません。ネット接続を確認してください', 'error');
-      $('exportInfo').textContent = '読み込みに失敗しました。Chrome / Edge で開き、インターネット接続を確認してください。';
-      alert('顔追跡モデルの読み込みに失敗しました。インターネット接続を確認し、最新の Chrome / Edge で開き直してください。\n\n詳細: ' + (error?.message || error));
+      setStatus('顔追跡を読み込めません。ネット接続を確認してください','error');
+      $('exportInfo').textContent =
+        '読み込みに失敗しました。Chrome / Edge で開き、インターネット接続を確認してください。';
+
+      alert(
+        '顔追跡モデルの読み込みに失敗しました。インターネット接続を確認し、最新の Chrome / Edge で開き直してください。\\n\\n詳細: ' +
+        (error?.message || error)
+      );
       return false;
     } finally {
       trackerLoading = false;
       updateReady();
     }
   }
+
+  function normalizeHexColor(raw) {
+    let value = String(raw || '').trim();
+    if (!value) return null;
+    if (!value.startsWith('#')) value = '#' + value;
+
+    if (/^#[0-9a-fA-F]{3}$/.test(value)) {
+      value = '#' + value.slice(1).split('').map(ch => ch+ch).join('');
+    }
+
+    return /^#[0-9a-fA-F]{6}$/.test(value) ? value.toUpperCase() : null;
+  }
+
+  function currentBackgroundHex() {
+    return normalizeHexColor(backgroundHexInput.value) ||
+      backgroundColorInput.value.toUpperCase();
+  }
+
+  function backgroundDescription() {
+    if (bgMode.value === 'green') return 'グリーンバック #00FF00';
+    if (bgMode.value === 'color') return `単色背景 ${currentBackgroundHex()}`;
+    return '元動画＋立ち絵';
+  }
+
+  function updateBackgroundUI() {
+    backgroundColorField.style.display =
+      bgMode.value === 'color' ? 'block' : 'none';
+
+    if (!recorder) {
+      $('exportInfo').textContent =
+        `出力形式：WebM（背景：${backgroundDescription()}）`;
+    }
+
+    $('modePill').textContent =
+      bgMode.value === 'green' ? 'グリーンバック' :
+      bgMode.value === 'color' ? currentBackgroundHex() :
+      '元動画＋立ち絵';
+
+    drawFrame();
+  }
+
   function drawVideoBackground() {
-    const w = canvas.width, h = canvas.height;
-    ctx.fillStyle = '#00FF00';
-    ctx.fillRect(0, 0, w, h);
+    const w = canvas.width;
+    const h = canvas.height;
+
     if (bgMode.value === 'video' && video.readyState >= 2) {
       ctx.save();
       if (mirrorInput.checked) {
-        ctx.translate(w, 0);
-        ctx.scale(-1, 1);
+        ctx.translate(w,0);
+        ctx.scale(-1,1);
       }
-      ctx.drawImage(video, 0, 0, w, h);
+      ctx.drawImage(video,0,0,w,h);
       ctx.restore();
+    } else {
+      ctx.fillStyle =
+        bgMode.value === 'color' ? currentBackgroundHex() : '#00FF00';
+      ctx.fillRect(0,0,w,h);
     }
   }
+
   function drawAvatar() {
+    /*
+      重要：
+      顔が検出できなくなっても smoothedFace を消さない。
+      最後に検出した位置とサイズを保持して立ち絵を描画し続ける。
+    */
     if (!avatar.complete || !avatar.naturalWidth || !smoothedFace) return;
-    if (!video.paused && performance.now() - lastFaceSeenAt > 800) return;
+
     const face = smoothedFace;
     const factor = Number($('avatarScale').value) / 100;
-    const imageW = Math.max(8, face.width * factor);
+    const imageW = Math.max(8,face.width * factor);
     const imageH = imageW * avatar.naturalHeight / avatar.naturalWidth;
     const ax = Number($('anchorX').value) / 100;
     const ay = Number($('anchorY').value) / 100;
     const ox = Number($('offsetX').value) / 100 * canvas.width;
     const oy = Number($('offsetY').value) / 100 * canvas.height;
-    const angle = tiltFollow.checked ? face.angle * Math.PI / 180 : 0;
+    const angle = $('tiltFollow').checked ? face.angle * Math.PI / 180 : 0;
+
     ctx.save();
-    ctx.translate(face.x + ox, face.y + oy);
+    ctx.translate(face.x + ox,face.y + oy);
     ctx.rotate(angle);
-    ctx.drawImage(avatar, -imageW * ax, -imageH * ay, imageW, imageH);
+    ctx.drawImage(avatar,-imageW*ax,-imageH*ay,imageW,imageH);
     ctx.restore();
   }
+
   function drawFrame() {
     drawVideoBackground();
     drawAvatar();
-    $('modePill').textContent = bgMode.value === 'green' ? 'グリーンバック' : '元動画＋立ち絵';
+
+    $('modePill').textContent =
+      bgMode.value === 'green' ? 'グリーンバック' :
+      bgMode.value === 'color' ? currentBackgroundHex() :
+      '元動画＋立ち絵';
   }
+
   function animationLoop(now) {
-    if (faceLandmarker && video.readyState >= 2 && !video.paused && !video.ended && video.currentTime !== lastVideoTime) {
+    if (
+      faceLandmarker &&
+      video.readyState >= 2 &&
+      !video.paused &&
+      !video.ended &&
+      video.currentTime !== lastVideoTime
+    ) {
       try {
-        const result = faceLandmarker.detectForVideo(video, now);
+        const result = faceLandmarker.detectForVideo(video,now);
         lastVideoTime = video.currentTime;
-        const landmarks = result.faceLandmarks && result.faceLandmarks[0];
+
+        const landmarks =
+          result.faceLandmarks && result.faceLandmarks[0];
         const found = pointFromLandmarks(landmarks);
+
         if (found) {
-          latestFace = found;
           lastFaceSeenAt = now;
+          faceLostNotified = false;
+
           const smooth = Number($('smoothness').value) / 100;
           const alpha = 0.48 - smooth * 0.43;
-          if (!smoothedFace) smoothedFace = { ...found };
-          else {
-            smoothedFace.x += (found.x - smoothedFace.x) * alpha;
-            smoothedFace.y += (found.y - smoothedFace.y) * alpha;
-            smoothedFace.width += (found.width - smoothedFace.width) * alpha;
-            let da = found.angle - smoothedFace.angle;
+
+          if (!smoothedFace) {
+            smoothedFace = {...found};
+          } else {
+            smoothedFace.x += (found.x-smoothedFace.x) * alpha;
+            smoothedFace.y += (found.y-smoothedFace.y) * alpha;
+            smoothedFace.width += (found.width-smoothedFace.width) * alpha;
+
+            let da = found.angle-smoothedFace.angle;
             while (da > 180) da -= 360;
             while (da < -180) da += 360;
             smoothedFace.angle += da * alpha;
           }
-          if (status.dataset.state !== 'error' && !recorder) setStatus('顔を追跡中', 'good');
-        } else if (now - lastFaceSeenAt > 800) {
-          latestFace = null;
-          smoothedFace = null;
-          if (!recorder && faceLandmarker) setStatus('顔が見つかりません。顔が画面内に入るようにしてください', 'warn');
+
+          if (status.dataset.state !== 'error' && !recorder) {
+            setStatus('顔を追跡中','good');
+          }
+        } else if (
+          smoothedFace &&
+          now-lastFaceSeenAt > 800
+        ) {
+          /*
+            顔を見失ったら座標を変更しない。
+            smoothedFace はそのままなので、立ち絵も最後の位置で固定される。
+          */
+          if (!faceLostNotified && !recorder) {
+            setStatus(
+              '顔を検出できないため、立ち絵を最後の位置に固定しています',
+              'warn'
+            );
+            faceLostNotified = true;
+          }
+        } else if (!smoothedFace && !recorder) {
+          setStatus('顔を検出中…','warn');
         }
       } catch (error) {
-        console.warn('Face tracking frame failed:', error);
+        console.warn('Face tracking frame failed:',error);
       }
     }
+
     drawFrame();
     updateTimeUI();
     requestAnimationFrame(animationLoop);
   }
+
   function resetPosition() {
     smoothedFace = null;
-    latestFace = null;
     lastFaceSeenAt = 0;
-    setStatus('追従位置をリセットしました。動画を再生してください', 'idle');
+    faceLostNotified = false;
+    lastVideoTime = -1;
+    setStatus('追従位置をリセットしました。動画を再生してください','idle');
+    drawFrame();
   }
+
   async function togglePlay() {
     if (video.readyState < 1) return;
+
     if (video.paused) {
-      try { await video.play(); playBtn.textContent = 'Ⅱ 一時停止'; }
-      catch (e) { setStatus('動画を再生できませんでした', 'error'); }
+      try {
+        await video.play();
+        playBtn.textContent = 'Ⅱ 一時停止';
+      } catch (error) {
+        setStatus('動画を再生できませんでした','error');
+      }
     } else {
       video.pause();
       playBtn.textContent = '▶ 再生';
     }
   }
+
   function getRecordingMimeType() {
-    const candidates = ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm;codecs=vp9','video/webm'];
-    for (const type of candidates) if (window.MediaRecorder && MediaRecorder.isTypeSupported(type)) return type;
+    const candidates = [
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus',
+      'video/webm;codecs=vp9',
+      'video/webm'
+    ];
+
+    for (const type of candidates) {
+      if (window.MediaRecorder && MediaRecorder.isTypeSupported(type)) {
+        return type;
+      }
+    }
     return '';
   }
+
   async function beginExport() {
     if (!video.videoWidth || !avatar.naturalWidth) return;
     if (!await prepareTracker()) return;
+
     if (!canvas.captureStream || !window.MediaRecorder) {
       alert('このブラウザーは動画書き出しに対応していません。最新の Chrome / Edge をお試しください。');
       return;
     }
-    if (video.ended || video.currentTime >= video.duration - 0.05) video.currentTime = 0;
+
+    if (video.ended || video.currentTime >= video.duration-0.05) {
+      video.currentTime = 0;
+    }
+
     recordedChunks = [];
     outputStream = canvas.captureStream(30);
     audioStream = null;
+
     if ($('includeAudio').checked) {
       try {
-        const capture = video.captureStream ? video.captureStream() : (video.mozCaptureStream ? video.mozCaptureStream() : null);
+        const capture = video.captureStream
+          ? video.captureStream()
+          : (video.mozCaptureStream ? video.mozCaptureStream() : null);
+
         if (capture) {
           audioStream = capture;
-          for (const track of capture.getAudioTracks()) outputStream.addTrack(track);
+          for (const track of capture.getAudioTracks()) {
+            outputStream.addTrack(track);
+          }
         }
-      } catch (e) { console.warn('Audio capture is unavailable:', e); }
+      } catch (error) {
+        console.warn('Audio capture is unavailable:',error);
+      }
     }
+
     const mimeType = getRecordingMimeType();
+
     try {
-      recorder = mimeType ? new MediaRecorder(outputStream, { mimeType }) : new MediaRecorder(outputStream);
+      recorder = mimeType
+        ? new MediaRecorder(outputStream,{mimeType})
+        : new MediaRecorder(outputStream);
     } catch (error) {
       recorder = null;
       if (outputStream) outputStream.getTracks().forEach(t => t.stop());
@@ -353,73 +919,117 @@ canvas{width:100%;height:auto;display:block;max-height:72vh;object-fit:contain} 
       updateReady();
       return;
     }
-    recorder.ondataavailable = (event) => { if (event.data && event.data.size) recordedChunks.push(event.data); };
-    recorder.onerror = (event) => { console.error('MediaRecorder error:', event.error); setStatus('録画中にエラーが発生しました', 'error'); };
-    recorder.onstop = () => {
-      const type = recorder && recorder.mimeType ? recorder.mimeType : (mimeType || 'video/webm');
-      const blob = new Blob(recordedChunks, { type });
+
+    const activeRecorder = recorder;
+
+    activeRecorder.ondataavailable = event => {
+      if (event.data && event.data.size) recordedChunks.push(event.data);
+    };
+
+    activeRecorder.onerror = event => {
+      console.error('MediaRecorder error:',event.error);
+      setStatus('録画中にエラーが発生しました','error');
+    };
+
+    activeRecorder.onstop = () => {
+      const type = activeRecorder.mimeType || mimeType || 'video/webm';
+      const blob = new Blob(recordedChunks,{type});
+
       if (blob.size) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
+
         a.href = url;
-        a.download = `face-follow-green-${new Date().toISOString().replace(/[:.]/g,'-')}.webm`;
+        a.download =
+          `face-follow-${new Date().toISOString().replace(/[:.]/g,'-')}.webm`;
+
         document.body.appendChild(a);
         a.click();
         a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
-        $('exportInfo').textContent = `保存しました：${(blob.size / 1024 / 1024).toFixed(1)} MB · WebM`;
-        setStatus('書き出し動画を保存しました', 'good');
+
+        setTimeout(() => URL.revokeObjectURL(url),60000);
+
+        $('exportInfo').textContent =
+          `保存しました：${(blob.size/1024/1024).toFixed(1)} MB · WebM`;
+
+        setStatus('書き出し動画を保存しました','good');
       } else {
-        setStatus('動画データが空でした。再生してから再度書き出してください', 'error');
+        setStatus('動画データが空でした。再生してから再度書き出してください','error');
       }
+
       if (outputStream) outputStream.getTracks().forEach(t => t.stop());
       if (audioStream) audioStream.getTracks().forEach(t => t.stop());
-      outputStream = null; audioStream = null; recorder = null;
+
+      outputStream = null;
+      audioStream = null;
+      recorder = null;
+
       stopExportBtn.disabled = true;
       exportBtn.disabled = false;
       playBtn.textContent = video.paused ? '▶ 再生' : 'Ⅱ 一時停止';
       updateReady();
     };
-    recorder.start(500);
+
+    activeRecorder.start(500);
     stopExportBtn.disabled = false;
     exportBtn.disabled = true;
-    setStatus('録画中…動画の終わりで自動保存します', 'warn');
-    $('exportInfo').textContent = '録画中です。停止して保存を押すと、その時点までを書き出します。';
+
+    setStatus('録画中…動画の終わりで自動保存します','warn');
+    $('exportInfo').textContent =
+      '録画中です。停止して保存を押すと、その時点までを書き出します。';
+
     try {
       await video.play();
       playBtn.textContent = 'Ⅱ 一時停止';
     } catch (error) {
-      setStatus('動画を再生できないため、録画を停止してください', 'error');
+      setStatus('動画を再生できないため、録画を停止してください','error');
     }
   }
+
   function stopExport() {
     if (recorder && recorder.state !== 'inactive') recorder.stop();
     video.pause();
     playBtn.textContent = '▶ 再生';
   }
 
-  videoFile.addEventListener('change', () => {
+  videoFile.addEventListener('change',() => {
     const file = videoFile.files && videoFile.files[0];
     if (!file) return;
+
     if (videoURL) URL.revokeObjectURL(videoURL);
     videoURL = URL.createObjectURL(file);
     video.src = videoURL;
     video.load();
-    sourceName.textContent = file.name;
+
+    $('videoName').textContent = file.name;
     resetPosition();
-    setStatus('動画を読み込んでいます…', 'warn');
+    setStatus('動画を読み込んでいます…','warn');
   });
-  avatarFile.addEventListener('change', () => {
+
+  avatarFile.addEventListener('change',() => {
     const file = avatarFile.files && avatarFile.files[0];
     if (!file) return;
+
     if (avatarURL) URL.revokeObjectURL(avatarURL);
     avatarURL = URL.createObjectURL(file);
-    avatar.onload = () => { avatarName.textContent = `${file.name} · ${avatar.naturalWidth}×${avatar.naturalHeight}`; updateReady(); };
-    avatar.onerror = () => { avatarName.textContent = '画像を読み込めませんでした'; setStatus('立ち絵の読み込みに失敗しました', 'error'); };
+
+    avatar.onload = () => {
+      $('avatarName').textContent =
+        `${file.name} · ${avatar.naturalWidth}×${avatar.naturalHeight}`;
+      updateReady();
+      drawFrame();
+    };
+
+    avatar.onerror = () => {
+      $('avatarName').textContent = '画像を読み込めませんでした';
+      setStatus('立ち絵の読み込みに失敗しました','error');
+    };
+
     avatar.src = avatarURL;
     updateReady();
   });
-  video.addEventListener('loadedmetadata', () => {
+
+  video.addEventListener('loadedmetadata',() => {
     canvasSizeFromVideo();
     seekBar.max = Number.isFinite(video.duration) ? video.duration : 100;
     seekBar.value = 0;
@@ -429,31 +1039,88 @@ canvas{width:100%;height:auto;display:block;max-height:72vh;object-fit:contain} 
     updateReady();
     drawFrame();
   });
-  video.addEventListener('loadeddata', updateReady);
-  video.addEventListener('play', () => { playBtn.textContent = 'Ⅱ 一時停止'; });
-  video.addEventListener('pause', () => { playBtn.textContent = '▶ 再生'; });
-  video.addEventListener('ended', () => {
+
+  video.addEventListener('loadeddata',updateReady);
+  video.addEventListener('play',() => {
+    playBtn.textContent = 'Ⅱ 一時停止';
+  });
+  video.addEventListener('pause',() => {
+    playBtn.textContent = '▶ 再生';
+  });
+  video.addEventListener('ended',() => {
     playBtn.textContent = '▶ 再生';
     if (recorder && recorder.state !== 'inactive') recorder.stop();
   });
-  video.addEventListener('timeupdate', updateTimeUI);
-  video.addEventListener('error', () => setStatus('動画を開けません。別の形式の動画を試してください', 'error'));
-  playBtn.addEventListener('click', togglePlay);
-  trackBtn.addEventListener('click', prepareTracker);
-  centerBtn.addEventListener('click', resetPosition);
-  exportBtn.addEventListener('click', beginExport);
-  stopExportBtn.addEventListener('click', stopExport);
-  seekBar.addEventListener('input', () => { seeking = true; $('currentTime').textContent = fmtTime(Number(seekBar.value)); });
-  seekBar.addEventListener('change', () => { if (Number.isFinite(video.duration)) video.currentTime = Math.min(video.duration, Number(seekBar.value)); seeking = false; lastVideoTime = -1; });
-  for (const id of sliderIds) $(id).addEventListener('input', updateSliderLabels);
-  for (const id of ['backgroundMode','mirrorVideo','tiltFollow']) $(id).addEventListener('change', () => { if (id === 'mirrorVideo') { smoothedFace = null; lastVideoTime = -1; } drawFrame(); });
-  $('anchorX').addEventListener('input', drawFrame);
-  $('anchorY').addEventListener('input', drawFrame);
-  $('avatarScale').addEventListener('input', drawFrame);
-  $('offsetX').addEventListener('input', drawFrame);
-  $('offsetY').addEventListener('input', drawFrame);
-  $('smoothness').addEventListener('input', () => {});
+  video.addEventListener('timeupdate',updateTimeUI);
+  video.addEventListener('error',() => {
+    setStatus('動画を開けません。別の形式の動画を試してください','error');
+  });
+
+  playBtn.addEventListener('click',togglePlay);
+  trackBtn.addEventListener('click',prepareTracker);
+  centerBtn.addEventListener('click',resetPosition);
+  exportBtn.addEventListener('click',beginExport);
+  stopExportBtn.addEventListener('click',stopExport);
+
+  seekBar.addEventListener('input',() => {
+    seeking = true;
+    $('currentTime').textContent = fmtTime(Number(seekBar.value));
+  });
+
+  seekBar.addEventListener('change',() => {
+    if (Number.isFinite(video.duration)) {
+      video.currentTime = Math.min(video.duration,Number(seekBar.value));
+    }
+    seeking = false;
+    lastVideoTime = -1;
+  });
+
+  for (const id of sliderIds) {
+    $(id).addEventListener('input',() => {
+      updateSliderLabels();
+      drawFrame();
+    });
+  }
+
+  bgMode.addEventListener('change',updateBackgroundUI);
+
+  for (const id of ['mirrorVideo','tiltFollow']) {
+    $(id).addEventListener('change',() => {
+      if (id === 'mirrorVideo') {
+        smoothedFace = null;
+        lastVideoTime = -1;
+      }
+      drawFrame();
+    });
+  }
+
+  backgroundColorInput.addEventListener('input',() => {
+    backgroundHexInput.value = backgroundColorInput.value.toUpperCase();
+    backgroundHexHelp.textContent = `背景色：${backgroundHexInput.value}`;
+    backgroundHexHelp.dataset.invalid = 'false';
+    updateBackgroundUI();
+  });
+
+  backgroundHexInput.addEventListener('input',() => {
+    const color = normalizeHexColor(backgroundHexInput.value);
+
+    if (!color) {
+      backgroundHexHelp.textContent =
+        '色コードを確認してください。例：#1E90FF（#RRGGBB形式）';
+      backgroundHexHelp.dataset.invalid = 'true';
+      return;
+    }
+
+    backgroundColorInput.value = color;
+    backgroundHexInput.value = color;
+    backgroundHexHelp.textContent = `背景色：${color}`;
+    backgroundHexHelp.dataset.invalid = 'false';
+    updateBackgroundUI();
+  });
+
   updateSliderLabels();
+  updateBackgroundUI();
+  updateReady();
   drawFrame();
   requestAnimationFrame(animationLoop);
 })();
