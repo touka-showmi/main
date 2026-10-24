@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06c755">
+<title>通話画面メーカー（再現映像）</title>
+<style>
+  :root {
+    --green:#06c755;
+    --green-deep:#079b45;
+    --ink:#14201b;
+    --muted:#a7b4ad;
+    --stage-w:min(430px, 100vw);
+    --stage-h:min(900px, 100dvh);
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; min-height:100%; background:#101512; color:#eef5f0; font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif; }
+  body { padding:22px; }
+  button,input { font:inherit; }
+  button { cursor:pointer; }
+  .app { max-width:1180px; margin:0 auto; display:grid; grid-template-columns:minmax(270px,350px) minmax(300px,1fr); gap:28px; align-items:start; }
+  .panel { border:1px solid #2c3931; background:#18211b; padding:20px; border-radius:20px; position:sticky; top:20px; }
+  .eyebrow { color:#77e99e; letter-spacing:.12em; font-size:11px; font-weight:800; margin-bottom:8px; }
+  h1 { font-size:21px; margin:0 0 8px; letter-spacing:-.03em; }
+  .intro { font-size:13px; color:#b9c7bf; line-height:1.65; margin:0 0 20px; }
+  .field { margin:15px 0; }
+  .field label { display:block; font-size:12px; font-weight:700; color:#dce7df; margin-bottom:7px; }
+  .field input[type="text"] { width:100%; border:1px solid #425148; background:#101713; border-radius:10px; padding:11px 12px; color:#f5fff8; outline:none; }
+  .field input[type="text"]:focus { border-color:#50df82; box-shadow:0 0 0 3px #06c75522; }
+  .filebox { border:1px dashed #526359; border-radius:12px; padding:14px; background:#111813; }
+  .filebox input { display:block; width:100%; color:#c7d5cc; font-size:12px; }
+  .file-note { margin-top:8px; color:#a8b9ae; font-size:11px; line-height:1.5; overflow-wrap:anywhere; }
+  .rowbtn { display:flex; gap:8px; margin-top:14px; }
+  .btn { border:1px solid #44534a; border-radius:11px; color:#eef8f1; background:#26332b; padding:11px 12px; flex:1; font-weight:700; font-size:12px; }
+  .btn.primary { border-color:var(--green); color:#062411; background:var(--green); }
+  .btn:hover { filter:brightness(1.08); }
+  .fineprint { font-size:11px; color:#93a399; line-height:1.6; margin:18px 0 0; }
+  .preview-wrap { display:flex; flex-direction:column; align-items:center; gap:13px; min-width:0; }
+  .preview-caption { width:min(100%,430px); color:#a7b5ac; font-size:12px; display:flex; justify-content:space-between; gap:10px; }
+  .stage { position:relative; width:var(--stage-w); height:min(900px, calc(var(--stage-w) * 2)); max-height:calc(100dvh - 35px); aspect-ratio:9/19; overflow:hidden; border-radius:29px; background:linear-gradient(160deg,#0b432b 0%,#075b36 36%,#0c3829 100%); box-shadow:0 30px 90px #0009, inset 0 0 0 1px #ffffff20; isolation:isolate; display:flex; flex-direction:column; }
+  .stage:before { content:""; position:absolute; z-index:-1; width:125%; height:75%; left:-15%; top:-12%; border-radius:50%; background:radial-gradient(ellipse,#21bd62 0%,#0d7b41 34%,transparent 72%); opacity:.46; }
+  .stage:after { content:""; position:absolute; z-index:-1; width:130%; height:60%; right:-40%; bottom:-12%; border-radius:50%; background:radial-gradient(ellipse,#0a7950 0%,transparent 68%); opacity:.55; }
+  .statusbar { padding:14px 22px 8px; min-height:37px; display:flex; align-items:center; justify-content:space-between; color:#f2fff6; font-size:11px; font-weight:700; text-shadow:0 1px 3px #0003; }
+  .status-right { display:flex; gap:5px; align-items:center; }
+  .status-icon { width:14px; height:9px; border:1.5px solid #effff4; border-radius:2px; position:relative; }
+  .status-icon:before { content:""; position:absolute; top:1px; left:1px; bottom:1px; width:70%; background:#effff4; border-radius:1px; }
+  .topline { display:flex; justify-content:center; align-items:center; padding-top:3px; color:#d7f4e1; font-size:12px; letter-spacing:.02em; }
+  .call-main { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px 26px 28px; text-align:center; min-height:0; }
+  .avatar-ring { width:clamp(112px, 34vw, 154px); height:clamp(112px, 34vw, 154px); max-width:38%; max-height:18vh; aspect-ratio:1; border-radius:50%; padding:5px; background:linear-gradient(140deg,#baffd0,#3cde7d80 55%,#ffffff08); box-shadow:0 10px 45px #001c0c66; margin-bottom:25px; }
+  .avatar { width:100%; height:100%; border-radius:50%; display:grid; place-items:center; overflow:hidden; background:linear-gradient(145deg,#e4fff0,#8ee8b4); color:#08783a; font-size:clamp(46px,12vw,70px); font-weight:700; letter-spacing:-.04em; }
+  .avatar img { width:100%; height:100%; object-fit:cover; display:none; }
+  .contact-name { font-size:clamp(24px,6vw,31px); font-weight:750; letter-spacing:-.04em; line-height:1.2; max-width:100%; overflow-wrap:anywhere; text-shadow:0 2px 12px #00311755; }
+  .call-state { margin-top:12px; font-size:13px; color:#d1f4dd; min-height:20px; }
+  .timer { margin-top:5px; font-size:14px; color:#f1fff5; font-variant-numeric:tabular-nums; letter-spacing:.07em; min-height:20px; }
+  .audio-bars { display:flex; align-items:center; justify-content:center; gap:4px; height:25px; margin-top:18px; opacity:.25; }
+  .audio-bars i { width:3px; height:5px; background:#d5ffe2; border-radius:4px; display:block; }
+  .stage.playing .audio-bars { opacity:.95; }
+  .stage.playing .audio-bars i { animation:wave .72s ease-in-out infinite alternate; }
+  .stage.playing .audio-bars i:nth-child(2n) { animation-delay:-.45s; }
+  .stage.playing .audio-bars i:nth-child(3n) { animation-delay:-.2s; }
+  .stage.playing .audio-bars i:nth-child(4n) { animation-delay:-.57s; }
+  @keyframes wave { from { height:4px; } to { height:22px; } }
+  .controls { padding:8px 24px max(30px, env(safe-area-inset-bottom)); display:grid; grid-template-columns:repeat(3,1fr); align-items:end; gap:18px 10px; }
+  .ctrl { display:flex; flex-direction:column; align-items:center; gap:9px; color:#e4f7e9; font-size:10px; text-shadow:0 1px 3px #00220e66; }
+  .ctrl-button { border:0; width:58px; height:58px; border-radius:50%; display:grid; place-items:center; color:#fff; background:#ffffff23; box-shadow:inset 0 0 0 1px #ffffff14; transition:transform .12s,background .12s; }
+  .ctrl-button:active { transform:scale(.94); }
+  .ctrl-button svg { width:24px; height:24px; stroke:currentColor; stroke-width:1.8; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+  .ctrl-button.on { background:#d8ffe5; color:#087a3a; }
+  .ctrl-button.end { width:66px; height:66px; background:#ff4e52; box-shadow:0 7px 20px #5b00064a; }
+  .ctrl-button.end svg { width:29px; height:29px; }
+  .bottom-hint { text-align:center; padding:0 15px 13px; color:#d1e8d9a8; font-size:9px; letter-spacing:.05em; }
+  .recreation-mark { position:absolute; right:13px; top:49px; border:1px solid #ffffff45; background:#001d10aa; color:#e5ffed; border-radius:4px; padding:3px 6px; font-size:9px; letter-spacing:.08em; }
+  .call-action { display:none; padding:0 24px 36px; justify-content:center; }
+  .stage.idle .call-action { display:flex; }
+  .start-call { border:0; border-radius:999px; background:#e8fff0; color:#087638; min-height:56px; width:min(245px,100%); padding:13px 20px; font-weight:800; display:flex; justify-content:center; align-items:center; gap:10px; box-shadow:0 12px 35px #002b1640; }
+  .start-call svg { width:21px; height:21px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .stage.idle .controls { display:none; }
+  .stage.ended .call-state { color:#e5f5e9; }
+  .stage.ended .controls { display:none; }
+  .stage.ended .call-action { display:flex; }
+  .stage.recording { width:100vw; height:100dvh; max-height:none; max-width:none; aspect-ratio:auto; border-radius:0; box-shadow:none; }
+  .stage.recording .statusbar { padding-top:max(14px, env(safe-area-inset-top)); }
+  .stage.recording .call-main { padding-bottom:34px; }
+  .stage.recording .avatar-ring { width:min(37vw, 190px); height:min(37vw, 190px); }
+  body.recording-mode { padding:0; overflow:hidden; background:#000; }
+  body.recording-mode .app { display:block; }
+  body.recording-mode .panel, body.recording-mode .preview-caption { display:none; }
+  body.recording-mode .preview-wrap { display:block; }
+  body.recording-mode .stage { margin:0 auto; }
+  body.recording-mode .preview-wrap { width:100%; }
+  .toast { position:absolute; left:50%; bottom:126px; transform:translate(-50%,14px); border-radius:999px; background:#001d10c9; color:white; border:1px solid #ffffff28; padding:9px 13px; white-space:nowrap; font-size:11px; opacity:0; pointer-events:none; transition:.2s; }
+  .toast.show { opacity:1; transform:translate(-50%,0); }
+  .is-hidden { display:none !important; }
+  @media (max-width:760px) {
+    body { padding:0; background:#101512; }
+    .app { display:flex; flex-direction:column-reverse; align-items:stretch; gap:14px; }
+    .preview-wrap { width:100%; }
+    .stage { width:min(100vw, 430px); height:min(900px, calc(min(100vw, 430px) * 1.95)); max-height:80dvh; border-radius:0 0 25px 25px; }
+    .preview-caption { padding:0 14px; }
+    .panel { position:static; border-radius:20px 20px 0 0; border-bottom:0; padding:19px 18px 24px; }
+    .stage.recording { width:100vw; height:100dvh; max-height:none; border-radius:0; }
+  }
+  @media (prefers-reduced-motion:reduce) { *,*:before,*:after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="panel" id="panel">
+    <div class="eyebrow">CALL SCREEN STUDIO</div>
+    <h1>通話画面メーカー</h1>
+    <p class="intro">音声ファイルと表示名を指定し、通話画面の演出を作成します。収録モードでは編集パネルを隠して画面収録できます。</p>
+    <div class="field">
+      <label for="contactNameInput">通話相手の名前</label>
+      <input id="contactNameInput" type="text" maxlength="48" value="通話相手" placeholder="例：海さん" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="audioInput">再生する音声ファイル</label>
+      <div class="filebox">
+        <input id="audioInput" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg,.aac,.flac">
+        <div class="file-note" id="audioStatus">音声を選択してください。ファイルはこのブラウザー内で再生されます。</div>
+      </div>
+    </div>
+    <div class="field">
+      <label for="avatarInput">プロフィール画像（任意）</label>
+      <div class="filebox">
+        <input id="avatarInput" type="file" accept="image/*">
+        <div class="file-note">選択しない場合は、名前の先頭文字を表示します。</div>
+      </div>
+    </div>
+    <div class="rowbtn">
+      <button class="btn primary" id="recordModeBtn" type="button">収録モードへ</button>
+      <button class="btn" id="resetBtn" type="button">リセット</button>
+    </div>
+    <p class="fineprint">使い方：①音声と名前を指定 → ②「収録モードへ」→ ③画面の「通話を開始」を押す → ④画面収録。実際のLINE公式画面ではない再現用デザインです。第三者の音声を使う場合は、利用許可や動画プラットフォームのルールを確認してください。</p>
+  </aside>
+
+  <main class="preview-wrap">
+    <div class="preview-caption"><span>プレビュー / 9:16相当</span><span id="modeLabel">編集モード</span></div>
+    <section class="stage idle" id="stage" aria-label="通話画面プレビュー">
+      <div class="statusbar">
+        <span id="clock">9:41</span>
+        <span class="status-right" aria-hidden="true">
+          <svg width="15" height="12" viewBox="0 0 15 12" fill="currentColor"><path d="M1 10V8h2v2H1zm3 0V6h2v4H4zm3 0V4h2v6H7zm3 0V2h2v8h-2z"/></svg>
+          <svg width="14" height="12" viewBox="0 0 14 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 4.5a9 9 0 0 1 12 0M3.5 7a5.4 5.4 0 0 1 7 0M6 9.3a1.8 1.8 0 0 1 2 0"/></svg>
+          <span class="status-icon"></span>
+        </span>
+      </div>
+      <div class="recreation-mark">再現映像</div>
+      <div class="topline">音声通話</div>
+      <div class="call-main">
+        <div class="avatar-ring"><div class="avatar" id="avatar"><span id="avatarInitial">通</span><img id="avatarImage" alt=""></div></div>
+        <div class="contact-name" id="contactName">通話相手</div>
+        <div class="call-state" id="callState">通話を開始できます</div>
+        <div class="timer" id="timer">00:00</div>
+        <div class="audio-bars" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+      </div>
+      <div class="call-action" id="callAction">
+        <button class="start-call" id="startCallBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3.8 9.5 3l2 4.4-2 1.5a14 14 0 0 0 5.6 5.6l1.5-2 4.4 2-.8 2.9a2 2 0 0 1-2.2 1.4A17.5 17.5 0 0 1 3.2 5.9a2 2 0 0 1 1.4-2.1z"/></svg>
+          通話を開始
+        </button>
+      </div>
+      <div class="controls" id="controls">
+        <div class="ctrl"><button class="ctrl-button" id="muteBtn" type="button" aria-label="マイクの表示切替" title="マイク"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg></button><span id="muteLabel">マイク</span></div>
+        <div class="ctrl"><button class="ctrl-button end" id="endCallBtn" type="button" aria-label="通話終了" title="通話終了"><svg viewBox="0 0 24 24"><path d="M3.5 14.8c4.8-4.1 12.2-4.1 17 0l-2.1 3.1a1.5 1.5 0 0 1-1.9.5l-2.3-1.1a1.5 1.5 0 0 1-.8-1.7l.3-1.2a12.5 12.5 0 0 0-5.4 0l.3 1.2a1.5 1.5 0 0 1-.8 1.7l-2.3 1.1a1.5 1.5 0 0 1-1.9-.5z"/></svg></button><span>終了</span></div>
+        <div class="ctrl"><button class="ctrl-button" id="speakerBtn" type="button" aria-label="スピーカーの表示切替" title="スピーカー"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4zM17 9a5 5 0 0 1 0 6M19 6a9 9 0 0 1 0 12"/></svg></button><span id="speakerLabel">スピーカー</span></div>
+      </div>
+      <div class="bottom-hint" id="bottomHint">通話画面の再現デザイン</div>
+      <div class="toast" id="toast" role="status"></div>
+    </section>
+  </main>
+</div>
+<audio id="audio" preload="metadata"></audio>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const stage = $('stage');
+  const audio = $('audio');
+  const nameInput = $('contactNameInput');
+  const audioInput = $('audioInput');
+  const avatarInput = $('avatarInput');
+  const audioStatus = $('audioStatus');
+  const modeLabel = $('modeLabel');
+  const callState = $('callState');
+  const timerEl = $('timer');
+  const toast = $('toast');
+  let audioUrl = null;
+  let avatarUrl = null;
+  let startedAt = 0;
+  let elapsedBeforePause = 0;
+  let timerInterval = null;
+  let hasEnded = false;
+  let micMuted = false;
+  let speakerOn = false;
+  let toastTimeout = null;
+
+  function showToast(message) {
+    toast.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => toast.classList.remove('show'), 1900);
+  }
+  function formatTime(seconds) {
+    const s = Math.max(0, Math.floor(Number(seconds) || 0));
+    return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+  }
+  function updateTimer() {
+    timerEl.textContent = formatTime(audio.currentTime || elapsedBeforePause || 0);
+  }
+  function updateName() {
+    const name = nameInput.value.trim() || '通話相手';
+    $('contactName').textContent = name;
+    $('avatarInitial').textContent = Array.from(name)[0] || '通';
+  }
+  function stopTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  function startTimer() {
+    stopTimer();
+    timerInterval = setInterval(updateTimer, 200);
+  }
+  function setCallState(state) {
+    stage.classList.remove('idle', 'playing', 'ended');
+    if (state === 'idle') {
+      stage.classList.add('idle');
+      callState.textContent = '通話を開始できます';
+      $('startCallBtn').innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3.8 9.5 3l2 4.4-2 1.5a14 14 0 0 0 5.6 5.6l1.5-2 2.9 2.9a2 2 0 0 1-2.2 1.4A17.5 17.5 0 0 1 3.2 5.9a2 2 0 0 1 1.4-2.1z"/></svg>通話を開始';
+    } else if (state === 'playing') {
+      stage.classList.add('playing');
+      callState.textContent = '通話中';
+    } else {
+      stage.classList.add('ended');
+      callState.textContent = '通話が終了しました';
+      $('startCallBtn').innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3.8 9.5 3l2 4.4-2 1.5a14 14 0 0 0 5.6 5.6l1.5-2 4.4 2-.8 2.9a2 2 0 0 1-2.2 1.4A17.5 17.5 0 0 1 3.2 5.9a2 2 0 0 1 1.4-2.1z"/></svg>もう一度再生';
+    }
+  }
+  async function startCall() {
+    if (!audio.src) {
+      showToast('先に音声ファイルを選択してください');
+      if (document.body.classList.contains('recording-mode')) exitRecordingMode();
+      return;
+    }
+    try {
+      if (hasEnded || audio.ended) {
+        audio.currentTime = 0;
+        elapsedBeforePause = 0;
+      }
+      await audio.play();
+      hasEnded = false;
+      setCallState('playing');
+      startTimer();
+    } catch (err) {
+      showToast('音声を再生できません。別の音声ファイルをお試しください');
+    }
+  }
+  function endCall() {
+    audio.pause();
+    stopTimer();
+    hasEnded = true;
+    elapsedBeforePause = audio.currentTime || elapsedBeforePause;
+    setCallState('ended');
+    updateTimer();
+    showToast('通話を終了しました');
+  }
+  function resetCall() {
+    audio.pause();
+    try { audio.currentTime = 0; } catch (_) {}
+    stopTimer();
+    elapsedBeforePause = 0;
+    hasEnded = false;
+    micMuted = false;
+    speakerOn = false;
+    $('muteBtn').classList.remove('on');
+    $('speakerBtn').classList.remove('on');
+    $('muteLabel').textContent = 'マイク';
+    $('speakerLabel').textContent = 'スピーカー';
+    setCallState('idle');
+    updateTimer();
+  }
+  function enterRecordingMode() {
+    if (!audio.src) {
+      showToast('先に音声ファイルを選択してください');
+      return;
+    }
+    document.body.classList.add('recording-mode');
+    stage.classList.add('recording');
+    $('recordModeBtn').textContent = '編集画面へ戻る';
+    modeLabel.textContent = '収録モード';
+    showToast('画面の「通話を開始」を押してください');
+    if (stage.requestFullscreen) {
+      stage.requestFullscreen().catch(() => {});
+    }
+  }
+  function exitRecordingMode() {
+    document.body.classList.remove('recording-mode');
+    stage.classList.remove('recording');
+    $('recordModeBtn').textContent = '収録モードへ';
+    modeLabel.textContent = '編集モード';
+    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+  }
+
+  nameInput.addEventListener('input', updateName);
+  audioInput.addEventListener('change', () => {
+    const file = audioInput.files && audioInput.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('audio/') && !/\.(mp3|m4a|wav|ogg|aac|flac)$/i.test(file.name)) {
+      showToast('音声ファイルを選択してください');
+      audioInput.value = '';
+      return;
+    }
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    audioUrl = URL.createObjectURL(file);
+    audio.src = audioUrl;
+    audio.load();
+    resetCall();
+    audioStatus.textContent = file.name + '（' + (file.size / (1024 * 1024)).toFixed(2) + ' MB）';
+  });
+  avatarInput.addEventListener('change', () => {
+    const file = avatarInput.files && avatarInput.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showToast('画像ファイルを選択してください');
+      avatarInput.value = '';
+      return;
+    }
+    if (avatarUrl) URL.revokeObjectURL(avatarUrl);
+    avatarUrl = URL.createObjectURL(file);
+    $('avatarImage').src = avatarUrl;
+    $('avatarImage').style.display = 'block';
+    $('avatarInitial').style.display = 'none';
+  });
+  $('startCallBtn').addEventListener('click', startCall);
+  $('endCallBtn').addEventListener('click', endCall);
+  $('muteBtn').addEventListener('click', () => {
+    micMuted = !micMuted;
+    $('muteBtn').classList.toggle('on', micMuted);
+    $('muteLabel').textContent = micMuted ? 'マイクOFF' : 'マイク';
+    showToast(micMuted ? 'マイクOFF（表示演出）' : 'マイクON（表示演出）');
+  });
+  $('speakerBtn').addEventListener('click', () => {
+    speakerOn = !speakerOn;
+    $('speakerBtn').classList.toggle('on', speakerOn);
+    $('speakerLabel').textContent = speakerOn ? 'スピーカーON' : 'スピーカー';
+    showToast(speakerOn ? 'スピーカーON' : 'スピーカーOFF');
+  });
+  $('recordModeBtn').addEventListener('click', () => {
+    if (document.body.classList.contains('recording-mode')) exitRecordingMode();
+    else enterRecordingMode();
+  });
+  $('resetBtn').addEventListener('click', () => {
+    resetCall();
+    nameInput.value = '通話相手';
+    updateName();
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    audioUrl = null;
+    audio.removeAttribute('src');
+    audio.load();
+    audioInput.value = '';
+    audioStatus.textContent = '音声を選択してください。ファイルはこのブラウザー内で再生されます。';
+    if (avatarUrl) URL.revokeObjectURL(avatarUrl);
+    avatarUrl = null;
+    avatarInput.value = '';
+    $('avatarImage').removeAttribute('src');
+    $('avatarImage').style.display = 'none';
+    $('avatarInitial').style.display = 'block';
+    exitRecordingMode();
+    showToast('設定をリセットしました');
+  });
+  audio.addEventListener('ended', () => {
+    stopTimer();
+    hasEnded = true;
+    setCallState('ended');
+    updateTimer();
+  });
+  audio.addEventListener('timeupdate', updateTimer);
+  audio.addEventListener('error', () => {
+    if (audio.src) showToast('音声を読み込めませんでした');
+  });
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && document.body.classList.contains('recording-mode')) {
+      // Fullscreenを解除しても収録レイアウトは維持。編集画面へ戻るボタンで終了できます。
+    }
+  });
+  function updateClock() {
+    const now = new Date();
+    $('clock').textContent = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+  }
+  updateName(); updateClock(); setInterval(updateClock, 15000); updateTimer();
+})();
+</script>
+</body>
+</html>
