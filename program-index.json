@@ -12,34 +12,14 @@
   },
   "programs": [
     {
-      "file": "tools/index (1).html",
-      "title": "逆再生サンプラー",
-      "description": "音声を逆再生するサンプラー",
-      "color": "#7c5cff",
+      "file": "tools/PRO-RACK.html",
+      "title": "Pro-RACK FX Studio",
+      "description": "Pro用の高性能ミキサー。ローカルで動作し、オフライン動作も実現します。",
+      "color": "#F59E0B",
       "textColor": "#ffffff",
-      "icon": "⏪",
+      "icon": "🎛️",
       "category": "tools",
-      "order": 10
+      "order": 1
     },
-    {
-      "file": "tools/index (4).html",
-      "title": "ROUTE（SNS）（レガシー）",
-      "description": "ROUTE SNS の旧バージョン",
-      "color": "#d65c94",
-      "textColor": "#ffffff",
-      "icon": "💬",
-      "category": "tools",
-      "order": 20
-    },
-    {
-      "file": "tools/index (5).html",
-      "title": "P2Pファイル転送",
-      "description": "P2P方式でファイルを転送するツール",
-      "color": "#1fa6a0",
-      "textColor": "#ffffff",
-      "icon": "🔗",
-      "category": "tools",
-      "order": 30
-    }
   ]
 }
