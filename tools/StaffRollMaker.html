@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>スタッフロールメーカー</title>
+<style>
+  :root {
+    --page: #0b0d12;
+    --panel: #141821;
+    --panel-2: #1a202c;
+    --line: #2a3242;
+    --text: #eef2fa;
+    --muted: #9ba6b8;
+    --accent: #8bb8ff;
+    --accent-strong: #3977d5;
+    --stage-bg: #000000;
+    --credit-color: #ffffff;
+    --credit-size: 32px;
+    --credit-leading: 1.55;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--page); }
+  body {
+    margin: 0; background: var(--page); color: var(--text);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+    min-height: 100vh;
+  }
+  button, input, select, textarea { font: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+  .app-shell { width: min(1500px, 100%); margin: 0 auto; padding: 24px clamp(14px, 3vw, 36px) 30px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 22px; }
+  .brand { display: flex; align-items: center; gap: 13px; min-width: 0; }
+  .brand-mark {
+    width: 42px; height: 42px; flex: 0 0 42px; border-radius: 12px;
+    display: grid; place-items: center; background: linear-gradient(145deg, #8bb8ff, #5876e8);
+    color: #08111f; font-weight: 900; font-size: 18px;
+  }
+  h1 { font-size: clamp(19px, 2.5vw, 25px); margin: 0; letter-spacing: .02em; }
+  .subtitle { margin-top: 4px; color: var(--muted); font-size: 13px; }
+  .top-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .layout { display: grid; grid-template-columns: minmax(290px, 370px) minmax(0, 1fr); gap: 22px; align-items: start; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+  .panel-head { padding: 17px 18px 13px; border-bottom: 1px solid var(--line); }
+  .panel-head h2 { font-size: 15px; margin: 0; }
+  .panel-head p { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 6px 0 0; }
+  .panel-body { padding: 17px 18px 19px; }
+  .field { margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+  .field-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  label, .field-label { font-size: 13px; font-weight: 650; }
+  output, .value { color: var(--accent); font-variant-numeric: tabular-nums; font-size: 12px; }
+  textarea, select, input[type="number"] {
+    width: 100%; border: 1px solid #30394a; background: #0d1119; color: var(--text);
+    border-radius: 9px; padding: 10px 11px;
+  }
+  textarea { resize: vertical; min-height: 205px; line-height: 1.65; font-size: 13px; tab-size: 2; }
+  select { min-height: 39px; }
+  input[type="range"] { width: 100%; accent-color: var(--accent-strong); display: block; }
+  input[type="color"] { width: 43px; height: 34px; padding: 3px; border: 1px solid #30394a; border-radius: 8px; background: #0d1119; cursor: pointer; }
+  .color-row { display: flex; gap: 10px; align-items: center; }
+  .color-control { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: 1; min-width: 0; }
+  .color-control span { font-size: 12px; color: var(--muted); }
+  .two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .hint { color: var(--muted); font-size: 11px; line-height: 1.65; margin-top: 7px; }
+  .button {
+    border: 1px solid #354056; background: #202838; color: var(--text); border-radius: 9px;
+    padding: 9px 12px; min-height: 38px; font-size: 12px; font-weight: 650; transition: background .15s, border-color .15s;
+  }
+  .button:hover { background: #293449; border-color: #52617b; }
+  .button.primary { background: var(--accent-strong); border-color: var(--accent-strong); color: #fff; }
+  .button.primary:hover { background: #4a86e4; }
+  .button.ghost { background: transparent; }
+  .button:disabled { opacity: .45; cursor: not-allowed; }
+  .preview-panel { min-width: 0; }
+  .preview-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 15px 17px; border-bottom: 1px solid var(--line); }
+  .preview-head h2 { font-size: 15px; margin: 0; }
+  .preview-meta { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 11px; }
+  .status-dot { width: 7px; height: 7px; display: inline-block; border-radius: 50%; background: #768398; margin-right: 5px; }
+  .status-dot.running { background: #5dd6a0; box-shadow: 0 0 9px #5dd6a055; }
+  .stage-pad { padding: 16px; }
+  .stage-frame { width: 100%; position: relative; }
+  #stage {
+    width: 100%; aspect-ratio: 16 / 9; position: relative; overflow: hidden; isolation: isolate;
+    background: var(--stage-bg); border: 1px solid #303746; border-radius: 10px;
+    color: var(--credit-color); cursor: default; user-select: none; -webkit-user-select: none;
+  }
+  #stage:fullscreen { width: 100vw; height: 100vh; max-width: none; aspect-ratio: auto; border: 0; border-radius: 0; }
+  #credits {
+    position: absolute; left: 50%; top: 0; width: 86%; margin: 0;
+    white-space: pre-wrap; overflow-wrap: anywhere; word-break: normal;
+    font-size: var(--credit-size); line-height: var(--credit-leading); font-weight: 500;
+    letter-spacing: .015em; text-align: center; color: var(--credit-color);
+    text-shadow: 0 1px 2px rgba(0,0,0,.25); will-change: transform;
+  }
+  #stage.align-left #credits { text-align: left; }
+  #stage.align-right #credits { text-align: right; }
+  #stage.font-serif #credits { font-family: "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif; }
+  #stage.font-sans #credits { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif; }
+  #stage.font-mono #credits { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .stage-empty { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; padding: 24px; color: #9aa5b5; font-size: 13px; }
+  #stage.is-empty .stage-empty { display: flex; }
+  #stage.is-empty #credits { display: none; }
+  .stage-under { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-top: 11px; }
+  .stage-under p { color: var(--muted); font-size: 11px; line-height: 1.65; margin: 0; }
+  .keycap { display: inline-block; padding: 2px 6px; border: 1px solid #3b4558; border-radius: 5px; color: #cdd6e5; background: #171d28; font-size: 10px; margin: 0 2px; }
+  .transport { padding: 14px 17px 17px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
+  .transport .button { min-width: 104px; }
+  .transport-spacer { flex: 1; }
+  .duration-note { width: 100%; margin: 0; font-size: 11px; color: var(--muted); line-height: 1.6; }
+  .note-bar { margin-top: 16px; padding: 12px 14px; border-radius: 10px; border: 1px solid #29354a; background: #101723; color: #c0cde0; font-size: 12px; line-height: 1.7; }
+  .note-bar strong { color: #e8effb; }
+  .footer { color: #727f93; font-size: 11px; text-align: center; margin-top: 22px; }
+
+  /* Capture mode: hide all authoring UI and expand the output to the viewport. */
+  body.capture-mode { overflow: hidden; background: #000; }
+  body.capture-mode .topbar,
+  body.capture-mode .settings-panel,
+  body.capture-mode .preview-head,
+  body.capture-mode .stage-under,
+  body.capture-mode .note-bar,
+  body.capture-mode .footer,
+  body.capture-mode .transport { display: none !important; }
+  body.capture-mode .app-shell { width: 100%; max-width: none; margin: 0; padding: 0; }
+  body.capture-mode .layout { display: block; }
+  body.capture-mode .preview-panel { border: 0; border-radius: 0; overflow: visible; background: transparent; }
+  body.capture-mode .preview-panel.panel { border: 0; }
+  body.capture-mode .stage-pad { padding: 0; }
+  body.capture-mode .stage-frame { width: 100vw; height: 100dvh; }
+  body.capture-mode #stage { position: fixed; inset: 0; width: 100vw; height: 100dvh; max-width: none; aspect-ratio: auto; border: 0; border-radius: 0; }
+  body.capture-mode #stage:fullscreen { width: 100vw; height: 100vh; }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .settings-panel { order: 2; }
+    .preview-panel { order: 1; }
+    .stage-pad { padding: 10px; }
+    .topbar { align-items: flex-start; }
+  }
+  @media (max-width: 560px) {
+    .app-shell { padding: 14px 10px 20px; }
+    .topbar { display: block; }
+    .top-actions { justify-content: flex-start; margin-top: 14px; }
+    .stage-under { display: block; }
+    .stage-under p + p { margin-top: 5px; }
+    .transport .button { flex: 1; }
+    .transport-spacer { display: none; }
+    .two-cols { gap: 8px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .button { transition: none; } }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">↑</div>
+      <div>
+        <h1>スタッフロールメーカー</h1>
+        <div class="subtitle">改行付きテキストから、画面録画用の縦スクロール映像を作成</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="button ghost" id="resetAllBtn" type="button">設定を初期化</button>
+      <button class="button primary" id="captureBtn" type="button">録画モード（UIを隠す）</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel settings-panel" aria-label="スタッフロール設定">
+      <div class="panel-head">
+        <h2>テキスト・表示設定</h2>
+        <p>長いテキストをそのまま貼り付けてください。空行も間隔として反映します。</p>
+      </div>
+      <div class="panel-body">
+        <div class="field">
+          <div class="field-head"><label for="creditText">スタッフロールのテキスト</label><span id="charCount" class="value">0文字</span></div>
+          <textarea id="creditText" spellcheck="false" aria-describedby="textHint" placeholder="ここにスタッフロールのテキストを貼り付けます"></textarea>
+          <div class="hint" id="textHint">改行・空行を保持して表示します。長い行は画面幅に合わせて折り返します。</div>
+        </div>
+
+        <div class="field">
+          <div class="field-head"><label for="speed">スクロール速度</label><output id="speedVal" for="speed">45 px/秒</output></div>
+          <input id="speed" type="range" min="10" max="180" step="1" value="45">
+          <div class="hint">数値が小さいほどゆっくり流れます。</div>
+        </div>
+
+        <div class="field">
+          <div class="field-head"><label for="fontSize">文字サイズ</label><output id="fontSizeVal" for="fontSize">32 px</output></div>
+          <input id="fontSize" type="range" min="14" max="80" step="1" value="32">
+        </div>
+
+        <div class="field">
+          <div class="field-head"><label for="lineHeight">行間</label><output id="lineHeightVal" for="lineHeight">1.55</output></div>
+          <input id="lineHeight" type="range" min="1.0" max="2.5" step="0.05" value="1.55">
+        </div>
+
+        <div class="field two-cols">
+          <div>
+            <div class="field-head"><label for="fontFamily">フォント</label></div>
+            <select id="fontFamily">
+              <option value="sans">ゴシック体</option>
+              <option value="serif">明朝体</option>
+              <option value="mono">等幅フォント</option>
+            </select>
+          </div>
+          <div>
+            <div class="field-head"><label for="alignment">文字の配置</label></div>
+            <select id="alignment">
+              <option value="center">中央揃え</option>
+              <option value="left">左揃え</option>
+              <option value="right">右揃え</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-head"><span class="field-label">文字色・背景色</span></div>
+          <div class="color-row">
+            <div class="color-control"><span>文字色</span><input id="textColor" type="color" value="#ffffff" aria-label="文字色"></div>
+            <div class="color-control"><span>背景色</span><input id="bgColor" type="color" value="#000000" aria-label="背景色"></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <button class="button" id="exampleBtn" type="button">サンプルテキストを挿入</button>
+          <div class="hint">内容を変更すると、プレビューに反映されます。再生中に編集した場合は先頭に戻ります。</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel preview-panel" aria-label="プレビュー">
+      <div class="preview-head">
+        <h2>映像プレビュー</h2>
+        <div class="preview-meta"><span><i id="statusDot" class="status-dot"></i><span id="statusText">待機中</span></span><span>16:9 プレビュー</span></div>
+      </div>
+      <div class="stage-pad">
+        <div class="stage-frame">
+          <div id="stage" class="font-sans align-center" tabindex="0" aria-label="スタッフロール映像プレビュー">
+            <div id="credits"></div>
+            <div class="stage-empty">左側のテキスト欄に<br>スタッフロールを入力してください</div>
+          </div>
+        </div>
+        <div class="stage-under">
+          <p>録画用は <strong>「録画モード」</strong> を押すと操作UIが消え、映像だけになります。</p>
+          <p><span class="keycap">Space</span> 再生／一時停止　<span class="keycap">R</span> 先頭へ　<span class="keycap">H</span> UI表示切替　<span class="keycap">F</span> 全画面</p>
+        </div>
+      </div>
+      <div class="transport">
+        <button id="playBtn" class="button primary" type="button">▶ 再生</button>
+        <button id="restartBtn" class="button" type="button">↺ 先頭に戻す</button>
+        <button id="fullscreenBtn" class="button" type="button">全画面表示</button>
+        <span class="transport-spacer"></span>
+        <button id="hideBtn" class="button ghost" type="button">UIだけ隠す</button>
+        <p class="duration-note">再生時間はテキスト量とスクロール速度で変わります。実際の映像は、全画面にしてから画面録画してください。</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="note-bar"><strong>録画の流れ：</strong>テキストと速度を調整 → 再生位置を先頭に戻す → 「録画モード」を押す → 画面収録を開始 → <span class="keycap">Space</span> でスクロール開始。録画モード中は、画面をタップ／クリックするとUIが戻ります。キーボードでは <span class="keycap">H</span> でも戻せます。</div>
+  <footer class="footer">このHTMLは単体で動作します。入力したテキストは外部に送信されません。</footer>
+</div>
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const defaults = {
+    text: 'スタッフロール\n\n企画・制作\n作品名\n\n監督\n〇〇 〇〇\n\n脚本\n〇〇 〇〇\n\n出演\n〇〇 〇〇\n〇〇 〇〇\n\n音楽\n〇〇 〇〇\n\n撮影・編集\n〇〇 〇〇\n\n協力\n関係者のみなさま\n\nご視聴ありがとうございました',
+    speed: 45, fontSize: 32, lineHeight: 1.55, fontFamily: 'sans', alignment: 'center',
+    textColor: '#ffffff', bgColor: '#000000'
+  };
+  const state = { y: 0, lastTime: null, playing: false, started: false, finished: false, capture: false, raf: 0 };
+  const stage = $('stage');
+  const credits = $('credits');
+
+  function setStatus(label, running = false) {
+    $('statusText').textContent = label;
+    $('statusDot').classList.toggle('running', running);
+  }
+  function applyText(reset = true) {
+    const text = $('creditText').value;
+    credits.textContent = text;
+    $('charCount').textContent = `${text.length.toLocaleString('ja-JP')}文字`;
+    stage.classList.toggle('is-empty', text.length === 0);
+    if (reset) resetRoll(false);
+  }
+  function applySettings() {
+    const size = Number($('fontSize').value);
+    const speed = Number($('speed').value);
+    const lineHeight = Number($('lineHeight').value);
+    document.documentElement.style.setProperty('--credit-size', `${size}px`);
+    document.documentElement.style.setProperty('--credit-leading', String(lineHeight));
+    document.documentElement.style.setProperty('--credit-color', $('textColor').value);
+    document.documentElement.style.setProperty('--stage-bg', $('bgColor').value);
+    $('speedVal').textContent = `${speed} px/秒`;
+    $('fontSizeVal').textContent = `${size} px`;
+    $('lineHeightVal').textContent = lineHeight.toFixed(2).replace(/0$/, '');
+    stage.classList.remove('font-sans', 'font-serif', 'font-mono', 'align-center', 'align-left', 'align-right');
+    stage.classList.add(`font-${$('fontFamily').value}`, `align-${$('alignment').value}`);
+    if (!state.playing && !state.started) setY(stage.clientHeight);
+    else credits.style.transform = `translate(-50%, ${state.y}px)`;
+  }
+  function setY(y) {
+    state.y = y;
+    credits.style.transform = `translate(-50%, ${state.y}px)`;
+  }
+  function updatePlayButton() {
+    $('playBtn').textContent = state.playing ? 'Ⅱ 一時停止' : (state.finished ? '↻ もう一度再生' : '▶ 再生');
+  }
+  function resetRoll(updateStatus = true) {
+    state.playing = false;
+    state.started = false;
+    state.finished = false;
+    state.lastTime = null;
+    if (state.raf) cancelAnimationFrame(state.raf);
+    state.raf = 0;
+    setY(stage.clientHeight);
+    updatePlayButton();
+    if (updateStatus) setStatus('待機中', false);
+  }
+  function finishRoll() {
+    state.playing = false;
+    state.finished = true;
+    state.lastTime = null;
+    state.raf = 0;
+    updatePlayButton();
+    setStatus('再生終了', false);
+  }
+  function tick(now) {
+    if (!state.playing) return;
+    if (state.lastTime === null) state.lastTime = now;
+    const dt = Math.min((now - state.lastTime) / 1000, 0.08);
+    state.lastTime = now;
+    state.y -= dt * Number($('speed').value);
+    credits.style.transform = `translate(-50%, ${state.y}px)`;
+    if (state.y + credits.offsetHeight < 0) {
+      finishRoll();
+      return;
+    }
+    state.raf = requestAnimationFrame(tick);
+  }
+  function play() {
+    if (!credits.textContent.length) {
+      setStatus('テキストを入力してください', false);
+      return;
+    }
+    if (state.playing) {
+      state.playing = false;
+      state.lastTime = null;
+      if (state.raf) cancelAnimationFrame(state.raf);
+      state.raf = 0;
+      updatePlayButton();
+      setStatus('一時停止中', false);
+      return;
+    }
+    if (state.finished) resetRoll(false);
+    if (!state.started) {
+      setY(stage.clientHeight);
+      state.started = true;
+    }
+    state.playing = true;
+    state.lastTime = null;
+    updatePlayButton();
+    setStatus('再生中', true);
+    state.raf = requestAnimationFrame(tick);
+  }
+  function setCapture(enabled, requestFullscreen = false) {
+    state.capture = enabled;
+    document.body.classList.toggle('capture-mode', enabled);
+    if (enabled) {
+      setStatus(state.playing ? '再生中' : '録画待機中', state.playing);
+      if (requestFullscreen && stage.requestFullscreen) {
+        const p = stage.requestFullscreen();
+        if (p && typeof p.catch === 'function') p.catch(() => {});
+      }
+    } else {
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+      setStatus(state.playing ? '再生中' : (state.finished ? '再生終了' : '待機中'), state.playing);
+    }
+  }
+  function enterCaptureMode() {
+    // Start in a clean waiting state; the first Space press (or stage tap) begins the roll.
+    setCapture(true, true);
+  }
+  function toggleFullscreen() {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else if (stage.requestFullscreen) {
+      const p = stage.requestFullscreen();
+      if (p && typeof p.catch === 'function') p.catch(() => setCapture(true, false));
+    } else {
+      setCapture(true, false);
+    }
+  }
+  function restoreDefaults() {
+    $('creditText').value = defaults.text;
+    $('speed').value = defaults.speed;
+    $('fontSize').value = defaults.fontSize;
+    $('lineHeight').value = defaults.lineHeight;
+    $('fontFamily').value = defaults.fontFamily;
+    $('alignment').value = defaults.alignment;
+    $('textColor').value = defaults.textColor;
+    $('bgColor').value = defaults.bgColor;
+    applyText(false);
+    resetRoll(false);
+    applySettings();
+    setStatus('待機中', false);
+  }
+
+  $('creditText').addEventListener('input', () => { applyText(true); applySettings(); });
+  ['speed', 'fontSize', 'lineHeight', 'fontFamily', 'alignment', 'textColor', 'bgColor'].forEach((id) => {
+    $(id).addEventListener('input', applySettings);
+    $(id).addEventListener('change', applySettings);
+  });
+  $('playBtn').addEventListener('click', play);
+  $('restartBtn').addEventListener('click', () => resetRoll(true));
+  $('fullscreenBtn').addEventListener('click', toggleFullscreen);
+  $('captureBtn').addEventListener('click', enterCaptureMode);
+  $('hideBtn').addEventListener('click', () => setCapture(true, false));
+  $('resetAllBtn').addEventListener('click', restoreDefaults);
+  $('exampleBtn').addEventListener('click', () => { $('creditText').value = defaults.text; applyText(true); applySettings(); });
+
+  stage.addEventListener('click', () => {
+    if (state.capture) {
+      if (!state.playing && !state.finished) play();
+      else setCapture(false, false);
+    }
+  });
+  document.addEventListener('fullscreenchange', () => {
+    // If the user leaves browser fullscreen with Escape, restore the controls automatically.
+    if (!document.fullscreenElement && state.capture) {
+      document.body.classList.remove('capture-mode');
+      state.capture = false;
+      setStatus(state.playing ? '再生中' : (state.finished ? '再生終了' : '待機中'), state.playing);
+    }
+  });
+  document.addEventListener('keydown', (event) => {
+    const target = event.target;
+    const editing = target && (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.isContentEditable);
+    if (editing) {
+      if (event.key === 'Escape' && state.capture) setCapture(false, false);
+      return;
+    }
+    if (event.code === 'Space') {
+      event.preventDefault();
+      play();
+    } else if (event.key.toLowerCase() === 'r') {
+      resetRoll(true);
+    } else if (event.key.toLowerCase() === 'h') {
+      setCapture(!state.capture, false);
+    } else if (event.key.toLowerCase() === 'f') {
+      toggleFullscreen();
+    } else if (event.key === 'Escape' && state.capture && !document.fullscreenElement) {
+      setCapture(false, false);
+    }
+  });
+  window.addEventListener('resize', () => {
+    if (!state.started && !state.playing) setY(stage.clientHeight);
+  });
+
+  restoreDefaults();
+})();
+</script>
+</body>
+</html>
