@@ -115,6 +115,22 @@
         canvas {
             touch-action: none;
             border-radius: 8px;
+            display: block;
+        }
+
+        /* Keep backing-store sizing stable even when the remote Tailwind CDN is unavailable. */
+        #eqCanvas {
+            width: 100%;
+            height: 260px;
+        }
+        #compCanvas {
+            width: 280px;
+            height: 190px;
+        }
+        @media (max-width: 420px) {
+            #compCanvas {
+                width: min(280px, calc(100vw - 150px));
+            }
         }
 
         /* GR Meter Styling */
@@ -217,7 +233,7 @@
             <label class="cursor-pointer bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold text-xs py-2 px-3.5 rounded flex items-center gap-1.5 transition-colors shadow">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                 <span>読み込み (Load)</span>
-                <input type="file" id="fileInput" accept="audio/*,.m4a,.mp3,.wav,.aac,.flac,.ogg,.caf" class="hidden">
+                <input type="file" id="fileInput" accept="audio/*,.m4a,.m4b,.mp3,.wav,.aac,.flac,.ogg,.oga,.opus,.caf,.aif,.aiff,.webm" class="hidden">
             </label>
 
             <div class="h-6 w-px bg-slate-800 mx-0.5"></div>
@@ -245,13 +261,13 @@
     </header>
 
     <!-- Audio Player Timeline Bar -->
-    <div class="w-full max-w-6xl mb-6 bg-slate-900/60 p-3 rounded-xl border border-slate-800 flex items-center gap-4">
+    <div class="w-full max-w-6xl mb-6 bg-slate-900/60 p-3 rounded-xl border border-slate-800 flex flex-wrap items-center gap-4">
         <span id="timeCurrent" class="mono text-xs text-amber-400 w-14 text-right">00:00.0</span>
         <div class="flex-grow relative flex items-center">
             <input type="range" id="seekSlider" min="0" max="100" value="0" step="0.1" class="slider-amber">
         </div>
         <span id="timeTotal" class="mono text-xs text-slate-400 w-14">00:00.0</span>
-        <span id="fileStatus" class="mono text-[11px] text-slate-500 hidden md:inline-block max-w-[180px] truncate">ファイル未選択</span>
+        <span id="fileStatus" class="mono text-[11px] text-slate-400 inline-block basis-full md:basis-auto md:max-w-[240px] min-w-0 truncate" role="status" aria-live="polite" aria-atomic="true">ファイル未選択</span>
     </div>
 
     <!-- Main Rack Container -->
@@ -548,61 +564,78 @@
 
     </main>
 
-    <!-- Modal for Export Progress -->
-    <div id="exportModal" class="fixed inset-0 bg-black/80 modal-blur z-50 flex items-center justify-center hidden">
-        <div class="bg-slate-900 border border-slate-700 p-6 rounded-xl max-w-sm w-full shadow-2xl flex flex-col items-center text-center">
-            <div class="w-12 h-12 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin mb-4"></div>
-            <h3 class="text-lg font-bold text-white mb-1">WAVファイル書き出し中...</h3>
-            <p class="text-xs text-slate-400 mb-4">エフェクト処理と4xオーバーサンプリングを計算中</p>
-            <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-800 mb-2">
-                <div id="exportProgressBar" class="bg-indigo-500 h-full w-0 transition-all duration-100"></div>
+    <!-- WAV Export Status / iOS Save Flow -->
+    <div id="exportModal" class="fixed inset-0 bg-black/80 modal-blur z-50 flex items-center justify-center hidden" role="dialog" aria-modal="true" aria-labelledby="exportTitle">
+        <div class="bg-slate-900 border border-slate-700 p-6 rounded-xl max-w-sm w-full shadow-2xl flex flex-col items-center text-center mx-4">
+            <div id="exportSpinner" class="w-12 h-12 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin mb-4"></div>
+            <h3 id="exportTitle" class="text-lg font-bold text-white mb-1">WAVファイル書き出し中...</h3>
+            <p id="exportMessage" class="text-xs text-slate-400 mb-4" aria-live="polite">エフェクト処理と4xオーバーサンプリングを計算中</p>
+            <div id="exportProgressArea" class="w-full">
+                <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-800 mb-2">
+                    <div id="exportProgressBar" class="bg-indigo-500 h-full w-0 transition-all duration-100"></div>
+                </div>
+                <span id="exportProgressText" class="mono text-xs text-indigo-400 font-bold">0%</span>
             </div>
-            <span id="exportProgressText" class="mono text-xs text-indigo-400 font-bold">0%</span>
+            <a id="exportDownloadLink" class="hidden mt-3 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm py-3 px-4 rounded-lg" href="#" download="ProRack_FX_Export.wav">WAVを保存 / 開く</a>
+            <button id="btnCloseExport" type="button" class="hidden mt-3 text-xs text-slate-400 hover:text-white underline">閉じる</button>
         </div>
     </div>
 
     <script>
         const workerScript = `
             self.onmessage = function(e) {
-                const { channelData, sampleRate, numChannels } = e.data;
-                const length = channelData[0].length;
-                const buffer = new ArrayBuffer(44 + length * numChannels * 2);
-                const view = new DataView(buffer);
-                
-                function writeString(offset, string) {
-                    for (let i = 0; i < string.length; i++) {
-                        view.setUint8(offset + i, string.charCodeAt(i));
+                try {
+                    const { channelData, sampleRate, numChannels } = e.data;
+                    if (!Array.isArray(channelData) || !channelData.length || !sampleRate || !numChannels) {
+                        throw new Error('WAVエンコードに必要なデータがありません。');
                     }
-                }
-                
-                writeString(0, 'RIFF');
-                view.setUint32(4, 36 + length * numChannels * 2, true);
-                writeString(8, 'WAVE');
-                writeString(12, 'fmt ');
-                view.setUint32(16, 16, true);
-                view.setUint16(20, 1, true);
-                view.setUint16(22, numChannels, true);
-                view.setUint32(24, sampleRate, true);
-                view.setUint32(28, sampleRate * numChannels * 2, true);
-                view.setUint16(32, numChannels * 2, true);
-                view.setUint16(34, 16, true);
-                writeString(36, 'data');
-                view.setUint32(40, length * numChannels * 2, true);
-                
-                let offset = 44;
-                for (let i = 0; i < length; i++) {
+                    const length = channelData[0].length;
+                    const dataBytes = length * numChannels * 2;
+                    if (!Number.isSafeInteger(dataBytes) || dataBytes > 0xFFFFFFFF - 36) {
+                        throw new Error('出力が通常のWAV形式の上限（約4GB）を超えています。');
+                    }
                     for (let ch = 0; ch < numChannels; ch++) {
-                        let sample = Math.max(-1, Math.min(1, channelData[ch][i]));
-                        sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
-                        view.setInt16(offset, sample, true);
-                        offset += 2;
+                        if (!channelData[ch] || channelData[ch].length !== length) {
+                            throw new Error('チャンネルデータの長さが一致しません。');
+                        }
                     }
-                    if (i % 150000 === 0) {
-                        self.postMessage({ type: 'progress', progress: Math.round((i / length) * 100) });
+
+                    const buffer = new ArrayBuffer(44 + dataBytes);
+                    const view = new DataView(buffer);
+                    function writeString(offset, value) {
+                        for (let i = 0; i < value.length; i++) view.setUint8(offset + i, value.charCodeAt(i));
                     }
+                    writeString(0, 'RIFF');
+                    view.setUint32(4, 36 + dataBytes, true);
+                    writeString(8, 'WAVE');
+                    writeString(12, 'fmt ');
+                    view.setUint32(16, 16, true);
+                    view.setUint16(20, 1, true);
+                    view.setUint16(22, numChannels, true);
+                    view.setUint32(24, sampleRate, true);
+                    view.setUint32(28, sampleRate * numChannels * 2, true);
+                    view.setUint16(32, numChannels * 2, true);
+                    view.setUint16(34, 16, true);
+                    writeString(36, 'data');
+                    view.setUint32(40, dataBytes, true);
+
+                    let offset = 44;
+                    const reportEvery = Math.max(1, Math.floor(length / 100));
+                    for (let i = 0; i < length; i++) {
+                        for (let ch = 0; ch < numChannels; ch++) {
+                            let sample = Math.max(-1, Math.min(1, channelData[ch][i]));
+                            sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+                            view.setInt16(offset, sample, true);
+                            offset += 2;
+                        }
+                        if (i % reportEvery === 0) {
+                            self.postMessage({ type: 'progress', progress: Math.min(99, Math.round((i / length) * 100)) });
+                        }
+                    }
+                    self.postMessage({ type: 'complete', buffer: buffer }, [buffer]);
+                } catch (error) {
+                    self.postMessage({ type: 'error', message: error && error.message ? error.message : 'WAVエンコードに失敗しました。' });
                 }
-                
-                self.postMessage({ type: 'complete', buffer: buffer }, [buffer]);
             };
         `;
         const workerBlob = new Blob([workerScript], { type: 'application/javascript' });
@@ -612,12 +645,23 @@
         let audioCtx = null;
         let audioBuffer = null;
         let currentSource = null;
-        
+        let currentFileName = '';
         let isPlaying = false;
+        let isStartingPlayback = false;
         let isLooping = false;
         let startTime = 0;
         let pauseOffset = 0;
         let globalBypass = false;
+        let loadRequestId = 0;
+        let playRequestId = 0;
+        let activeFileReader = null;
+        let isLoadingAudio = false;
+        let exportInProgress = false;
+        let activeExportWorker = null;
+        let exportObjectUrl = null;
+        let reverbUpdateTimer = null;
+        let reverbUpdateRequestId = 0;
+        let lastCanvasRenderAt = 0;
 
         // DSP Nodes Map
         const nodes = {};
@@ -636,104 +680,151 @@
         let activeEqBandIndex = 0;
 
         function initAudioEngine() {
+            if (!AudioCtx) throw new Error('このブラウザーはWeb Audio APIに対応していません。');
+            if (audioCtx && audioCtx.state === 'closed') {
+                audioCtx = null;
+                Object.keys(nodes).forEach(key => delete nodes[key]);
+            }
             if (audioCtx) return;
+
             audioCtx = new AudioCtx();
+            audioCtx.onstatechange = () => {
+                if (isLoadingAudio || !isPlaying || !audioCtx) return;
+                if (audioCtx.state !== 'running') {
+                    setFileStatus('音声出力が一時停止しています。再生ボタンで復帰してください。', 'warning');
+                    updatePlayButton(true);
+                } else {
+                    setFileStatus(`再生中: ${currentFileName}`, 'success');
+                }
+            };
 
-            // 1. Dry Input Splitter
             nodes.inputNode = audioCtx.createGain();
-
-            // 2. Gate Node (WaveShaper)
             nodes.gateNode = audioCtx.createWaveShaper();
-            updateGateCurve(-70);
+            updateGateCurve(parseFloat(document.getElementById('gateThresh').value));
 
-            // 3. EQ Nodes (7 BiquadFilters)
-            nodes.eqFilters = eqBandsState.map(band => {
-                const f = audioCtx.createBiquadFilter();
-                f.type = band.type;
-                f.frequency.value = band.freq;
-                f.gain.value = band.gain;
-                f.Q.value = band.q;
-                return f;
+            nodes.eqFilters = [];
+            nodes.eqWetGains = [];
+            nodes.eqDryGains = [];
+            let prevNode = nodes.gateNode;
+            eqBandsState.forEach((band, index) => {
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = band.type;
+                filter.frequency.value = band.freq;
+                filter.gain.value = band.gain;
+                filter.Q.value = band.q;
+                const wet = audioCtx.createGain();
+                const dry = audioCtx.createGain();
+                const sum = audioCtx.createGain();
+                nodes.eqFilters.push(filter);
+                nodes.eqWetGains.push(wet);
+                nodes.eqDryGains.push(dry);
+                prevNode.connect(filter);
+                filter.connect(wet);
+                wet.connect(sum);
+                prevNode.connect(dry);
+                dry.connect(sum);
+                prevNode = sum;
             });
 
-            // 4. Compressor Analyzer & Dynamics Compressor
             nodes.compInputAnalyzer = audioCtx.createAnalyser();
             nodes.compInputAnalyzer.fftSize = 256;
-
             nodes.compressor = audioCtx.createDynamicsCompressor();
+            nodes.compressor.threshold.value = parseFloat(document.getElementById('compThresh').value);
+            nodes.compressor.ratio.value = parseFloat(document.getElementById('compRatio').value);
+            nodes.compressor.knee.value = parseFloat(document.getElementById('compKnee').value);
+            nodes.compressor.attack.value = parseFloat(document.getElementById('compAttack').value) / 1000;
+            nodes.compressor.release.value = parseFloat(document.getElementById('compRelease').value) / 1000;
             nodes.compMakeup = audioCtx.createGain();
-
-            // 5. Tube Amp Waveshaper
-            nodes.amp = audioCtx.createWaveShaper();
-            nodes.amp.oversample = '4x';
-            nodes.amp.curve = makeDistortionCurve(0);
-
-            // 6. Delay Nodes
-            nodes.delay = audioCtx.createDelay(2.0);
-            nodes.delay.delayTime.value = 0.25;
-            nodes.delayFbk = audioCtx.createGain();
-            nodes.delayFbk.gain.value = 0.35;
-            nodes.delayWet = audioCtx.createGain();
-            nodes.delayWet.gain.value = 0;
-
-            // 7. Reverb Convolver & Wet Gain
-            nodes.reverb = audioCtx.createConvolver();
-            nodes.reverbWet = audioCtx.createGain();
-            nodes.reverbWet.gain.value = 0;
-            generateReverbImpulse(2.5).then(b => nodes.reverb.buffer = b);
-
-            // 8. Master Limiter & Master Output Gain
-            nodes.limiter = audioCtx.createDynamicsCompressor();
-            nodes.limiter.threshold.value = -0.3;
-            nodes.limiter.ratio.value = 20.0;
-            nodes.limiter.attack.value = 0.002;
-            nodes.limiter.release.value = 0.1;
-
-            nodes.masterGain = audioCtx.createGain();
-
-            // 9. Global Bypass Routing Switches
-            nodes.wetPathGain = audioCtx.createGain();
-            nodes.dryPathGain = audioCtx.createGain();
-            nodes.dryPathGain.gain.value = 0; // Default Wet
-
-            // Connect Audio DSP Chain
-            nodes.inputNode.connect(nodes.gateNode);
-            
-            // Connect EQ Chain in series
-            let prevNode = nodes.gateNode;
-            nodes.eqFilters.forEach(filter => {
-                prevNode.connect(filter);
-                prevNode = filter;
-            });
-
+            nodes.compWetGain = audioCtx.createGain();
+            nodes.compDryGain = audioCtx.createGain();
             prevNode.connect(nodes.compInputAnalyzer);
             nodes.compInputAnalyzer.connect(nodes.compressor);
             nodes.compressor.connect(nodes.compMakeup);
+            nodes.compMakeup.connect(nodes.compWetGain);
+            prevNode.connect(nodes.compDryGain);
 
-            nodes.compMakeup.connect(nodes.amp);
+            nodes.amp = audioCtx.createWaveShaper();
+            nodes.amp.oversample = '4x';
+            nodes.amp.curve = makeDistortionCurve(document.getElementById('chkAmpEnable').checked ? parseFloat(document.getElementById('ampDrive').value) : 0);
+            nodes.compWetGain.connect(nodes.amp);
+            nodes.compDryGain.connect(nodes.amp);
 
-            // Connect to Delay & Reverb parallel wet paths
+            nodes.delay = audioCtx.createDelay(2.0);
+            nodes.delay.delayTime.value = parseFloat(document.getElementById('delayTime').value) / 1000;
+            nodes.delayFbk = audioCtx.createGain();
+            nodes.delayFbk.gain.value = parseFloat(document.getElementById('delayFbk').value) / 100;
+            nodes.delayWet = audioCtx.createGain();
+            nodes.delayWet.gain.value = document.getElementById('chkDelayEnable').checked ? parseFloat(document.getElementById('delayMix').value) / 100 : 0;
             nodes.amp.connect(nodes.delay);
             nodes.delay.connect(nodes.delayFbk);
             nodes.delayFbk.connect(nodes.delay);
             nodes.delay.connect(nodes.delayWet);
 
+            nodes.reverb = audioCtx.createConvolver();
+            nodes.reverbWet = audioCtx.createGain();
+            nodes.reverbWet.gain.value = document.getElementById('chkReverbEnable').checked ? parseFloat(document.getElementById('revMix').value) / 100 : 0;
+            nodes.reverb.buffer = generateReverbImpulse(parseFloat(document.getElementById('revTime').value), audioCtx);
             nodes.amp.connect(nodes.reverb);
             nodes.reverb.connect(nodes.reverbWet);
 
-            // Sum Dry Amp + Wet Delays/Reverbs to Wet Path Gain
+            nodes.limiter = audioCtx.createDynamicsCompressor();
+            nodes.limiter.threshold.value = -0.3;
+            nodes.limiter.ratio.value = 20.0;
+            nodes.limiter.attack.value = 0.002;
+            nodes.limiter.release.value = 0.1;
+            nodes.masterGain = audioCtx.createGain();
+            nodes.wetPathGain = audioCtx.createGain();
+            nodes.dryPathGain = audioCtx.createGain();
+            nodes.wetPathGain.gain.value = globalBypass ? 0 : 1;
+            nodes.dryPathGain.gain.value = globalBypass ? 1 : 0;
+
             nodes.amp.connect(nodes.wetPathGain);
             nodes.delayWet.connect(nodes.wetPathGain);
             nodes.reverbWet.connect(nodes.wetPathGain);
-
-            // Connect Input directly to Dry Path (for Global Bypass)
             nodes.inputNode.connect(nodes.dryPathGain);
-
-            // Master Output Stage
             nodes.wetPathGain.connect(nodes.limiter);
             nodes.dryPathGain.connect(nodes.limiter);
             nodes.limiter.connect(nodes.masterGain);
+            nodes.masterGain.gain.value = Math.pow(10, parseFloat(document.getElementById('masterGain').value) / 20);
             nodes.masterGain.connect(audioCtx.destination);
+
+            applyEqRouting(true);
+            applyCompressorRouting(true);
+        }
+
+        function applyEqRouting(immediate = false) {
+            if (!audioCtx || !nodes.eqWetGains) return;
+            const enabled = document.getElementById('chkEQEnable').checked;
+            eqBandsState.forEach((band, index) => {
+                const bypass = !enabled || band.bypass;
+                const now = audioCtx.currentTime;
+                const set = immediate ? (param, value) => { param.value = value; } : (param, value) => param.setTargetAtTime(value, now, 0.015);
+                set(nodes.eqWetGains[index].gain, bypass ? 0 : 1);
+                set(nodes.eqDryGains[index].gain, bypass ? 1 : 0);
+            });
+        }
+
+        function applyCompressorRouting(immediate = false) {
+            if (!audioCtx || !nodes.compWetGain) return;
+            const enabled = document.getElementById('chkCompEnable').checked;
+            const now = audioCtx.currentTime;
+            if (immediate) {
+                nodes.compWetGain.gain.value = enabled ? 1 : 0;
+                nodes.compDryGain.gain.value = enabled ? 0 : 1;
+                nodes.compMakeup.gain.value = enabled ? Math.pow(10, parseFloat(document.getElementById('compMakeup').value) / 20) : 1;
+            } else {
+                nodes.compWetGain.gain.setTargetAtTime(enabled ? 1 : 0, now, 0.015);
+                nodes.compDryGain.gain.setTargetAtTime(enabled ? 0 : 1, now, 0.015);
+                nodes.compMakeup.gain.setTargetAtTime(enabled ? Math.pow(10, parseFloat(document.getElementById('compMakeup').value) / 20) : 1, now, 0.015);
+            }
+        }
+
+        async function ensureAudioContextRunning() {
+            initAudioEngine();
+            if (audioCtx.state !== 'running') await audioCtx.resume();
+            if (audioCtx.state !== 'running') {
+                throw new Error('音声エンジンを再開できませんでした。Safariの画面上で再生ボタンをもう一度押してください。');
+            }
         }
 
         function updateGateCurve(threshDb) {
@@ -761,10 +852,14 @@
             return curve;
         }
 
-        async function generateReverbImpulse(duration) {
-            const sampleRate = audioCtx ? audioCtx.sampleRate : 44100;
-            const length = sampleRate * duration;
-            const impulse = (audioCtx || new AudioCtx()).createBuffer(2, length, sampleRate);
+        function generateReverbImpulse(duration, context = audioCtx) {
+            if (!context || typeof context.createBuffer !== 'function') {
+                throw new Error('リバーブ用の音声コンテキストを作成できません。');
+            }
+            const safeDuration = Math.max(0.1, Math.min(8, Number(duration) || 2.5));
+            const sampleRate = context.sampleRate || 44100;
+            const length = Math.max(1, Math.floor(sampleRate * safeDuration));
+            const impulse = context.createBuffer(2, length, sampleRate);
             for (let c = 0; c < 2; c++) {
                 const channel = impulse.getChannelData(c);
                 for (let i = 0; i < length; i++) {
@@ -780,10 +875,15 @@
 
         function setupHiDPICanvas(cvs, ctx) {
             const rect = cvs.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
-            cvs.width = rect.width * dpr;
-            cvs.height = rect.height * dpr;
-            ctx.scale(dpr, dpr);
+            const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+            const pixelWidth = Math.max(1, Math.round(rect.width * dpr));
+            const pixelHeight = Math.max(1, Math.round(rect.height * dpr));
+            if (cvs.width !== pixelWidth || cvs.height !== pixelHeight) {
+                cvs.width = pixelWidth;
+                cvs.height = pixelHeight;
+            }
+            if (typeof ctx.setTransform === 'function') ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            else ctx.scale(dpr, dpr);
             return { width: rect.width, height: rect.height };
         }
 
@@ -1196,105 +1296,289 @@
         const seekSlider = document.getElementById('seekSlider');
         const fileInput = document.getElementById('fileInput');
 
-        async function loadAudioFile(file) {
-            initAudioEngine();
-            document.getElementById('fileStatus').innerText = "読み込み中 (Loading)...";
+        function setFileStatus(message, kind = 'normal') {
+            const status = document.getElementById('fileStatus');
+            status.textContent = message;
+            status.classList.toggle('text-red-400', kind === 'error');
+            status.classList.toggle('text-amber-300', kind === 'warning');
+            status.classList.toggle('text-emerald-400', kind === 'success');
+            status.classList.toggle('text-slate-400', kind === 'normal');
+        }
 
-            try {
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    const arrayBuffer = e.target.result;
-                    // iOS compatible decode
-                    audioBuffer = await new Promise((resolve, reject) => {
-                        audioCtx.decodeAudioData(arrayBuffer, resolve, reject);
-                    });
-                    
-                    pauseOffset = 0;
-                    document.getElementById('fileStatus').innerText = `${file.name} (${(audioBuffer.duration).toFixed(1)}s)`;
-                    document.getElementById('timeTotal').innerText = formatTime(audioBuffer.duration);
-                    btnPlay.disabled = false;
-                    btnExport.disabled = false;
-                    seekSlider.max = audioBuffer.duration;
-                    seekSlider.value = 0;
-                };
-                reader.readAsArrayBuffer(file);
-            } catch (err) {
-                document.getElementById('fileStatus').innerText = "エラー: 読み込み失敗";
+        function updatePlayButton(playing) {
+            if (playing) {
+                btnPlay.innerHTML = '⏸ 一時停止';
+                btnPlay.classList.replace('bg-emerald-600', 'bg-amber-600');
+            } else {
+                btnPlay.innerHTML = '▶ 再生';
+                btnPlay.classList.replace('bg-amber-600', 'bg-emerald-600');
             }
         }
 
-        function playAudio(offset = 0) {
-            if (!audioBuffer) return;
-            initAudioEngine();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+        function stopCurrentSource() {
+            const oldSource = currentSource;
+            currentSource = null;
+            if (oldSource) {
+                oldSource.onended = null;
+                try { oldSource.stop(); } catch (_) {}
+                try { oldSource.disconnect(); } catch (_) {}
+            }
+        }
 
-            if (currentSource) {
-                try { currentSource.stop(); } catch(e){}
-                currentSource.disconnect();
+        function getCurrentPlaybackPosition() {
+            if (!audioBuffer || !audioCtx || !audioBuffer.duration) return 0;
+            let position = isPlaying ? audioCtx.currentTime - startTime : pauseOffset;
+            if (!Number.isFinite(position)) position = 0;
+            if (isLooping) position = ((position % audioBuffer.duration) + audioBuffer.duration) % audioBuffer.duration;
+            return Math.max(0, Math.min(audioBuffer.duration, position));
+        }
+
+        function readFileAsArrayBuffer(file, requestId) {
+            if (file && typeof file.arrayBuffer === 'function') {
+                return file.arrayBuffer();
+            }
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                activeFileReader = reader;
+                reader.onload = () => {
+                    if (activeFileReader === reader) activeFileReader = null;
+                    resolve(reader.result);
+                };
+                reader.onerror = () => {
+                    if (activeFileReader === reader) activeFileReader = null;
+                    reject(reader.error || new Error('ファイルを読み込めませんでした。'));
+                };
+                reader.onabort = () => {
+                    if (activeFileReader === reader) activeFileReader = null;
+                    reject(new DOMException('ファイル読み込みが中断されました。', 'AbortError'));
+                };
+                reader.onprogress = (event) => {
+                    if (requestId === loadRequestId && event.lengthComputable) {
+                        const percent = Math.round((event.loaded / event.total) * 100);
+                        setFileStatus(`ファイル読み込み中 ${percent}%`);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function decodeAudioDataCompat(arrayBuffer) {
+            return new Promise((resolve, reject) => {
+                let settled = false;
+                const success = (buffer) => {
+                    if (settled) return;
+                    settled = true;
+                    resolve(buffer);
+                };
+                const failure = (error) => {
+                    if (settled) return;
+                    settled = true;
+                    reject(error || new Error('音声データをデコードできませんでした。'));
+                };
+                try {
+                    const result = audioCtx.decodeAudioData(arrayBuffer, success, failure);
+                    if (result && typeof result.then === 'function') result.then(success, failure);
+                } catch (error) {
+                    failure(error);
+                }
+            });
+        }
+
+        function describeLoadError(error) {
+            const name = error && error.name ? error.name : '';
+            const message = error && error.message ? error.message : '';
+            if (name === 'AbortError') return '読み込みがキャンセルされました。';
+            if (name === 'NotSupportedError' || name === 'EncodingError' || /decode|encoding|format|supported/i.test(message)) {
+                return '音声形式または内部コーデックに対応していません。MP3 / M4A(AAC) / WAV / FLACなど別形式をお試しください。';
+            }
+            if (name === 'NotReadableError' || name === 'QuotaExceededError' || /memory|quota|read|file/i.test(message)) return 'ファイルを読み取れませんでした。ファイルの保存完了とアクセス権限を確認してください。';
+            return '読み込みに失敗しました。ファイルが破損していないか、端末の空き容量があるか確認してください。';
+        }
+
+        async function loadAudioFile(file) {
+            const requestId = ++loadRequestId;
+            if (activeFileReader && activeFileReader.readyState === FileReader.LOADING) {
+                try { activeFileReader.abort(); } catch (_) {}
+                activeFileReader = null;
+            }
+            if (!file) {
+                isLoadingAudio = false;
+                btnPlay.disabled = !audioBuffer;
+                btnExport.disabled = !audioBuffer || exportInProgress;
+                return;
+            }
+            if (!Number.isFinite(file.size) || file.size <= 0) {
+                isLoadingAudio = false;
+                btnPlay.disabled = !audioBuffer;
+                btnExport.disabled = !audioBuffer || exportInProgress;
+                setFileStatus('空のファイル、または読み取れないファイルです。', 'error');
+                return;
+            }
+            if (file.size > 80 * 1024 * 1024) {
+                const proceed = window.confirm(`選択したファイルは約${(file.size / (1024 * 1024)).toFixed(0)}MBです。音声に展開すると、iPhoneのメモリーを大きく消費する場合があります。読み込みを続けますか？`);
+                if (!proceed) {
+                    isLoadingAudio = false;
+                    btnPlay.disabled = !audioBuffer;
+                    btnExport.disabled = !audioBuffer || exportInProgress;
+                    setFileStatus('ファイル読み込みをキャンセルしました。', 'normal');
+                    return;
+                }
             }
 
-            currentSource = audioCtx.createBufferSource();
-            currentSource.buffer = audioBuffer;
-            currentSource.loop = isLooping;
+            isLoadingAudio = true;
+            setFileStatus(`読み込み準備中: ${file.name}`);
+            btnPlay.disabled = !audioBuffer;
+            btnExport.disabled = !audioBuffer || exportInProgress;
 
-            currentSource.connect(nodes.inputNode);
-
-            startTime = audioCtx.currentTime - offset;
-            pauseOffset = offset;
-            currentSource.start(0, offset);
-
-            isPlaying = true;
-            btnPlay.innerHTML = "⏸ 一時停止";
-            btnPlay.classList.replace('bg-emerald-600', 'bg-amber-600');
-
-            currentSource.onended = () => {
-                if (!isLooping && isPlaying) {
-                    stopAudio();
+            try {
+                initAudioEngine();
+                const arrayBuffer = await readFileAsArrayBuffer(file, requestId);
+                if (requestId !== loadRequestId) return;
+                if (!(arrayBuffer instanceof ArrayBuffer) || arrayBuffer.byteLength === 0) {
+                    throw new Error('ファイルデータが空です。');
                 }
-            };
+                setFileStatus('音声を解析・デコードしています...');
+                // Use a dedicated copy: some engines detach the supplied ArrayBuffer during decoding.
+                const decodeInput = arrayBuffer.slice(0);
+                const decoded = await decodeAudioDataCompat(decodeInput);
+                if (requestId !== loadRequestId) return;
+                if (!decoded || !Number.isFinite(decoded.duration) || decoded.duration <= 0 || decoded.numberOfChannels < 1) {
+                    throw new Error('デコード結果が無効です。');
+                }
+
+                const decodedBytes = decoded.length * decoded.numberOfChannels * 4;
+                stopCurrentSource();
+                playRequestId++;
+                isPlaying = false;
+                isStartingPlayback = false;
+                pauseOffset = 0;
+                audioBuffer = decoded;
+                currentFileName = file.name || '名称未設定';
+                updatePlayButton(false);
+                btnPlay.disabled = false;
+                btnExport.disabled = exportInProgress;
+                seekSlider.min = 0;
+                seekSlider.max = decoded.duration;
+                seekSlider.value = 0;
+                document.getElementById('timeCurrent').innerText = '00:00.0';
+                document.getElementById('timeTotal').innerText = formatTime(decoded.duration);
+                const memoryMB = decodedBytes / (1024 * 1024);
+                const note = memoryMB >= 160 ? ` / PCM約${memoryMB.toFixed(0)}MB` : '';
+                setFileStatus(`読み込み完了: ${currentFileName} (${decoded.duration.toFixed(1)}秒${note})`, memoryMB >= 160 ? 'warning' : 'success');
+                renderEQCanvas();
+                renderCompCanvas();
+            } catch (error) {
+                if (requestId !== loadRequestId || (error && error.name === 'AbortError')) return;
+                const reason = describeLoadError(error);
+                const retained = audioBuffer ? '（直前の読み込み済み音声は保持しています）' : '';
+                setFileStatus(`${reason} ${retained}`, 'error');
+                console.error('[PRO-RACK] Audio load failed:', error);
+            } finally {
+                if (requestId === loadRequestId) {
+                    isLoadingAudio = false;
+                    btnPlay.disabled = !audioBuffer;
+                    btnExport.disabled = !audioBuffer || exportInProgress;
+                }
+            }
+        }
+
+        async function playAudio(offset = 0) {
+            if (!audioBuffer) return;
+            const requestId = ++playRequestId;
+            isStartingPlayback = true;
+            try {
+                await ensureAudioContextRunning();
+                if (requestId !== playRequestId || !audioBuffer) return;
+                const duration = audioBuffer.duration;
+                let safeOffset = Number.isFinite(offset) ? offset : 0;
+                safeOffset = Math.max(0, Math.min(duration, safeOffset));
+                if (safeOffset >= duration) safeOffset = 0;
+                if (isLooping && duration > 0) safeOffset %= duration;
+
+                stopCurrentSource();
+                const source = audioCtx.createBufferSource();
+                source.buffer = audioBuffer;
+                source.loop = isLooping;
+                source.connect(nodes.inputNode);
+                source.onended = () => {
+                    if (currentSource !== source) {
+                        try { source.disconnect(); } catch (_) {}
+                        return;
+                    }
+                    currentSource = null;
+                    try { source.disconnect(); } catch (_) {}
+                    if (!isLooping && isPlaying) {
+                        isPlaying = false;
+                        pauseOffset = 0;
+                        seekSlider.value = 0;
+                        document.getElementById('timeCurrent').innerText = '00:00.0';
+                        updatePlayButton(false);
+                    }
+                };
+                currentSource = source;
+                startTime = audioCtx.currentTime - safeOffset;
+                pauseOffset = safeOffset;
+                source.start(0, safeOffset);
+                isPlaying = true;
+                isStartingPlayback = false;
+                updatePlayButton(true);
+                setFileStatus(`再生中: ${currentFileName}`, 'success');
+            } catch (error) {
+                if (requestId !== playRequestId) return;
+                isPlaying = false;
+                isStartingPlayback = false;
+                stopCurrentSource();
+                updatePlayButton(false);
+                setFileStatus(error && error.message ? error.message : '再生を開始できませんでした。', 'error');
+                console.error('[PRO-RACK] Audio playback failed:', error);
+            } finally {
+                if (requestId === playRequestId && !isPlaying) isStartingPlayback = false;
+            }
         }
 
         function pauseAudio() {
             if (!isPlaying) return;
-            pauseOffset = audioCtx.currentTime - startTime;
-            if (currentSource) {
-                try { currentSource.stop(); } catch(e){}
-            }
+            pauseOffset = getCurrentPlaybackPosition();
             isPlaying = false;
-            btnPlay.innerHTML = "▶ 再生";
-            btnPlay.classList.replace('bg-amber-600', 'bg-emerald-600');
+            isStartingPlayback = false;
+            playRequestId++;
+            stopCurrentSource();
+            updatePlayButton(false);
+            if (audioBuffer) setFileStatus(`一時停止: ${currentFileName}`, 'normal');
         }
 
         function stopAudio() {
-            if (currentSource) {
-                try { currentSource.stop(); } catch(e){}
-            }
+            playRequestId++;
             isPlaying = false;
+            isStartingPlayback = false;
+            stopCurrentSource();
             pauseOffset = 0;
             seekSlider.value = 0;
-            document.getElementById('timeCurrent').innerText = "00:00.0";
-            btnPlay.innerHTML = "▶ 再生";
-            btnPlay.classList.replace('bg-amber-600', 'bg-emerald-600');
+            document.getElementById('timeCurrent').innerText = '00:00.0';
+            updatePlayButton(false);
+            if (audioBuffer) setFileStatus(`停止: ${currentFileName}`, 'normal');
         }
 
         function formatTime(seconds) {
+            if (!Number.isFinite(seconds) || seconds < 0) seconds = 0;
             const m = Math.floor(seconds / 60);
             const s = (seconds % 60).toFixed(1);
             return `${m.toString().padStart(2, '0')}:${s.padStart(4, '0')}`;
         }
 
-        // Animation Loop for Progress Bar and Canvases
-        function animationFrameLoop() {
+        function animationFrameLoop(timestamp = 0) {
             requestAnimationFrame(animationFrameLoop);
-
-            if (isPlaying && audioBuffer) {
-                const currentPos = (audioCtx.currentTime - startTime) % audioBuffer.duration;
+            if (isPlaying && audioBuffer && audioCtx) {
+                const currentPos = getCurrentPlaybackPosition();
                 seekSlider.value = currentPos;
                 document.getElementById('timeCurrent').innerText = formatTime(currentPos);
             }
-
-            renderEQCanvas();
-            renderCompCanvas();
+            // Canvas dimensions are no longer reset every frame. Limit redraws and skip hidden tabs.
+            if (!document.hidden && timestamp - lastCanvasRenderAt >= 66) {
+                lastCanvasRenderAt = timestamp;
+                renderEQCanvas();
+                renderCompCanvas();
+            }
         }
 
         const btnExport = document.getElementById('btnExport');
@@ -1302,155 +1586,235 @@
         const exportProgressBar = document.getElementById('exportProgressBar');
         const exportProgressText = document.getElementById('exportProgressText');
 
-        async function exportProcessedWAV() {
-            if (!audioBuffer) return;
-            initAudioEngine();
+        function setExportState(title, message, mode = 'working') {
+            document.getElementById('exportTitle').textContent = title;
+            document.getElementById('exportMessage').textContent = message;
+            document.getElementById('exportSpinner').classList.toggle('hidden', mode !== 'working');
+            document.getElementById('exportProgressArea').classList.toggle('hidden', mode !== 'working');
+            document.getElementById('exportDownloadLink').classList.toggle('hidden', mode !== 'ready');
+            document.getElementById('btnCloseExport').classList.toggle('hidden', mode === 'working');
+        }
 
+        function cleanupExportWorker() {
+            if (activeExportWorker) {
+                try { activeExportWorker.terminate(); } catch (_) {}
+                activeExportWorker = null;
+            }
+        }
+
+        async function exportProcessedWAV() {
+            if (!audioBuffer || exportInProgress) return;
+            const sourceBuffer = audioBuffer;
+            exportInProgress = true;
+            btnExport.disabled = true;
             exportModal.classList.remove('hidden');
             exportProgressBar.style.width = '0%';
             exportProgressText.innerText = '0%';
-
-            // Add 3.5 seconds tail for Reverb/Delay decay
-            const tailDuration = 3.5;
-            const totalDuration = audioBuffer.duration + tailDuration;
-            const sampleRate = audioBuffer.sampleRate;
-
-            const offlineCtx = new OfflineAudioContext(
-                audioBuffer.numberOfChannels,
-                Math.ceil(totalDuration * sampleRate),
-                sampleRate
-            );
-
-            // Re-create DSP Graph in Offline Context
-            const offInput = offlineCtx.createGain();
-            
-            // Gate
-            const offGate = offlineCtx.createWaveShaper();
-            const gateThresh = parseFloat(document.getElementById('gateThresh').value);
-            const gateSamples = 1024;
-            const gateCurve = new Float32Array(gateSamples);
-            const threshLin = Math.pow(10, gateThresh / 20);
-            for (let i = 0; i < gateSamples; i++) {
-                let x = (i / (gateSamples - 1)) * 2 - 1;
-                gateCurve[i] = Math.abs(x) < threshLin ? 0 : x;
-            }
-            offGate.curve = gateCurve;
-
-            // 7 EQ Filters
-            const offEqFilters = eqBandsState.map(band => {
-                const f = offlineCtx.createBiquadFilter();
-                f.type = band.type;
-                f.frequency.value = band.freq;
-                f.gain.value = band.gain;
-                f.Q.value = band.q;
-                return f;
-            });
-
-            // Compressor
-            const offComp = offlineCtx.createDynamicsCompressor();
-            offComp.threshold.value = parseFloat(document.getElementById('compThresh').value);
-            offComp.ratio.value = parseFloat(document.getElementById('compRatio').value);
-            offComp.knee.value = parseFloat(document.getElementById('compKnee').value);
-            offComp.attack.value = parseFloat(document.getElementById('compAttack').value) / 1000;
-            offComp.release.value = parseFloat(document.getElementById('compRelease').value) / 1000;
-
-            const offMakeup = offlineCtx.createGain();
-            offMakeup.gain.value = Math.pow(10, parseFloat(document.getElementById('compMakeup').value) / 20);
-
-            // Amp
-            const offAmp = offlineCtx.createWaveShaper();
-            offAmp.oversample = '4x';
-            offAmp.curve = makeDistortionCurve(document.getElementById('chkAmpEnable').checked ? parseFloat(document.getElementById('ampDrive').value) : 0);
-
-            // Delay
-            const offDelay = offlineCtx.createDelay(2.0);
-            offDelay.delayTime.value = parseFloat(document.getElementById('delayTime').value) / 1000;
-            const offDelayFbk = offlineCtx.createGain();
-            offDelayFbk.gain.value = parseFloat(document.getElementById('delayFbk').value) / 100;
-            const offDelayWet = offlineCtx.createGain();
-            offDelayWet.gain.value = document.getElementById('chkDelayEnable').checked ? parseFloat(document.getElementById('delayMix').value) / 100 : 0;
-
-            // Reverb
-            const offReverb = offlineCtx.createConvolver();
-            offReverb.buffer = await generateReverbImpulse(parseFloat(document.getElementById('revTime').value));
-            const offReverbWet = offlineCtx.createGain();
-            offReverbWet.gain.value = document.getElementById('chkReverbEnable').checked ? parseFloat(document.getElementById('revMix').value) / 100 : 0;
-
-            // Limiter & Master
-            const offLimiter = offlineCtx.createDynamicsCompressor();
-            offLimiter.threshold.value = -0.3;
-            offLimiter.ratio.value = 20.0;
-            const offMaster = offlineCtx.createGain();
-            offMaster.gain.value = Math.pow(10, parseFloat(document.getElementById('masterGain').value) / 20);
-
-            // Connect Offline Chain
-            const offSource = offlineCtx.createBufferSource();
-            offSource.buffer = audioBuffer;
-
-            offSource.connect(offInput);
-            offInput.connect(offGate);
-
-            let prevOff = offGate;
-            offEqFilters.forEach(f => {
-                prevOff.connect(f);
-                prevOff = f;
-            });
-
-            prevOff.connect(offComp);
-            offComp.connect(offMakeup);
-            offMakeup.connect(offAmp);
-
-            offAmp.connect(offDelay);
-            offDelay.connect(offDelayFbk);
-            offDelayFbk.connect(offDelay);
-            offDelay.connect(offDelayWet);
-
-            offAmp.connect(offReverb);
-            offReverb.connect(offReverbWet);
-
-            const offWetSum = offlineCtx.createGain();
-            offAmp.connect(offWetSum);
-            offDelayWet.connect(offWetSum);
-            offReverbWet.connect(offWetSum);
-
-            offWetSum.connect(offLimiter);
-            offLimiter.connect(offMaster);
-            offMaster.connect(offlineCtx.destination);
-
-            offSource.start(0);
-
-            const renderedBuffer = await offlineCtx.startRendering();
-
-            // Web Worker Encoding
-            const channelData = [];
-            for (let i = 0; i < renderedBuffer.numberOfChannels; i++) {
-                channelData.push(renderedBuffer.getChannelData(i));
+            setExportState('WAVファイル書き出し中...', 'エフェクト処理とWAVエンコードを実行しています。', 'working');
+            cleanupExportWorker();
+            if (exportObjectUrl) {
+                URL.revokeObjectURL(exportObjectUrl);
+                exportObjectUrl = null;
             }
 
-            const worker = new Worker(workerUrl);
-            worker.postMessage({
-                channelData,
-                sampleRate: renderedBuffer.sampleRate,
-                numChannels: renderedBuffer.numberOfChannels
-            });
-
-            worker.onmessage = (e) => {
-                if (e.data.type === 'progress') {
-                    exportProgressBar.style.width = `${e.data.progress}%`;
-                    exportProgressText.innerText = `${e.data.progress}%`;
-                } else if (e.data.type === 'complete') {
-                    const blob = new Blob([e.data.buffer], { type: 'audio/wav' });
-                    const url = URL.createObjectURL(blob);
-                    
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `ProRack_FX_Export_${Date.now()}.wav`;
-                    a.click();
-
-                    exportModal.classList.add('hidden');
-                    worker.terminate();
+            try {
+                initAudioEngine();
+                if (!window.OfflineAudioContext && !window.webkitOfflineAudioContext) {
+                    throw new Error('このブラウザーはオフライン音声レンダリングに対応していません。');
                 }
-            };
+                const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+                const tailDuration = 3.5;
+                const totalDuration = sourceBuffer.duration + tailDuration;
+                const sampleRate = sourceBuffer.sampleRate;
+                const frameCount = Math.ceil(totalDuration * sampleRate);
+                const numChannels = sourceBuffer.numberOfChannels;
+                const estimatedWavBytes = 44 + frameCount * numChannels * 2;
+                if (!Number.isSafeInteger(estimatedWavBytes) || estimatedWavBytes > 0xFFFFFFFF) {
+                    throw new Error('音声が長すぎるため、通常のWAV形式では書き出せません（約4GB上限）。');
+                }
+                if (estimatedWavBytes > 180 * 1024 * 1024) {
+                    const proceed = window.confirm(`書き出しデータは約${(estimatedWavBytes / (1024 * 1024)).toFixed(0)}MBです。iPhoneではメモリー不足になる可能性があります。続行しますか？`);
+                    if (!proceed) throw new Error('書き出しをキャンセルしました。');
+                }
+
+                const offlineCtx = new OfflineCtx(numChannels, frameCount, sampleRate);
+                const offInput = offlineCtx.createGain();
+                const offGate = offlineCtx.createWaveShaper();
+                const gateThresh = parseFloat(document.getElementById('gateThresh').value);
+                const gateCurve = new Float32Array(1024);
+                const threshLin = Math.pow(10, gateThresh / 20);
+                for (let i = 0; i < gateCurve.length; i++) {
+                    const x = (i / (gateCurve.length - 1)) * 2 - 1;
+                    gateCurve[i] = Math.abs(x) < threshLin ? 0 : x;
+                }
+                offGate.curve = gateCurve;
+
+                const offEqFilters = [];
+                let prevOff = offGate;
+                const eqEnabled = document.getElementById('chkEQEnable').checked;
+                eqBandsState.forEach((band) => {
+                    const filter = offlineCtx.createBiquadFilter();
+                    filter.type = band.type;
+                    filter.frequency.value = band.freq;
+                    filter.gain.value = band.gain;
+                    filter.Q.value = band.q;
+                    offEqFilters.push(filter);
+                    const wet = offlineCtx.createGain();
+                    const dry = offlineCtx.createGain();
+                    const sum = offlineCtx.createGain();
+                    const bypass = !eqEnabled || band.bypass;
+                    wet.gain.value = bypass ? 0 : 1;
+                    dry.gain.value = bypass ? 1 : 0;
+                    prevOff.connect(filter);
+                    filter.connect(wet);
+                    wet.connect(sum);
+                    prevOff.connect(dry);
+                    dry.connect(sum);
+                    prevOff = sum;
+                });
+
+                const offComp = offlineCtx.createDynamicsCompressor();
+                offComp.threshold.value = parseFloat(document.getElementById('compThresh').value);
+                offComp.ratio.value = parseFloat(document.getElementById('compRatio').value);
+                offComp.knee.value = parseFloat(document.getElementById('compKnee').value);
+                offComp.attack.value = parseFloat(document.getElementById('compAttack').value) / 1000;
+                offComp.release.value = parseFloat(document.getElementById('compRelease').value) / 1000;
+                const compressorEnabled = document.getElementById('chkCompEnable').checked;
+                const offMakeup = offlineCtx.createGain();
+                offMakeup.gain.value = compressorEnabled ? Math.pow(10, parseFloat(document.getElementById('compMakeup').value) / 20) : 1;
+                const offCompWet = offlineCtx.createGain();
+                const offCompDry = offlineCtx.createGain();
+                offCompWet.gain.value = compressorEnabled ? 1 : 0;
+                offCompDry.gain.value = compressorEnabled ? 0 : 1;
+                prevOff.connect(offComp);
+                offComp.connect(offMakeup);
+                offMakeup.connect(offCompWet);
+                prevOff.connect(offCompDry);
+
+                const offAmp = offlineCtx.createWaveShaper();
+                offAmp.oversample = '4x';
+                offAmp.curve = makeDistortionCurve(document.getElementById('chkAmpEnable').checked ? parseFloat(document.getElementById('ampDrive').value) : 0);
+                offCompWet.connect(offAmp);
+                offCompDry.connect(offAmp);
+
+                const offDelay = offlineCtx.createDelay(2.0);
+                offDelay.delayTime.value = parseFloat(document.getElementById('delayTime').value) / 1000;
+                const offDelayFbk = offlineCtx.createGain();
+                offDelayFbk.gain.value = parseFloat(document.getElementById('delayFbk').value) / 100;
+                const offDelayWet = offlineCtx.createGain();
+                offDelayWet.gain.value = document.getElementById('chkDelayEnable').checked ? parseFloat(document.getElementById('delayMix').value) / 100 : 0;
+                offAmp.connect(offDelay);
+                offDelay.connect(offDelayFbk);
+                offDelayFbk.connect(offDelay);
+                offDelay.connect(offDelayWet);
+
+                const offReverb = offlineCtx.createConvolver();
+                offReverb.buffer = generateReverbImpulse(parseFloat(document.getElementById('revTime').value), offlineCtx);
+                const offReverbWet = offlineCtx.createGain();
+                offReverbWet.gain.value = document.getElementById('chkReverbEnable').checked ? parseFloat(document.getElementById('revMix').value) / 100 : 0;
+                offAmp.connect(offReverb);
+                offReverb.connect(offReverbWet);
+
+                const offWetSum = offlineCtx.createGain();
+                offAmp.connect(offWetSum);
+                offDelayWet.connect(offWetSum);
+                offReverbWet.connect(offWetSum);
+                const offDryGlobal = offlineCtx.createGain();
+                const offWetGlobal = offlineCtx.createGain();
+                offWetGlobal.gain.value = globalBypass ? 0 : 1;
+                offDryGlobal.gain.value = globalBypass ? 1 : 0;
+                offInput.connect(offDryGlobal);
+                offWetSum.connect(offWetGlobal);
+
+                const offLimiter = offlineCtx.createDynamicsCompressor();
+                offLimiter.threshold.value = -0.3;
+                offLimiter.ratio.value = 20.0;
+                const offMaster = offlineCtx.createGain();
+                offMaster.gain.value = Math.pow(10, parseFloat(document.getElementById('masterGain').value) / 20);
+                const offSource = offlineCtx.createBufferSource();
+                offSource.buffer = sourceBuffer;
+                offSource.connect(offInput);
+                offWetGlobal.connect(offLimiter);
+                offDryGlobal.connect(offLimiter);
+                offLimiter.connect(offMaster);
+                offMaster.connect(offlineCtx.destination);
+                offSource.start(0);
+
+                const renderedBuffer = await offlineCtx.startRendering();
+                if (numChannels > 0 && renderedBuffer.length > 0) {
+                    const channelData = [];
+                    const transferList = [];
+                    for (let channel = 0; channel < renderedBuffer.numberOfChannels; channel++) {
+                        const data = renderedBuffer.getChannelData(channel);
+                        channelData.push(data);
+                        transferList.push(data.buffer);
+                    }
+
+                    await new Promise((resolve, reject) => {
+                        let settled = false;
+                        const finish = (error) => {
+                            if (settled) return;
+                            settled = true;
+                            cleanupExportWorker();
+                            if (error) reject(error); else resolve();
+                        };
+                        let worker;
+                        try {
+                            worker = new Worker(workerUrl);
+                        } catch (error) {
+                            reject(new Error('WAVエンコーダーを起動できませんでした。ブラウザーのコンテンツ制限を確認してください。'));
+                            return;
+                        }
+                        activeExportWorker = worker;
+                        worker.onmessage = (event) => {
+                            const data = event.data || {};
+                            if (data.type === 'progress') {
+                                exportProgressBar.style.width = `${data.progress}%`;
+                                exportProgressText.innerText = `${data.progress}%`;
+                            } else if (data.type === 'error') {
+                                finish(new Error(data.message || 'WAVエンコードに失敗しました。'));
+                            } else if (data.type === 'complete') {
+                                try {
+                                    const blob = new Blob([data.buffer], { type: 'audio/wav' });
+                                    exportObjectUrl = URL.createObjectURL(blob);
+                                    const link = document.getElementById('exportDownloadLink');
+                                    link.href = exportObjectUrl;
+                                    link.download = `ProRack_FX_Export_${Date.now()}.wav`;
+                                    link.textContent = 'WAVを保存 / 開く';
+                                    exportProgressBar.style.width = '100%';
+                                    exportProgressText.innerText = '100%';
+                                    setExportState('WAVの準備が完了しました', '下のボタンをタップしてファイルを保存、または開いてください。iPhoneでは自動ダウンロードではなく、手動タップが必要です。', 'ready');
+                                    finish();
+                                    // Keep this URL valid until the next export or page exit; iOS may open a preview first.
+                                } catch (error) {
+                                    finish(error);
+                                }
+                            }
+                        };
+                        worker.onerror = (event) => {
+                            event.preventDefault && event.preventDefault();
+                            finish(new Error('WAVエンコード用Workerでエラーが発生しました。'));
+                        };
+                        worker.onmessageerror = () => finish(new Error('Workerとのデータ受け渡しに失敗しました。'));
+                        try {
+                            worker.postMessage({ channelData, sampleRate: renderedBuffer.sampleRate, numChannels: renderedBuffer.numberOfChannels }, transferList);
+                        } catch (error) {
+                            finish(new Error('WAVデータをWorkerへ転送できませんでした。'));
+                        }
+                    });
+                } else {
+                    throw new Error('書き出し対象の音声データが空です。');
+                }
+            } catch (error) {
+                cleanupExportWorker();
+                const message = error && error.message ? error.message : 'WAV書き出しに失敗しました。';
+                setExportState('WAV書き出しに失敗しました', message, 'error');
+                document.getElementById('btnCloseExport').classList.remove('hidden');
+                console.error('[PRO-RACK] WAV export failed:', error);
+            } finally {
+                exportInProgress = false;
+                btnExport.disabled = !audioBuffer;
+            }
         }
 
         function createEQBandTabs() {
@@ -1523,25 +1887,38 @@
 
             // Transport Play/Pause/Stop
             btnPlay.addEventListener('click', () => {
-                if (isPlaying) pauseAudio();
-                else playAudio(pauseOffset);
+                // A suspended/interrupted iOS AudioContext must be resumed from this user gesture.
+                if (isPlaying && audioCtx && audioCtx.state === 'running') pauseAudio();
+                else playAudio(isPlaying ? getCurrentPlaybackPosition() : pauseOffset);
             });
             btnStop.addEventListener('click', stopAudio);
 
             btnLoop.addEventListener('click', () => {
                 isLooping = !isLooping;
+                if (currentSource) currentSource.loop = isLooping;
                 document.getElementById('ledLoop').className = `led-indicator ${isLooping ? 'led-active-amber' : ''}`;
             });
 
             seekSlider.addEventListener('input', (e) => {
                 const targetTime = parseFloat(e.target.value);
-                if (isPlaying) playAudio(targetTime);
+                if (isPlaying || isStartingPlayback) playAudio(targetTime);
                 else pauseOffset = targetTime;
                 document.getElementById('timeCurrent').innerText = formatTime(targetTime);
             });
 
             fileInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) loadAudioFile(e.target.files[0]);
+                const selectedFile = e.target.files && e.target.files.length ? e.target.files[0] : null;
+                // Clear the picker value so selecting the same file again also fires change.
+                e.target.value = '';
+                if (selectedFile) loadAudioFile(selectedFile);
+            });
+
+            document.getElementById('btnCloseExport').addEventListener('click', () => {
+                exportModal.classList.add('hidden');
+            });
+            document.getElementById('exportDownloadLink').addEventListener('click', () => {
+                // Do not revoke immediately: iOS Safari may still be handing the Blob to its viewer.
+                document.getElementById('exportMessage').textContent = 'ファイルを開く／保存する処理を開始しました。Safariの共有メニューから「ファイルに保存」も選択できます。';
             });
 
             btnExport.addEventListener('click', exportProcessedWAV);
@@ -1580,7 +1957,18 @@
 
             document.getElementById('inspectorBypass').addEventListener('change', (e) => {
                 eqBandsState[activeEqBandIndex].bypass = e.target.checked;
+                applyEqRouting();
                 renderEQCanvas();
+            });
+
+            document.getElementById('chkEQEnable').addEventListener('change', () => {
+                applyEqRouting();
+                renderEQCanvas();
+            });
+
+            document.getElementById('chkCompEnable').addEventListener('change', () => {
+                applyCompressorRouting();
+                renderCompCanvas();
             });
 
             document.getElementById('btnResetEQ').addEventListener('click', () => {
@@ -1588,6 +1976,7 @@
                     band.gain = 0;
                     if(nodes.eqFilters) nodes.eqFilters[idx].gain.setTargetAtTime(0, audioCtx.currentTime, 0.02);
                 });
+                applyEqRouting();
                 updateEQInspectorUI();
                 renderEQCanvas();
             });
@@ -1632,7 +2021,7 @@
             document.getElementById('compMakeup').addEventListener('input', (e) => {
                 const v = parseFloat(e.target.value);
                 document.getElementById('compMakeupVal').innerText = `${v > 0 ? '+' : ''}${v.toFixed(1)} dB`;
-                if(nodes.compMakeup) nodes.compMakeup.gain.setTargetAtTime(Math.pow(10, v / 20), audioCtx.currentTime, 0.02);
+                if(nodes.compMakeup) applyCompressorRouting();
             });
 
             // Amp, Delay, Reverb Controls
@@ -1674,10 +2063,21 @@
                 if(nodes.delayWet) nodes.delayWet.gain.setTargetAtTime(e.target.checked ? mix / 100 : 0, audioCtx.currentTime, 0.02);
             });
 
-            document.getElementById('revTime').addEventListener('input', async (e) => {
+            document.getElementById('revTime').addEventListener('input', (e) => {
                 const v = parseFloat(e.target.value);
                 document.getElementById('revTimeVal').innerText = `${v.toFixed(1)} s`;
-                if(nodes.reverb) nodes.reverb.buffer = await generateReverbImpulse(v);
+                if (reverbUpdateTimer) clearTimeout(reverbUpdateTimer);
+                const requestId = ++reverbUpdateRequestId;
+                reverbUpdateTimer = setTimeout(() => {
+                    try {
+                        if (requestId === reverbUpdateRequestId && nodes.reverb && audioCtx) {
+                            nodes.reverb.buffer = generateReverbImpulse(v, audioCtx);
+                        }
+                    } catch (error) {
+                        setFileStatus('リバーブ設定の更新に失敗しました。', 'warning');
+                        console.warn('[PRO-RACK] Reverb update failed:', error);
+                    }
+                }, 140);
             });
 
             document.getElementById('revMix').addEventListener('input', (e) => {
@@ -1711,18 +2111,40 @@
             window.addEventListener('resize', () => {
                 renderEQCanvas();
                 renderCompCanvas();
+            }, { passive: true });
+
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden && audioCtx && audioCtx.state !== 'running' && isPlaying) {
+                    setFileStatus('音声出力が一時停止しています。再生ボタンで復帰してください。', 'warning');
+                }
             });
 
+            window.addEventListener('pagehide', (event) => {
+                // Preserve in-memory Blob URLs and the Worker URL when Safari restores this page from BFCache.
+                if (event && event.persisted) return;
+                if (activeFileReader && activeFileReader.readyState === FileReader.LOADING) {
+                    try { activeFileReader.abort(); } catch (_) {}
+                }
+                cleanupExportWorker();
+                if (exportObjectUrl) {
+                    URL.revokeObjectURL(exportObjectUrl);
+                    exportObjectUrl = null;
+                }
+                if (workerUrl) URL.revokeObjectURL(workerUrl);
+            }, { once: true });
+
+            renderEQCanvas();
+            renderCompCanvas();
             animationFrameLoop();
         });
     </script>
-</body>
-</html>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js', {scope: './'})
+    navigator.serviceWorker.register('./sw.js', { scope: './', updateViaCache: 'none' })
       .catch(err => console.warn('PWA service worker registration failed:', err));
   });
 }
 </script>
+</body>
+</html>
