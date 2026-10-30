@@ -253,9 +253,28 @@
 
             <div class="h-6 w-px bg-slate-800 mx-0.5"></div>
 
+            <div class="flex items-center gap-1.5 flex-wrap">
+                <label class="text-[10px] text-slate-500 mono flex items-center gap-1">FORMAT
+                    <select id="exportBitDepth" class="bg-slate-900 border border-slate-700 text-slate-200 rounded px-1.5 py-1 text-[10px]">
+                        <option value="16">PCM 16bit</option>
+                        <option value="24" selected>PCM 24bit</option>
+                        <option value="32f">Float 32bit</option>
+                        <option value="64f">Float 64bit (分析用)</option>
+                    </select>
+                </label>
+                <label class="text-[10px] text-slate-500 mono flex items-center gap-1">RATE
+                    <select id="exportSampleRate" class="bg-slate-900 border border-slate-700 text-slate-200 rounded px-1.5 py-1 text-[10px]">
+                        <option value="source" selected>Engine Rate</option>
+                        <option value="44100">44.1k</option>
+                        <option value="48000">48k</option>
+                        <option value="96000">96k</option>
+                        <option value="192000">192k</option>
+                    </select>
+                </label>
+            </div>
             <button id="btnExport" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-2 px-3.5 rounded flex items-center gap-1.5 transition-colors shadow disabled:opacity-40">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                <span>WAV書き出し</span>
+                <span>高品質WAV</span>
             </button>
         </div>
     </header>
@@ -308,10 +327,18 @@
                 <!-- Parameters Controls -->
                 <div class="flex-grow grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
                     <!-- Gate Thresh -->
-                    <div class="col-span-2 md:col-span-3 bg-slate-950/40 p-2.5 rounded border border-slate-800/60 flex items-center gap-4">
-                        <span class="text-xs font-bold text-slate-300 w-28">NOISE GATE</span>
-                        <input type="range" id="gateThresh" min="-90" max="0" step="1" value="-70" class="slider-cyan">
-                        <span id="gateThreshVal" class="mono text-xs text-cyan-400 w-16 text-right font-bold">-70 dB</span>
+                    <div class="col-span-2 md:col-span-3 bg-slate-950/40 p-2.5 rounded border border-slate-800/60">
+                        <div class="flex items-center gap-4">
+                            <span class="text-xs font-bold text-slate-300 w-28">NOISE GATE</span>
+                            <input type="range" id="gateThresh" min="-90" max="0" step="1" value="-70" class="slider-cyan">
+                            <span id="gateThreshVal" class="mono text-xs text-cyan-400 w-16 text-right font-bold">-70 dB</span>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+                            <label class="text-[10px] text-slate-500">ATTACK <span id="gateAttackVal" class="mono text-cyan-400">5 ms</span><input type="range" id="gateAttack" min="0.1" max="100" step="0.1" value="5" class="slider-cyan mt-1"></label>
+                            <label class="text-[10px] text-slate-500">HOLD <span id="gateHoldVal" class="mono text-cyan-400">50 ms</span><input type="range" id="gateHold" min="0" max="500" step="5" value="50" class="slider-cyan mt-1"></label>
+                            <label class="text-[10px] text-slate-500">RELEASE <span id="gateReleaseVal" class="mono text-cyan-400">150 ms</span><input type="range" id="gateRelease" min="10" max="1000" step="5" value="150" class="slider-cyan mt-1"></label>
+                            <label class="text-[10px] text-slate-500">RANGE <span id="gateRangeVal" class="mono text-cyan-400">-80 dB</span><input type="range" id="gateRange" min="-90" max="0" step="1" value="-80" class="slider-cyan mt-1"></label>
+                        </div>
                     </div>
 
                     <!-- Comp Threshold -->
@@ -482,11 +509,20 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Tube Amp Box -->
                 <div class="bg-slate-950/50 p-4 rounded-lg border border-slate-800/80 flex flex-col justify-between">
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-sm font-bold text-purple-300">TUBE SATURATION (4x)</span>
+                    <div class="flex justify-between items-center mb-3 gap-2">
+                        <span class="text-sm font-bold text-purple-300">TUBE SATURATION</span>
                         <input type="checkbox" id="chkAmpEnable" class="w-4 h-4 accent-purple-500 rounded cursor-pointer">
                     </div>
-                    <p class="text-[11px] text-slate-500 mb-3">4倍オーバーサンプリング真空管ウォームサチュレーション</p>
+                    <div class="flex items-center justify-between gap-2 mb-3">
+                        <p class="text-[11px] text-slate-500">オーバーサンプル・非線形処理</p>
+                        <label class="text-[10px] text-slate-500">QUALITY
+                            <select id="ampQuality" class="bg-slate-900 border border-slate-700 text-slate-200 rounded px-1.5 py-1 text-[10px]">
+                                <option value="4">4x</option>
+                                <option value="8" selected>8x</option>
+                                <option value="16">16x</option>
+                            </select>
+                        </label>
+                    </div>
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <label class="text-xs text-slate-400 font-semibold">DRIVE</label>
@@ -557,6 +593,14 @@
                             </div>
                             <input type="range" id="masterGain" min="-24" max="12" step="0.5" value="0" class="slider-cyan">
                         </div>
+                        <div class="pt-2 border-t border-slate-800">
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs text-slate-300 font-bold">LOOKAHEAD PEAK LIMITER</label>
+                                <span id="limiterCeilingVal" class="mono text-xs text-emerald-400 font-bold">-0.5 dB</span>
+                            </div>
+                            <input type="range" id="limiterCeiling" min="-3" max="0" step="0.1" value="-0.5" class="slider-cyan">
+                            <p class="text-[10px] text-slate-500 mt-1">5ms先読み・4点補間によるインターサンプルピーク推定</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -569,7 +613,7 @@
         <div class="bg-slate-900 border border-slate-700 p-6 rounded-xl max-w-sm w-full shadow-2xl flex flex-col items-center text-center mx-4">
             <div id="exportSpinner" class="w-12 h-12 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin mb-4"></div>
             <h3 id="exportTitle" class="text-lg font-bold text-white mb-1">WAVファイル書き出し中...</h3>
-            <p id="exportMessage" class="text-xs text-slate-400 mb-4" aria-live="polite">エフェクト処理と4xオーバーサンプリングを計算中</p>
+            <p id="exportMessage" class="text-xs text-slate-400 mb-4" aria-live="polite">共通DSPエンジンで高精度レンダリング中</p>
             <div id="exportProgressArea" class="w-full">
                 <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-800 mb-2">
                     <div id="exportProgressBar" class="bg-indigo-500 h-full w-0 transition-all duration-100"></div>
@@ -585,54 +629,67 @@
         const workerScript = `
             self.onmessage = function(e) {
                 try {
-                    const { channelData, sampleRate, numChannels } = e.data;
+                    const { channelData, sampleRate, numChannels, bitDepth } = e.data;
                     if (!Array.isArray(channelData) || !channelData.length || !sampleRate || !numChannels) {
                         throw new Error('WAVエンコードに必要なデータがありません。');
                     }
                     const length = channelData[0].length;
-                    const dataBytes = length * numChannels * 2;
+                    const bytesPerSample = bitDepth === '32f' ? 4 : bitDepth === '64f' ? 8 : bitDepth === 24 ? 3 : 2;
+                    const dataBytes = length * numChannels * bytesPerSample;
                     if (!Number.isSafeInteger(dataBytes) || dataBytes > 0xFFFFFFFF - 36) {
-                        throw new Error('出力が通常のWAV形式の上限（約4GB）を超えています。');
+                        throw new Error('出力が通常のRIFF WAV形式の上限（約4GB）を超えています。');
                     }
                     for (let ch = 0; ch < numChannels; ch++) {
-                        if (!channelData[ch] || channelData[ch].length !== length) {
-                            throw new Error('チャンネルデータの長さが一致しません。');
-                        }
+                        if (!channelData[ch] || channelData[ch].length !== length) throw new Error('チャンネルデータの長さが一致しません。');
                     }
-
                     const buffer = new ArrayBuffer(44 + dataBytes);
                     const view = new DataView(buffer);
-                    function writeString(offset, value) {
-                        for (let i = 0; i < value.length; i++) view.setUint8(offset + i, value.charCodeAt(i));
-                    }
+                    function writeString(offset, value) { for (let i = 0; i < value.length; i++) view.setUint8(offset + i, value.charCodeAt(i)); }
+                    const floatOutput = bitDepth === '32f' || bitDepth === '64f';
+                    const bits = bitDepth === '64f' ? 64 : floatOutput ? 32 : bitDepth;
                     writeString(0, 'RIFF');
                     view.setUint32(4, 36 + dataBytes, true);
                     writeString(8, 'WAVE');
                     writeString(12, 'fmt ');
                     view.setUint32(16, 16, true);
-                    view.setUint16(20, 1, true);
+                    view.setUint16(20, floatOutput ? 3 : 1, true);
                     view.setUint16(22, numChannels, true);
                     view.setUint32(24, sampleRate, true);
-                    view.setUint32(28, sampleRate * numChannels * 2, true);
-                    view.setUint16(32, numChannels * 2, true);
-                    view.setUint16(34, 16, true);
+                    view.setUint32(28, sampleRate * numChannels * bytesPerSample, true);
+                    view.setUint16(32, numChannels * bytesPerSample, true);
+                    view.setUint16(34, bits, true);
                     writeString(36, 'data');
                     view.setUint32(40, dataBytes, true);
-
                     let offset = 44;
                     const reportEvery = Math.max(1, Math.floor(length / 100));
                     for (let i = 0; i < length; i++) {
                         for (let ch = 0; ch < numChannels; ch++) {
-                            let sample = Math.max(-1, Math.min(1, channelData[ch][i]));
-                            sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
-                            view.setInt16(offset, sample, true);
-                            offset += 2;
+                            let sample = Number.isFinite(channelData[ch][i]) ? channelData[ch][i] : 0;
+                            if (floatOutput) {
+                                if (bitDepth === '64f') { view.setFloat64(offset, sample, true); offset += 8; }
+                                else { view.setFloat32(offset, sample, true); offset += 4; }
+                            } else if (bitDepth === 24) {
+                                sample = Math.max(-1, Math.min(1, sample));
+                                const dither = (Math.random() - Math.random()) / 8388608;
+                                let value = Math.round(sample * (sample < 0 ? 8388608 : 8388607) + dither * 8388608);
+                                value = Math.max(-8388608, Math.min(8388607, value));
+                                if (value < 0) value += 0x1000000;
+                                view.setUint8(offset, value & 0xFF);
+                                view.setUint8(offset + 1, (value >>> 8) & 0xFF);
+                                view.setUint8(offset + 2, (value >>> 16) & 0xFF);
+                                offset += 3;
+                            } else {
+                                sample = Math.max(-1, Math.min(1, sample));
+                                const dither = (Math.random() - Math.random()) / 32768;
+                                let value = Math.round(sample * (sample < 0 ? 32768 : 32767) + dither * 32768);
+                                value = Math.max(-32768, Math.min(32767, value));
+                                view.setInt16(offset, value, true);
+                                offset += 2;
+                            }
                         }
-                        if (i % reportEvery === 0) {
-                            self.postMessage({ type: 'progress', progress: Math.min(99, Math.round((i / length) * 100)) });
-                        }
+                        if (i % reportEvery === 0) self.postMessage({ type: 'progress', progress: Math.min(99, Math.round((i / length) * 100)) });
                     }
-                    self.postMessage({ type: 'complete', buffer: buffer }, [buffer]);
+                    self.postMessage({ type: 'complete', buffer: buffer, bitDepth: String(bitDepth), sampleRate: sampleRate }, [buffer]);
                 } catch (error) {
                     self.postMessage({ type: 'error', message: error && error.message ? error.message : 'WAVエンコードに失敗しました。' });
                 }
@@ -640,6 +697,279 @@
         `;
         const workerBlob = new Blob([workerScript], { type: 'application/javascript' });
         const workerUrl = URL.createObjectURL(workerBlob);
+
+        // Shared high-quality DSP stages. The same processors are used by live playback
+        // and OfflineAudioContext rendering, so both paths use the same algorithms.
+        const dspWorkletSource = `
+            const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+            const dbToLinear = (db) => Math.pow(10, db / 20);
+            const coeff = (ms, sr) => Math.exp(-1 / Math.max(1, (Math.max(0.01, ms) * 0.001 * sr)));
+
+            class ProRackDSPProcessor extends AudioWorkletProcessor {
+                static get parameterDescriptors() {
+                    return [
+                        { name: 'threshold', defaultValue: -70, minValue: -90, maxValue: 0, automationRate: 'k-rate' },
+                        { name: 'attackMs', defaultValue: 5, minValue: 0.1, maxValue: 1000, automationRate: 'k-rate' },
+                        { name: 'holdMs', defaultValue: 50, minValue: 0, maxValue: 1000, automationRate: 'k-rate' },
+                        { name: 'releaseMs', defaultValue: 150, minValue: 1, maxValue: 2000, automationRate: 'k-rate' },
+                        { name: 'rangeDb', defaultValue: -80, minValue: -90, maxValue: 0, automationRate: 'k-rate' },
+                        { name: 'hysteresisDb', defaultValue: 6, minValue: 0, maxValue: 24, automationRate: 'k-rate' },
+                        { name: 'ratio', defaultValue: 4, minValue: 1, maxValue: 20, automationRate: 'k-rate' },
+                        { name: 'kneeDb', defaultValue: 12, minValue: 0, maxValue: 40, automationRate: 'k-rate' },
+                        { name: 'makeupDb', defaultValue: 0, minValue: -24, maxValue: 24, automationRate: 'k-rate' },
+                        { name: 'drive', defaultValue: 0, minValue: 0, maxValue: 100, automationRate: 'k-rate' },
+                        { name: 'quality', defaultValue: 8, minValue: 4, maxValue: 16, automationRate: 'k-rate' },
+                        { name: 'enabled', defaultValue: 1, minValue: 0, maxValue: 1, automationRate: 'k-rate' },
+                        { name: 'ceilingDb', defaultValue: -0.5, minValue: -6, maxValue: 0, automationRate: 'k-rate' },
+                        { name: 'limiterReleaseMs', defaultValue: 100, minValue: 10, maxValue: 1000, automationRate: 'k-rate' }
+                    ];
+                }
+
+                constructor(options) {
+                    super();
+                    this.stage = (options.processorOptions && options.processorOptions.stage) || 'gate';
+                    this.lookaheadMs = clamp(Number(options.processorOptions && options.processorOptions.lookaheadMs) || 5, 1, 20);
+                    this.gateEnvelope = 0;
+                    this.gateGain = dbToLinear(-80);
+                    this.gateOpen = false;
+                    this.gateHoldFrames = 0;
+                    this.compPower = 0;
+                    this.compGain = 1;
+                    this.compReductionDb = 0;
+                    this.satPrevious = [];
+                    this.limiterInitialized = false;
+                    this.port.onmessage = (event) => {
+                        const data = event.data || {};
+                        if (data.type === 'reset') this.resetState();
+                    };
+                }
+
+                resetState() {
+                    this.gateEnvelope = 0;
+                    this.gateGain = dbToLinear(-80);
+                    this.gateOpen = false;
+                    this.gateHoldFrames = 0;
+                    this.compPower = 0;
+                    this.compGain = 1;
+                    this.compReductionDb = 0;
+                    this.satPrevious = [];
+                    this.limiterInitialized = false;
+                }
+
+                getParam(parameters, name, index, fallback) {
+                    const values = parameters[name];
+                    return values && values.length ? values[values.length === 1 ? 0 : index] : fallback;
+                }
+
+                process(inputs, outputs, parameters) {
+                    const input = inputs[0] || [];
+                    const output = outputs[0] || [];
+                    if (!output.length) return true;
+                    const frames = output[0].length;
+                    if (!input.length) {
+                        for (const channel of output) channel.fill(0);
+                        return true;
+                    }
+                    if (this.stage === 'gate') this.processGate(input, output, parameters, frames);
+                    else if (this.stage === 'compressor') this.processCompressor(input, output, parameters, frames);
+                    else if (this.stage === 'saturation') this.processSaturation(input, output, parameters, frames);
+                    else if (this.stage === 'limiter') this.processLimiter(input, output, parameters, frames);
+                    else {
+                        for (let c = 0; c < output.length; c++) {
+                            const src = input[Math.min(c, input.length - 1)];
+                            if (src) output[c].set(src); else output[c].fill(0);
+                        }
+                    }
+                    return true;
+                }
+
+                processGate(input, output, p, frames) {
+                    const sr = sampleRate;
+                    for (let i = 0; i < frames; i++) {
+                        let peak = 0;
+                        for (let c = 0; c < input.length; c++) peak = Math.max(peak, Math.abs(input[c][i] || 0));
+                        const attack = this.getParam(p, 'attackMs', i, 5);
+                        const release = this.getParam(p, 'releaseMs', i, 150);
+                        const envCoeff = coeff(peak > this.gateEnvelope ? attack : release, sr);
+                        this.gateEnvelope = envCoeff * this.gateEnvelope + (1 - envCoeff) * peak;
+                        const threshold = this.getParam(p, 'threshold', i, -70);
+                        const hysteresis = this.getParam(p, 'hysteresisDb', i, 6);
+                        const holdFrames = Math.round(this.getParam(p, 'holdMs', i, 50) * 0.001 * sr);
+                        const levelDb = 20 * Math.log10(this.gateEnvelope + 1e-12);
+                        if (levelDb >= threshold) {
+                            this.gateOpen = true;
+                            this.gateHoldFrames = holdFrames;
+                        } else if (this.gateOpen) {
+                            if (this.gateHoldFrames > 0) this.gateHoldFrames--;
+                            else if (levelDb < threshold - hysteresis) this.gateOpen = false;
+                        }
+                        const range = dbToLinear(this.getParam(p, 'rangeDb', i, -80));
+                        const target = this.gateOpen ? 1 : range;
+                        const gainCoeff = coeff(target > this.gateGain ? attack : release, sr);
+                        this.gateGain = target + gainCoeff * (this.gateGain - target);
+                        for (let c = 0; c < output.length; c++) {
+                            const src = input[Math.min(c, input.length - 1)];
+                            output[c][i] = (src ? src[i] : 0) * this.gateGain;
+                        }
+                    }
+                }
+
+                processCompressor(input, output, p, frames) {
+                    const sr = sampleRate;
+                    let latestReduction = 0;
+                    for (let i = 0; i < frames; i++) {
+                        const enabled = this.getParam(p, 'enabled', i, 1) >= 0.5;
+                        const attack = this.getParam(p, 'attackMs', i, 15);
+                        const release = this.getParam(p, 'releaseMs', i, 200);
+                        let power = 0;
+                        for (let c = 0; c < input.length; c++) {
+                            const x = input[c][i] || 0;
+                            power += x * x;
+                        }
+                        power /= Math.max(1, input.length);
+                        const envCoeff = coeff(power > this.compPower ? attack : release, sr);
+                        this.compPower = envCoeff * this.compPower + (1 - envCoeff) * power;
+                        const levelDb = 10 * Math.log10(this.compPower + 1e-24);
+                        const threshold = this.getParam(p, 'threshold', i, -20);
+                        const ratio = Math.max(1, this.getParam(p, 'ratio', i, 4));
+                        const knee = Math.max(0, this.getParam(p, 'kneeDb', i, 12));
+                        const over = levelDb - threshold;
+                        let reductionDb = 0;
+                        if (enabled) {
+                            if (knee > 0 && over > -knee / 2 && over < knee / 2) {
+                                const x = over + knee / 2;
+                                reductionDb = -(1 - 1 / ratio) * (x * x) / (2 * knee);
+                            } else if (over >= knee / 2 || (knee === 0 && over > 0)) {
+                                reductionDb = -Math.max(0, over) * (1 - 1 / ratio);
+                            }
+                        }
+                        const targetGain = dbToLinear(reductionDb);
+                        const gainCoeff = coeff(targetGain < this.compGain ? attack : release, sr);
+                        this.compGain = targetGain + gainCoeff * (this.compGain - targetGain);
+                        const makeup = enabled ? dbToLinear(this.getParam(p, 'makeupDb', i, 0)) : 1;
+                        latestReduction = reductionDb;
+                        for (let c = 0; c < output.length; c++) {
+                            const src = input[Math.min(c, input.length - 1)];
+                            output[c][i] = (src ? src[i] : 0) * (enabled ? this.compGain * makeup : 1);
+                        }
+                    }
+                    this.compReductionDb = latestReduction;
+                    this.meterCounter = (this.meterCounter || 0) + 1;
+                    if ((this.meterCounter % 8) === 0) this.port.postMessage({ type: 'meter', reductionDb: latestReduction });
+                }
+
+                processSaturation(input, output, p, frames) {
+                    for (let c = 0; c < output.length; c++) {
+                        const src = input[Math.min(c, input.length - 1)];
+                        if (!src) { output[c].fill(0); continue; }
+                        let previous = this.satPrevious[c] || 0;
+                        for (let i = 0; i < frames; i++) {
+                            const x = src[i] || 0;
+                            const enabled = this.getParam(p, 'enabled', i, 0) >= 0.5;
+                            const drive = this.getParam(p, 'drive', i, 0);
+                            if (!enabled || drive <= 0.001) {
+                                output[c][i] = x;
+                            } else {
+                                const qualityRaw = Math.round(this.getParam(p, 'quality', i, 8));
+                                const quality = qualityRaw >= 16 ? 16 : qualityRaw >= 8 ? 8 : 4;
+                                const amount = clamp(drive / 100, 0, 1);
+                                const shape = 1 + amount * 4.5;
+                                const normalization = Math.tanh(shape);
+                                let sum = 0;
+                                // Linear interpolation at 4x/8x/16x followed by box integration.
+                                // This is the Worklet's oversampled approximation; the Offline path uses the same code.
+                                for (let k = 1; k <= quality; k++) {
+                                    const t = k / quality;
+                                    const interpolated = previous + (x - previous) * t;
+                                    sum += Math.tanh(interpolated * shape) / normalization;
+                                }
+                                output[c][i] = sum / quality;
+                            }
+                            previous = x;
+                        }
+                        this.satPrevious[c] = previous;
+                    }
+                }
+
+                initLimiter(channelCount) {
+                    this.lookaheadFrames = Math.max(1, Math.round(this.lookaheadMs * 0.001 * sampleRate));
+                    this.limiterRingSize = this.lookaheadFrames + 1;
+                    this.limiterDelay = Array.from({ length: channelCount }, () => new Float32Array(this.limiterRingSize));
+                    this.limiterHistory = Array.from({ length: channelCount }, () => new Float32Array(3));
+                    this.queueCapacity = this.lookaheadFrames + 8;
+                    this.queueIndices = new Float64Array(this.queueCapacity);
+                    this.queueValues = new Float32Array(this.queueCapacity);
+                    this.queueHead = 0;
+                    this.queueCount = 0;
+                    this.limiterFrame = 0;
+                    this.limiterGain = 1;
+                    this.limiterInitialized = true;
+                }
+
+                queuePeak(index, value) {
+                    const cap = this.queueCapacity;
+                    while (this.queueCount > 0) {
+                        const tail = (this.queueHead + this.queueCount - 1) % cap;
+                        if (this.queueValues[tail] > value) break;
+                        this.queueCount--;
+                    }
+                    const insert = (this.queueHead + this.queueCount) % cap;
+                    this.queueIndices[insert] = index;
+                    this.queueValues[insert] = value;
+                    this.queueCount++;
+                }
+
+                processLimiter(input, output, p, frames) {
+                    if (!this.limiterInitialized || this.limiterDelay.length !== output.length) this.initLimiter(output.length);
+                    const cap = this.queueCapacity;
+                    const releaseCoeff = coeff(this.getParam(p, 'limiterReleaseMs', 0, 100), sampleRate);
+                    for (let i = 0; i < frames; i++) {
+                        const frame = this.limiterFrame;
+                        let peak = 0;
+                        for (let c = 0; c < output.length; c++) {
+                            const src = input[Math.min(c, input.length - 1)];
+                            const x = src ? (src[i] || 0) : 0;
+                            this.limiterDelay[c][frame % this.limiterRingSize] = x;
+                            peak = Math.max(peak, Math.abs(x));
+                            const h = this.limiterHistory[c];
+                            const p0 = h[0], p1 = h[1], p2 = h[2], p3 = x;
+                            // Catmull-Rom 4x inter-sample peak estimate for the segment p1..p2.
+                            for (let q = 1; q <= 3; q++) {
+                                const t = q * 0.25;
+                                const t2 = t * t, t3 = t2 * t;
+                                const y = 0.5 * ((2 * p1) + (-p0 + p2) * t + (2*p0 - 5*p1 + 4*p2 - p3) * t2 + (-p0 + 3*p1 - 3*p2 + p3) * t3);
+                                peak = Math.max(peak, Math.abs(y));
+                            }
+                            h[0] = h[1]; h[1] = h[2]; h[2] = x;
+                        }
+                        this.queuePeak(frame, peak);
+                        const oldestAllowed = frame - this.lookaheadFrames;
+                        while (this.queueCount > 0 && this.queueIndices[this.queueHead] < oldestAllowed) {
+                            this.queueHead = (this.queueHead + 1) % cap;
+                            this.queueCount--;
+                        }
+                        const windowPeak = this.queueCount > 0 ? this.queueValues[this.queueHead] : 0;
+                        const ceiling = dbToLinear(this.getParam(p, 'ceilingDb', i, -0.5));
+                        const desired = windowPeak > ceiling ? ceiling / windowPeak : 1;
+                        if (desired < this.limiterGain) this.limiterGain = desired;
+                        else this.limiterGain = desired + releaseCoeff * (this.limiterGain - desired);
+                        if (frame >= this.lookaheadFrames) {
+                            const readIndex = (frame - this.lookaheadFrames) % this.limiterRingSize;
+                            for (let c = 0; c < output.length; c++) output[c][i] = this.limiterDelay[c][readIndex] * this.limiterGain;
+                        } else {
+                            for (let c = 0; c < output.length; c++) output[c][i] = 0;
+                        }
+                        this.limiterFrame++;
+                    }
+                }
+            }
+            registerProcessor('prorack-dsp-stage', ProRackDSPProcessor);
+        `;
+        const dspWorkletUrl = URL.createObjectURL(new Blob([dspWorkletSource], { type: 'text/javascript' }));
+        let dspWorkletAvailable = false;
+        let audioEngineInitPromise = null;
+        let compMeterReductionDb = 0;
+        let currentDSPMode = 'native';
 
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
@@ -679,117 +1009,206 @@
 
         let activeEqBandIndex = 0;
 
-        function initAudioEngine() {
+        async function initAudioEngine() {
             if (!AudioCtx) throw new Error('このブラウザーはWeb Audio APIに対応していません。');
             if (audioCtx && audioCtx.state === 'closed') {
                 audioCtx = null;
                 Object.keys(nodes).forEach(key => delete nodes[key]);
+                audioEngineInitPromise = null;
             }
-            if (audioCtx) return;
+            if (nodes.engineReady && audioCtx) return;
+            if (audioEngineInitPromise) return audioEngineInitPromise;
 
-            audioCtx = new AudioCtx();
-            audioCtx.onstatechange = () => {
-                if (isLoadingAudio || !isPlaying || !audioCtx) return;
-                if (audioCtx.state !== 'running') {
-                    setFileStatus('音声出力が一時停止しています。再生ボタンで復帰してください。', 'warning');
-                    updatePlayButton(true);
-                } else {
-                    setFileStatus(`再生中: ${currentFileName}`, 'success');
+            audioEngineInitPromise = (async () => {
+                if (!audioCtx) audioCtx = new AudioCtx();
+                audioCtx.onstatechange = () => {
+                    if (isLoadingAudio || !isPlaying || !audioCtx) return;
+                    if (audioCtx.state !== 'running') {
+                        setFileStatus('音声出力が一時停止しています。再生ボタンで復帰してください。', 'warning');
+                        updatePlayButton(true);
+                    } else {
+                        setFileStatus(`再生中: ${currentFileName}`, 'success');
+                    }
+                };
+
+                dspWorkletAvailable = false;
+                if (audioCtx.audioWorklet && typeof AudioWorkletNode !== 'undefined') {
+                    try {
+                        await audioCtx.audioWorklet.addModule(dspWorkletUrl);
+                        const probe = new AudioWorkletNode(audioCtx, 'prorack-dsp-stage', {
+                            numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2],
+                            processorOptions: { stage: 'gate' }
+                        });
+                        probe.disconnect();
+                        dspWorkletAvailable = true;
+                    } catch (workletError) {
+                        console.warn('[PRO-RACK] AudioWorklet unavailable; using native Web Audio fallback:', workletError);
+                    }
                 }
-            };
+                currentDSPMode = dspWorkletAvailable ? 'worklet' : 'native-fallback';
 
-            nodes.inputNode = audioCtx.createGain();
-            nodes.gateNode = audioCtx.createWaveShaper();
-            updateGateCurve(parseFloat(document.getElementById('gateThresh').value));
+                const createStage = (stage, lookaheadMs = 5) => new AudioWorkletNode(audioCtx, 'prorack-dsp-stage', {
+                    numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2],
+                    processorOptions: { stage, lookaheadMs }
+                });
+                const setParam = (node, name, value) => {
+                    const param = node && node.parameters && node.parameters.get(name);
+                    if (param) param.value = value;
+                };
 
-            nodes.eqFilters = [];
-            nodes.eqWetGains = [];
-            nodes.eqDryGains = [];
-            let prevNode = nodes.gateNode;
-            eqBandsState.forEach((band, index) => {
-                const filter = audioCtx.createBiquadFilter();
-                filter.type = band.type;
-                filter.frequency.value = band.freq;
-                filter.gain.value = band.gain;
-                filter.Q.value = band.q;
-                const wet = audioCtx.createGain();
-                const dry = audioCtx.createGain();
-                const sum = audioCtx.createGain();
-                nodes.eqFilters.push(filter);
-                nodes.eqWetGains.push(wet);
-                nodes.eqDryGains.push(dry);
-                prevNode.connect(filter);
-                filter.connect(wet);
-                wet.connect(sum);
-                prevNode.connect(dry);
-                dry.connect(sum);
-                prevNode = sum;
-            });
+                nodes.inputNode = audioCtx.createGain();
+                if (dspWorkletAvailable) {
+                    nodes.gateNode = createStage('gate');
+                    setParam(nodes.gateNode, 'threshold', parseFloat(document.getElementById('gateThresh').value));
+                    setParam(nodes.gateNode, 'attackMs', parseFloat(document.getElementById('gateAttack').value));
+                    setParam(nodes.gateNode, 'holdMs', parseFloat(document.getElementById('gateHold').value));
+                    setParam(nodes.gateNode, 'releaseMs', parseFloat(document.getElementById('gateRelease').value));
+                    setParam(nodes.gateNode, 'rangeDb', parseFloat(document.getElementById('gateRange').value));
+                } else {
+                    nodes.gateNode = audioCtx.createWaveShaper();
+                    updateGateCurve(parseFloat(document.getElementById('gateThresh').value));
+                }
+                nodes.inputNode.connect(nodes.gateNode);
 
-            nodes.compInputAnalyzer = audioCtx.createAnalyser();
-            nodes.compInputAnalyzer.fftSize = 256;
-            nodes.compressor = audioCtx.createDynamicsCompressor();
-            nodes.compressor.threshold.value = parseFloat(document.getElementById('compThresh').value);
-            nodes.compressor.ratio.value = parseFloat(document.getElementById('compRatio').value);
-            nodes.compressor.knee.value = parseFloat(document.getElementById('compKnee').value);
-            nodes.compressor.attack.value = parseFloat(document.getElementById('compAttack').value) / 1000;
-            nodes.compressor.release.value = parseFloat(document.getElementById('compRelease').value) / 1000;
-            nodes.compMakeup = audioCtx.createGain();
-            nodes.compWetGain = audioCtx.createGain();
-            nodes.compDryGain = audioCtx.createGain();
-            prevNode.connect(nodes.compInputAnalyzer);
-            nodes.compInputAnalyzer.connect(nodes.compressor);
-            nodes.compressor.connect(nodes.compMakeup);
-            nodes.compMakeup.connect(nodes.compWetGain);
-            prevNode.connect(nodes.compDryGain);
+                nodes.eqFilters = [];
+                nodes.eqWetGains = [];
+                nodes.eqDryGains = [];
+                let prevNode = nodes.gateNode;
+                eqBandsState.forEach((band) => {
+                    const filter = audioCtx.createBiquadFilter();
+                    filter.type = band.type;
+                    filter.frequency.value = band.freq;
+                    filter.gain.value = band.gain;
+                    filter.Q.value = band.q;
+                    const wet = audioCtx.createGain();
+                    const dry = audioCtx.createGain();
+                    const sum = audioCtx.createGain();
+                    nodes.eqFilters.push(filter);
+                    nodes.eqWetGains.push(wet);
+                    nodes.eqDryGains.push(dry);
+                    prevNode.connect(filter);
+                    filter.connect(wet);
+                    wet.connect(sum);
+                    prevNode.connect(dry);
+                    dry.connect(sum);
+                    prevNode = sum;
+                });
 
-            nodes.amp = audioCtx.createWaveShaper();
-            nodes.amp.oversample = '4x';
-            nodes.amp.curve = makeDistortionCurve(document.getElementById('chkAmpEnable').checked ? parseFloat(document.getElementById('ampDrive').value) : 0);
-            nodes.compWetGain.connect(nodes.amp);
-            nodes.compDryGain.connect(nodes.amp);
+                if (dspWorkletAvailable) {
+                    nodes.compProcessor = createStage('compressor');
+                    setParam(nodes.compProcessor, 'threshold', parseFloat(document.getElementById('compThresh').value));
+                    setParam(nodes.compProcessor, 'ratio', parseFloat(document.getElementById('compRatio').value));
+                    setParam(nodes.compProcessor, 'kneeDb', parseFloat(document.getElementById('compKnee').value));
+                    setParam(nodes.compProcessor, 'attackMs', parseFloat(document.getElementById('compAttack').value));
+                    setParam(nodes.compProcessor, 'releaseMs', parseFloat(document.getElementById('compRelease').value));
+                    setParam(nodes.compProcessor, 'makeupDb', parseFloat(document.getElementById('compMakeup').value));
+                    setParam(nodes.compProcessor, 'enabled', document.getElementById('chkCompEnable').checked ? 1 : 0);
+                    nodes.compProcessor.port.onmessage = (event) => {
+                        if (event.data && event.data.type === 'meter') {
+                            compMeterReductionDb = Number(event.data.reductionDb) || 0;
+                            if (!document.hidden && isPlaying) {
+                                const gr = Math.abs(compMeterReductionDb);
+                                document.getElementById('grValueText').innerText = `-${gr.toFixed(1)}`;
+                                document.getElementById('grBarFill').style.transform = `scaleY(${Math.min(1, gr / 30)})`;
+                            }
+                        }
+                    };
+                    prevNode.connect(nodes.compProcessor);
+                    prevNode = nodes.compProcessor;
 
-            nodes.delay = audioCtx.createDelay(2.0);
-            nodes.delay.delayTime.value = parseFloat(document.getElementById('delayTime').value) / 1000;
-            nodes.delayFbk = audioCtx.createGain();
-            nodes.delayFbk.gain.value = parseFloat(document.getElementById('delayFbk').value) / 100;
-            nodes.delayWet = audioCtx.createGain();
-            nodes.delayWet.gain.value = document.getElementById('chkDelayEnable').checked ? parseFloat(document.getElementById('delayMix').value) / 100 : 0;
-            nodes.amp.connect(nodes.delay);
-            nodes.delay.connect(nodes.delayFbk);
-            nodes.delayFbk.connect(nodes.delay);
-            nodes.delay.connect(nodes.delayWet);
+                    nodes.ampProcessor = createStage('saturation');
+                    setParam(nodes.ampProcessor, 'drive', parseFloat(document.getElementById('ampDrive').value));
+                    setParam(nodes.ampProcessor, 'quality', parseFloat(document.getElementById('ampQuality').value));
+                    setParam(nodes.ampProcessor, 'enabled', document.getElementById('chkAmpEnable').checked ? 1 : 0);
+                    prevNode.connect(nodes.ampProcessor);
+                    nodes.ampOutput = nodes.ampProcessor;
+                } else {
+                    nodes.compInputAnalyzer = audioCtx.createAnalyser();
+                    nodes.compInputAnalyzer.fftSize = 256;
+                    nodes.compressor = audioCtx.createDynamicsCompressor();
+                    nodes.compressor.threshold.value = parseFloat(document.getElementById('compThresh').value);
+                    nodes.compressor.ratio.value = parseFloat(document.getElementById('compRatio').value);
+                    nodes.compressor.knee.value = parseFloat(document.getElementById('compKnee').value);
+                    nodes.compressor.attack.value = parseFloat(document.getElementById('compAttack').value) / 1000;
+                    nodes.compressor.release.value = parseFloat(document.getElementById('compRelease').value) / 1000;
+                    nodes.compMakeup = audioCtx.createGain();
+                    nodes.compWetGain = audioCtx.createGain();
+                    nodes.compDryGain = audioCtx.createGain();
+                    prevNode.connect(nodes.compInputAnalyzer);
+                    nodes.compInputAnalyzer.connect(nodes.compressor);
+                    nodes.compressor.connect(nodes.compMakeup);
+                    nodes.compMakeup.connect(nodes.compWetGain);
+                    prevNode.connect(nodes.compDryGain);
+                    const compSum = audioCtx.createGain();
+                    nodes.compWetGain.connect(compSum);
+                    nodes.compDryGain.connect(compSum);
+                    nodes.amp = audioCtx.createWaveShaper();
+                    nodes.amp.oversample = '4x';
+                    nodes.amp.curve = makeDistortionCurve(document.getElementById('chkAmpEnable').checked ? parseFloat(document.getElementById('ampDrive').value) : 0);
+                    compSum.connect(nodes.amp);
+                    nodes.ampOutput = nodes.amp;
+                    applyCompressorRouting(true);
+                }
 
-            nodes.reverb = audioCtx.createConvolver();
-            nodes.reverbWet = audioCtx.createGain();
-            nodes.reverbWet.gain.value = document.getElementById('chkReverbEnable').checked ? parseFloat(document.getElementById('revMix').value) / 100 : 0;
-            nodes.reverb.buffer = generateReverbImpulse(parseFloat(document.getElementById('revTime').value), audioCtx);
-            nodes.amp.connect(nodes.reverb);
-            nodes.reverb.connect(nodes.reverbWet);
+                nodes.delay = audioCtx.createDelay(2.0);
+                nodes.delay.delayTime.value = parseFloat(document.getElementById('delayTime').value) / 1000;
+                nodes.delayFbk = audioCtx.createGain();
+                nodes.delayFbk.gain.value = parseFloat(document.getElementById('delayFbk').value) / 100;
+                nodes.delayWet = audioCtx.createGain();
+                nodes.delayWet.gain.value = document.getElementById('chkDelayEnable').checked ? parseFloat(document.getElementById('delayMix').value) / 100 : 0;
+                nodes.ampOutput.connect(nodes.delay);
+                nodes.delay.connect(nodes.delayFbk);
+                nodes.delayFbk.connect(nodes.delay);
+                nodes.delay.connect(nodes.delayWet);
 
-            nodes.limiter = audioCtx.createDynamicsCompressor();
-            nodes.limiter.threshold.value = -0.3;
-            nodes.limiter.ratio.value = 20.0;
-            nodes.limiter.attack.value = 0.002;
-            nodes.limiter.release.value = 0.1;
-            nodes.masterGain = audioCtx.createGain();
-            nodes.wetPathGain = audioCtx.createGain();
-            nodes.dryPathGain = audioCtx.createGain();
-            nodes.wetPathGain.gain.value = globalBypass ? 0 : 1;
-            nodes.dryPathGain.gain.value = globalBypass ? 1 : 0;
+                nodes.reverb = audioCtx.createConvolver();
+                nodes.reverbWet = audioCtx.createGain();
+                nodes.reverbWet.gain.value = document.getElementById('chkReverbEnable').checked ? parseFloat(document.getElementById('revMix').value) / 100 : 0;
+                nodes.reverb.buffer = generateReverbImpulse(parseFloat(document.getElementById('revTime').value), audioCtx);
+                nodes.ampOutput.connect(nodes.reverb);
+                nodes.reverb.connect(nodes.reverbWet);
 
-            nodes.amp.connect(nodes.wetPathGain);
-            nodes.delayWet.connect(nodes.wetPathGain);
-            nodes.reverbWet.connect(nodes.wetPathGain);
-            nodes.inputNode.connect(nodes.dryPathGain);
-            nodes.wetPathGain.connect(nodes.limiter);
-            nodes.dryPathGain.connect(nodes.limiter);
-            nodes.limiter.connect(nodes.masterGain);
-            nodes.masterGain.gain.value = Math.pow(10, parseFloat(document.getElementById('masterGain').value) / 20);
-            nodes.masterGain.connect(audioCtx.destination);
+                nodes.masterGain = audioCtx.createGain();
+                nodes.wetPathGain = audioCtx.createGain();
+                nodes.dryPathGain = audioCtx.createGain();
+                nodes.wetPathGain.gain.value = globalBypass ? 0 : 1;
+                nodes.dryPathGain.gain.value = globalBypass ? 1 : 0;
+                nodes.ampOutput.connect(nodes.wetPathGain);
+                nodes.delayWet.connect(nodes.wetPathGain);
+                nodes.reverbWet.connect(nodes.wetPathGain);
+                nodes.inputNode.connect(nodes.dryPathGain);
 
-            applyEqRouting(true);
-            applyCompressorRouting(true);
+                if (dspWorkletAvailable) {
+                    nodes.limiterProcessor = createStage('limiter', 5);
+                    setParam(nodes.limiterProcessor, 'ceilingDb', parseFloat(document.getElementById('limiterCeiling').value));
+                    setParam(nodes.limiterProcessor, 'limiterReleaseMs', 100);
+                    nodes.wetPathGain.connect(nodes.limiterProcessor);
+                    nodes.dryPathGain.connect(nodes.limiterProcessor);
+                    nodes.limiterProcessor.connect(nodes.masterGain);
+                } else {
+                    nodes.limiter = audioCtx.createDynamicsCompressor();
+                    nodes.limiter.threshold.value = parseFloat(document.getElementById('limiterCeiling').value);
+                    nodes.limiter.ratio.value = 20.0;
+                    nodes.limiter.attack.value = 0.001;
+                    nodes.limiter.release.value = 0.08;
+                    nodes.wetPathGain.connect(nodes.limiter);
+                    nodes.dryPathGain.connect(nodes.limiter);
+                    nodes.limiter.connect(nodes.masterGain);
+                }
+                nodes.masterGain.gain.value = Math.pow(10, parseFloat(document.getElementById('masterGain').value) / 20);
+                nodes.masterGain.connect(audioCtx.destination);
+
+                applyEqRouting(true);
+                applyCompressorRouting(true);
+                nodes.engineReady = true;
+                setFileStatus(dspWorkletAvailable ? '高精度DSPエンジン準備完了（AudioWorklet）' : '互換DSPエンジン準備完了（標準Web Audio）', 'normal');
+            })();
+            try {
+                await audioEngineInitPromise;
+            } catch (error) {
+                audioEngineInitPromise = null;
+                throw error;
+            }
         }
 
         function applyEqRouting(immediate = false) {
@@ -804,23 +1223,54 @@
             });
         }
 
+        function setWorkletParam(node, name, value, timeConstant = 0.02) {
+            const param = node && node.parameters && node.parameters.get(name);
+            if (!param) return;
+            if (audioCtx && audioCtx.state !== 'closed' && typeof param.setTargetAtTime === 'function') {
+                param.setTargetAtTime(value, audioCtx.currentTime, timeConstant);
+            } else {
+                param.value = value;
+            }
+        }
+
+        function applyGateSettings() {
+            if (!nodes.gateNode) return;
+            if (nodes.gateNode.parameters) {
+                setWorkletParam(nodes.gateNode, 'threshold', parseFloat(document.getElementById('gateThresh').value));
+                setWorkletParam(nodes.gateNode, 'attackMs', parseFloat(document.getElementById('gateAttack').value));
+                setWorkletParam(nodes.gateNode, 'holdMs', parseFloat(document.getElementById('gateHold').value));
+                setWorkletParam(nodes.gateNode, 'releaseMs', parseFloat(document.getElementById('gateRelease').value));
+                setWorkletParam(nodes.gateNode, 'rangeDb', parseFloat(document.getElementById('gateRange').value));
+            } else {
+                updateGateCurve(parseFloat(document.getElementById('gateThresh').value));
+            }
+        }
+
         function applyCompressorRouting(immediate = false) {
-            if (!audioCtx || !nodes.compWetGain) return;
             const enabled = document.getElementById('chkCompEnable').checked;
+            const makeup = parseFloat(document.getElementById('compMakeup').value);
+            if (nodes.compProcessor && nodes.compProcessor.parameters) {
+                const enabledParam = nodes.compProcessor.parameters.get('enabled');
+                const makeupParam = nodes.compProcessor.parameters.get('makeupDb');
+                if (enabledParam) immediate ? enabledParam.value = enabled ? 1 : 0 : setWorkletParam(nodes.compProcessor, 'enabled', enabled ? 1 : 0, 0.015);
+                if (makeupParam) immediate ? makeupParam.value = makeup : setWorkletParam(nodes.compProcessor, 'makeupDb', makeup, 0.015);
+                return;
+            }
+            if (!audioCtx || !nodes.compWetGain) return;
             const now = audioCtx.currentTime;
             if (immediate) {
                 nodes.compWetGain.gain.value = enabled ? 1 : 0;
                 nodes.compDryGain.gain.value = enabled ? 0 : 1;
-                nodes.compMakeup.gain.value = enabled ? Math.pow(10, parseFloat(document.getElementById('compMakeup').value) / 20) : 1;
+                nodes.compMakeup.gain.value = enabled ? Math.pow(10, makeup / 20) : 1;
             } else {
                 nodes.compWetGain.gain.setTargetAtTime(enabled ? 1 : 0, now, 0.015);
                 nodes.compDryGain.gain.setTargetAtTime(enabled ? 0 : 1, now, 0.015);
-                nodes.compMakeup.gain.setTargetAtTime(enabled ? Math.pow(10, parseFloat(document.getElementById('compMakeup').value) / 20) : 1, now, 0.015);
+                nodes.compMakeup.gain.setTargetAtTime(enabled ? Math.pow(10, makeup / 20) : 1, now, 0.015);
             }
         }
 
         async function ensureAudioContextRunning() {
-            initAudioEngine();
+            await initAudioEngine();
             if (audioCtx.state !== 'running') await audioCtx.resume();
             if (audioCtx.state !== 'running') {
                 throw new Error('音声エンジンを再開できませんでした。Safariの画面上で再生ボタンをもう一度押してください。');
@@ -828,42 +1278,78 @@
         }
 
         function updateGateCurve(threshDb) {
-            if(!nodes.gateNode) return;
-            const samples = 1024;
+            if (!nodes.gateNode) return;
+            if (nodes.gateNode.parameters) {
+                setWorkletParam(nodes.gateNode, 'threshold', Number(threshDb));
+                return;
+            }
+            const samples = 2048;
             const curve = new Float32Array(samples);
-            const threshLin = Math.pow(10, threshDb / 20);
+            const threshLin = Math.pow(10, Number(threshDb) / 20);
             for (let i = 0; i < samples; i++) {
-                let x = (i / (samples - 1)) * 2 - 1;
+                const x = (i / (samples - 1)) * 2 - 1;
                 curve[i] = Math.abs(x) < threshLin ? 0 : x;
             }
             nodes.gateNode.curve = curve;
         }
 
+        const saturationCurveCache = new Map();
         function makeDistortionCurve(amount) {
-            const k = amount;
-            const n = 44100;
-            const curve = new Float32Array(n);
-            const deg = Math.PI / 180;
-            for (let i = 0; i < n; ++i) {
-                let x = i * 2 / n - 1;
-                if (k === 0) curve[i] = x;
-                else curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+            const drive = Math.max(0, Math.min(100, Number(amount) || 0));
+            if (drive <= 0) return null;
+            const key = drive.toFixed(1);
+            if (saturationCurveCache.has(key)) return saturationCurveCache.get(key);
+            const size = 65537;
+            const shape = 1 + (drive / 100) * 4.5;
+            const normalization = Math.tanh(shape);
+            const curve = new Float32Array(size);
+            for (let i = 0; i < size; i++) {
+                const x = (i / (size - 1)) * 2 - 1;
+                curve[i] = Math.tanh(x * shape) / normalization;
             }
+            saturationCurveCache.set(key, curve);
+            if (saturationCurveCache.size > 12) saturationCurveCache.delete(saturationCurveCache.keys().next().value);
             return curve;
         }
 
         function generateReverbImpulse(duration, context = audioCtx) {
-            if (!context || typeof context.createBuffer !== 'function') {
-                throw new Error('リバーブ用の音声コンテキストを作成できません。');
-            }
-            const safeDuration = Math.max(0.1, Math.min(8, Number(duration) || 2.5));
-            const sampleRate = context.sampleRate || 44100;
-            const length = Math.max(1, Math.floor(sampleRate * safeDuration));
-            const impulse = context.createBuffer(2, length, sampleRate);
-            for (let c = 0; c < 2; c++) {
-                const channel = impulse.getChannelData(c);
-                for (let i = 0; i < length; i++) {
-                    channel[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2.5);
+            if (!context || typeof context.createBuffer !== 'function') throw new Error('リバーブ用の音声コンテキストを作成できません。');
+            const safeDuration = Math.max(0.2, Math.min(8, Number(duration) || 2.5));
+            const sr = context.sampleRate || 44100;
+            const length = Math.max(1, Math.floor(sr * safeDuration));
+            const impulse = context.createBuffer(2, length, sr);
+            const earlyReflections = [
+                [0.013, 0.42, 0.35], [0.021, -0.31, 0.28], [0.029, 0.25, -0.22],
+                [0.037, -0.19, 0.18], [0.047, 0.15, -0.13], [0.061, -0.11, 0.10],
+                [0.079, 0.085, -0.075], [0.103, -0.064, 0.058], [0.131, 0.048, -0.043]
+            ];
+            const seedBase = (Math.floor(safeDuration * 1000) ^ sr ^ 0x5f3759df) >>> 0;
+            for (let channelIndex = 0; channelIndex < 2; channelIndex++) {
+                const data = impulse.getChannelData(channelIndex);
+                data[0] = 0.82;
+                for (let r = 0; r < earlyReflections.length; r++) {
+                    const entry = earlyReflections[r];
+                    const index = Math.min(length - 1, Math.round(entry[0] * sr));
+                    data[index] += entry[channelIndex + 1];
+                }
+                let seed = (seedBase + (channelIndex + 1) * 0x9e3779b9) >>> 0;
+                let low = 0;
+                const damping = 0.68;
+                for (let i = 1; i < length; i++) {
+                    seed = (1664525 * seed + 1013904223) >>> 0;
+                    const noise = (seed / 4294967296) * 2 - 1;
+                    low = damping * low + (1 - damping) * noise;
+                    const t = i / sr;
+                    const decay = Math.pow(10, (-60 * t) / safeDuration);
+                    const stereoPattern = channelIndex === 0 ? 1 : -0.91;
+                    const diffuse = (0.76 * low + 0.24 * noise * stereoPattern) * decay * 0.22;
+                    data[i] += diffuse;
+                }
+                let peak = 0;
+                for (let i = 0; i < length; i++) peak = Math.max(peak, Math.abs(data[i]));
+                if (peak > 1) {
+                    const scale = 1 / peak;
+                    for (let i = 0; i < length; i++) data[i] *= scale;
                 }
             }
             return impulse;
@@ -1090,7 +1576,6 @@
         }
 
         eqCanvas.addEventListener('mousedown', (e) => {
-            initAudioEngine();
             const rect = eqCanvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
@@ -1153,7 +1638,6 @@
 
         // Touch Gesture Support (Drag & Touch Pinch)
         eqCanvas.addEventListener('touchstart', (e) => {
-            initAudioEngine();
             if (e.touches.length === 1) {
                 const rect = eqCanvas.getBoundingClientRect();
                 const x = e.touches[0].clientX - rect.left;
@@ -1278,8 +1762,8 @@
             compCtx.stroke();
 
             // GR Meter Update
-            if (nodes.compressor && isPlaying) {
-                let reduction = nodes.compressor.reduction;
+            if ((nodes.compProcessor || nodes.compressor) && isPlaying) {
+                let reduction = nodes.compProcessor ? compMeterReductionDb : nodes.compressor.reduction;
                 if (typeof reduction === 'object') reduction = reduction.value;
                 const grVal = Math.abs(reduction || 0);
                 document.getElementById('grValueText').innerText = `-${grVal.toFixed(1)}`;
@@ -1431,7 +1915,7 @@
             btnExport.disabled = !audioBuffer || exportInProgress;
 
             try {
-                initAudioEngine();
+                await initAudioEngine();
                 const arrayBuffer = await readFileAsArrayBuffer(file, requestId);
                 if (requestId !== loadRequestId) return;
                 if (!(arrayBuffer instanceof ArrayBuffer) || arrayBuffer.byteLength === 0) {
@@ -1482,6 +1966,15 @@
             }
         }
 
+        function resetDSPProcessors() {
+            ['gateNode', 'compProcessor', 'ampProcessor', 'limiterProcessor'].forEach((key) => {
+                const node = nodes[key];
+                if (node && node.port) {
+                    try { node.port.postMessage({ type: 'reset' }); } catch (_) {}
+                }
+            });
+        }
+
         async function playAudio(offset = 0) {
             if (!audioBuffer) return;
             const requestId = ++playRequestId;
@@ -1496,6 +1989,7 @@
                 if (isLooping && duration > 0) safeOffset %= duration;
 
                 stopCurrentSource();
+                resetDSPProcessors();
                 const source = audioCtx.createBufferSource();
                 source.buffer = audioBuffer;
                 source.loop = isLooping;
@@ -1610,7 +2104,7 @@
             exportModal.classList.remove('hidden');
             exportProgressBar.style.width = '0%';
             exportProgressText.innerText = '0%';
-            setExportState('WAVファイル書き出し中...', 'エフェクト処理とWAVエンコードを実行しています。', 'working');
+            setExportState('WAVファイル書き出し中...', '共通DSPエンジンで高精度レンダリングとWAVエンコードを実行しています。', 'working');
             cleanupExportWorker();
             if (exportObjectUrl) {
                 URL.revokeObjectURL(exportObjectUrl);
@@ -1618,39 +2112,89 @@
             }
 
             try {
-                initAudioEngine();
+                await initAudioEngine();
                 if (!window.OfflineAudioContext && !window.webkitOfflineAudioContext) {
                     throw new Error('このブラウザーはオフライン音声レンダリングに対応していません。');
                 }
                 const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-                const tailDuration = 3.5;
+                const reverbTail = document.getElementById('chkReverbEnable').checked ? parseFloat(document.getElementById('revTime').value) + 0.25 : 0;
+                const feedback = Math.max(0.01, Math.min(0.95, parseFloat(document.getElementById('delayFbk').value) / 100));
+                const delayTailRepeats = Math.ceil(Math.log(0.01) / Math.log(feedback));
+                const delayTail = document.getElementById('chkDelayEnable').checked
+                    ? Math.min(12, (parseFloat(document.getElementById('delayTime').value) / 1000) * Math.max(1, delayTailRepeats))
+                    : 0;
+                const tailDuration = Math.max(3.5, reverbTail, delayTail);
                 const totalDuration = sourceBuffer.duration + tailDuration;
-                const sampleRate = sourceBuffer.sampleRate;
+                const selectedRate = document.getElementById('exportSampleRate').value;
+                const sampleRate = selectedRate === 'source' ? sourceBuffer.sampleRate : Number(selectedRate);
                 const frameCount = Math.ceil(totalDuration * sampleRate);
                 const numChannels = sourceBuffer.numberOfChannels;
-                const estimatedWavBytes = 44 + frameCount * numChannels * 2;
-                if (!Number.isSafeInteger(estimatedWavBytes) || estimatedWavBytes > 0xFFFFFFFF) {
-                    throw new Error('音声が長すぎるため、通常のWAV形式では書き出せません（約4GB上限）。');
+                const bitDepthSelection = document.getElementById('exportBitDepth').value;
+                const bitDepth = bitDepthSelection.endsWith('f') ? bitDepthSelection : Number(bitDepthSelection);
+                const bytesPerSample = bitDepth === '32f' ? 4 : bitDepth === '64f' ? 8 : bitDepth === 24 ? 3 : 2;
+                const estimatedWavBytes = 44 + frameCount * numChannels * bytesPerSample;
+                if (!Number.isSafeInteger(estimatedWavBytes) || estimatedWavBytes > 0xFFFFFFFF - 36) {
+                    throw new Error('出力が通常のRIFF WAV形式の上限（約4GB）を超えています。サンプルレートまたはビット深度を下げてください。');
                 }
-                if (estimatedWavBytes > 180 * 1024 * 1024) {
-                    const proceed = window.confirm(`書き出しデータは約${(estimatedWavBytes / (1024 * 1024)).toFixed(0)}MBです。iPhoneではメモリー不足になる可能性があります。続行しますか？`);
+                const estimatedPcmBytes = frameCount * numChannels * 4;
+                const estimatedWorkingBytes = estimatedPcmBytes * 2 + estimatedWavBytes + (sourceBuffer.length * sourceBuffer.numberOfChannels * 4);
+                if (estimatedWorkingBytes > 700 * 1024 * 1024) {
+                    const proceed = window.confirm(`今回の推定一時メモリー使用量は約${(estimatedWorkingBytes / (1024 * 1024)).toFixed(0)}MBです。端末の空きメモリーによってはタブが終了する可能性があります。続行しますか？`);
                     if (!proceed) throw new Error('書き出しをキャンセルしました。');
                 }
 
                 const offlineCtx = new OfflineCtx(numChannels, frameCount, sampleRate);
-                const offInput = offlineCtx.createGain();
-                const offGate = offlineCtx.createWaveShaper();
-                const gateThresh = parseFloat(document.getElementById('gateThresh').value);
-                const gateCurve = new Float32Array(1024);
-                const threshLin = Math.pow(10, gateThresh / 20);
-                for (let i = 0; i < gateCurve.length; i++) {
-                    const x = (i / (gateCurve.length - 1)) * 2 - 1;
-                    gateCurve[i] = Math.abs(x) < threshLin ? 0 : x;
+                let offlineWorkletReady = false;
+                if (dspWorkletAvailable && offlineCtx.audioWorklet && typeof AudioWorkletNode !== 'undefined') {
+                    try {
+                        await offlineCtx.audioWorklet.addModule(dspWorkletUrl);
+                        const probe = new AudioWorkletNode(offlineCtx, 'prorack-dsp-stage', {
+                            numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [numChannels],
+                            processorOptions: { stage: 'gate' }
+                        });
+                        probe.disconnect();
+                        offlineWorkletReady = true;
+                    } catch (workletError) {
+                        console.warn('[PRO-RACK] Offline AudioWorklet unavailable:', workletError);
+                    }
                 }
-                offGate.curve = gateCurve;
+                if (dspWorkletAvailable && !offlineWorkletReady) {
+                    throw new Error('リアルタイムDSPと同じ処理で書き出すためのOffline AudioWorkletを初期化できませんでした。別のブラウザー、または通常のSafariタブで再試行してください。');
+                }
+                const createOfflineStage = (stage, lookaheadMs = 5) => new AudioWorkletNode(offlineCtx, 'prorack-dsp-stage', {
+                    numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [numChannels],
+                    processorOptions: { stage, lookaheadMs }
+                });
+                const setOfflineParam = (node, name, value) => {
+                    const param = node && node.parameters && node.parameters.get(name);
+                    if (param) param.value = value;
+                };
 
-                const offEqFilters = [];
-                let prevOff = offGate;
+                const offInput = offlineCtx.createGain();
+                let prevOff;
+                if (offlineWorkletReady) {
+                    const offGate = createOfflineStage('gate');
+                    setOfflineParam(offGate, 'threshold', parseFloat(document.getElementById('gateThresh').value));
+                    setOfflineParam(offGate, 'attackMs', parseFloat(document.getElementById('gateAttack').value));
+                    setOfflineParam(offGate, 'holdMs', parseFloat(document.getElementById('gateHold').value));
+                    setOfflineParam(offGate, 'releaseMs', parseFloat(document.getElementById('gateRelease').value));
+                    setOfflineParam(offGate, 'rangeDb', parseFloat(document.getElementById('gateRange').value));
+                    offInput.connect(offGate);
+                    prevOff = offGate;
+                } else {
+                    const offGate = offlineCtx.createWaveShaper();
+                    const gateCurve = new Float32Array(2048);
+                    const gateThresh = parseFloat(document.getElementById('gateThresh').value);
+                    const threshLin = Math.pow(10, gateThresh / 20);
+                    for (let i = 0; i < gateCurve.length; i++) {
+                        const x = (i / (gateCurve.length - 1)) * 2 - 1;
+                        gateCurve[i] = Math.abs(x) < threshLin ? 0 : x;
+                    }
+                    offGate.curve = gateCurve;
+                    offInput.connect(offGate);
+                    prevOff = offGate;
+                }
+
                 const eqEnabled = document.getElementById('chkEQEnable').checked;
                 eqBandsState.forEach((band) => {
                     const filter = offlineCtx.createBiquadFilter();
@@ -1658,7 +2202,6 @@
                     filter.frequency.value = band.freq;
                     filter.gain.value = band.gain;
                     filter.Q.value = band.q;
-                    offEqFilters.push(filter);
                     const wet = offlineCtx.createGain();
                     const dry = offlineCtx.createGain();
                     const sum = offlineCtx.createGain();
@@ -1673,29 +2216,56 @@
                     prevOff = sum;
                 });
 
-                const offComp = offlineCtx.createDynamicsCompressor();
-                offComp.threshold.value = parseFloat(document.getElementById('compThresh').value);
-                offComp.ratio.value = parseFloat(document.getElementById('compRatio').value);
-                offComp.knee.value = parseFloat(document.getElementById('compKnee').value);
-                offComp.attack.value = parseFloat(document.getElementById('compAttack').value) / 1000;
-                offComp.release.value = parseFloat(document.getElementById('compRelease').value) / 1000;
-                const compressorEnabled = document.getElementById('chkCompEnable').checked;
-                const offMakeup = offlineCtx.createGain();
-                offMakeup.gain.value = compressorEnabled ? Math.pow(10, parseFloat(document.getElementById('compMakeup').value) / 20) : 1;
-                const offCompWet = offlineCtx.createGain();
-                const offCompDry = offlineCtx.createGain();
-                offCompWet.gain.value = compressorEnabled ? 1 : 0;
-                offCompDry.gain.value = compressorEnabled ? 0 : 1;
-                prevOff.connect(offComp);
-                offComp.connect(offMakeup);
-                offMakeup.connect(offCompWet);
-                prevOff.connect(offCompDry);
+                if (offlineWorkletReady) {
+                    const offComp = createOfflineStage('compressor');
+                    setOfflineParam(offComp, 'threshold', parseFloat(document.getElementById('compThresh').value));
+                    setOfflineParam(offComp, 'ratio', parseFloat(document.getElementById('compRatio').value));
+                    setOfflineParam(offComp, 'kneeDb', parseFloat(document.getElementById('compKnee').value));
+                    setOfflineParam(offComp, 'attackMs', parseFloat(document.getElementById('compAttack').value));
+                    setOfflineParam(offComp, 'releaseMs', parseFloat(document.getElementById('compRelease').value));
+                    setOfflineParam(offComp, 'makeupDb', parseFloat(document.getElementById('compMakeup').value));
+                    setOfflineParam(offComp, 'enabled', document.getElementById('chkCompEnable').checked ? 1 : 0);
+                    prevOff.connect(offComp);
+                    prevOff = offComp;
+                } else {
+                    const offComp = offlineCtx.createDynamicsCompressor();
+                    offComp.threshold.value = parseFloat(document.getElementById('compThresh').value);
+                    offComp.ratio.value = parseFloat(document.getElementById('compRatio').value);
+                    offComp.knee.value = parseFloat(document.getElementById('compKnee').value);
+                    offComp.attack.value = parseFloat(document.getElementById('compAttack').value) / 1000;
+                    offComp.release.value = parseFloat(document.getElementById('compRelease').value) / 1000;
+                    const compressorEnabled = document.getElementById('chkCompEnable').checked;
+                    const offMakeup = offlineCtx.createGain();
+                    offMakeup.gain.value = compressorEnabled ? Math.pow(10, parseFloat(document.getElementById('compMakeup').value) / 20) : 1;
+                    const offCompWet = offlineCtx.createGain();
+                    const offCompDry = offlineCtx.createGain();
+                    offCompWet.gain.value = compressorEnabled ? 1 : 0;
+                    offCompDry.gain.value = compressorEnabled ? 0 : 1;
+                    const compSum = offlineCtx.createGain();
+                    prevOff.connect(offComp);
+                    offComp.connect(offMakeup);
+                    offMakeup.connect(offCompWet);
+                    prevOff.connect(offCompDry);
+                    offCompWet.connect(compSum);
+                    offCompDry.connect(compSum);
+                    prevOff = compSum;
+                }
 
-                const offAmp = offlineCtx.createWaveShaper();
-                offAmp.oversample = '4x';
-                offAmp.curve = makeDistortionCurve(document.getElementById('chkAmpEnable').checked ? parseFloat(document.getElementById('ampDrive').value) : 0);
-                offCompWet.connect(offAmp);
-                offCompDry.connect(offAmp);
+                let offAmpOutput;
+                if (offlineWorkletReady) {
+                    const offSat = createOfflineStage('saturation');
+                    setOfflineParam(offSat, 'drive', parseFloat(document.getElementById('ampDrive').value));
+                    setOfflineParam(offSat, 'quality', parseFloat(document.getElementById('ampQuality').value));
+                    setOfflineParam(offSat, 'enabled', document.getElementById('chkAmpEnable').checked ? 1 : 0);
+                    prevOff.connect(offSat);
+                    offAmpOutput = offSat;
+                } else {
+                    const offAmp = offlineCtx.createWaveShaper();
+                    offAmp.oversample = '4x';
+                    offAmp.curve = document.getElementById('chkAmpEnable').checked ? makeDistortionCurve(parseFloat(document.getElementById('ampDrive').value)) : null;
+                    prevOff.connect(offAmp);
+                    offAmpOutput = offAmp;
+                }
 
                 const offDelay = offlineCtx.createDelay(2.0);
                 offDelay.delayTime.value = parseFloat(document.getElementById('delayTime').value) / 1000;
@@ -1703,7 +2273,7 @@
                 offDelayFbk.gain.value = parseFloat(document.getElementById('delayFbk').value) / 100;
                 const offDelayWet = offlineCtx.createGain();
                 offDelayWet.gain.value = document.getElementById('chkDelayEnable').checked ? parseFloat(document.getElementById('delayMix').value) / 100 : 0;
-                offAmp.connect(offDelay);
+                offAmpOutput.connect(offDelay);
                 offDelay.connect(offDelayFbk);
                 offDelayFbk.connect(offDelay);
                 offDelay.connect(offDelayWet);
@@ -1712,11 +2282,11 @@
                 offReverb.buffer = generateReverbImpulse(parseFloat(document.getElementById('revTime').value), offlineCtx);
                 const offReverbWet = offlineCtx.createGain();
                 offReverbWet.gain.value = document.getElementById('chkReverbEnable').checked ? parseFloat(document.getElementById('revMix').value) / 100 : 0;
-                offAmp.connect(offReverb);
+                offAmpOutput.connect(offReverb);
                 offReverb.connect(offReverbWet);
 
                 const offWetSum = offlineCtx.createGain();
-                offAmp.connect(offWetSum);
+                offAmpOutput.connect(offWetSum);
                 offDelayWet.connect(offWetSum);
                 offReverbWet.connect(offWetSum);
                 const offDryGlobal = offlineCtx.createGain();
@@ -1726,18 +2296,30 @@
                 offInput.connect(offDryGlobal);
                 offWetSum.connect(offWetGlobal);
 
-                const offLimiter = offlineCtx.createDynamicsCompressor();
-                offLimiter.threshold.value = -0.3;
-                offLimiter.ratio.value = 20.0;
                 const offMaster = offlineCtx.createGain();
                 offMaster.gain.value = Math.pow(10, parseFloat(document.getElementById('masterGain').value) / 20);
+                if (offlineWorkletReady) {
+                    const offLimiter = createOfflineStage('limiter', 5);
+                    setOfflineParam(offLimiter, 'ceilingDb', parseFloat(document.getElementById('limiterCeiling').value));
+                    setOfflineParam(offLimiter, 'limiterReleaseMs', 100);
+                    offWetGlobal.connect(offLimiter);
+                    offDryGlobal.connect(offLimiter);
+                    offLimiter.connect(offMaster);
+                } else {
+                    const offLimiter = offlineCtx.createDynamicsCompressor();
+                    offLimiter.threshold.value = parseFloat(document.getElementById('limiterCeiling').value);
+                    offLimiter.ratio.value = 20.0;
+                    offLimiter.attack.value = 0.001;
+                    offLimiter.release.value = 0.08;
+                    offWetGlobal.connect(offLimiter);
+                    offDryGlobal.connect(offLimiter);
+                    offLimiter.connect(offMaster);
+                }
+                offMaster.connect(offlineCtx.destination);
+
                 const offSource = offlineCtx.createBufferSource();
                 offSource.buffer = sourceBuffer;
                 offSource.connect(offInput);
-                offWetGlobal.connect(offLimiter);
-                offDryGlobal.connect(offLimiter);
-                offLimiter.connect(offMaster);
-                offMaster.connect(offlineCtx.destination);
                 offSource.start(0);
 
                 const renderedBuffer = await offlineCtx.startRendering();
@@ -1779,11 +2361,11 @@
                                     exportObjectUrl = URL.createObjectURL(blob);
                                     const link = document.getElementById('exportDownloadLink');
                                     link.href = exportObjectUrl;
-                                    link.download = `ProRack_FX_Export_${Date.now()}.wav`;
+                                    link.download = `ProRack_FX_${bitDepth === '32f' ? 'Float32' : bitDepth === '64f' ? 'Float64' : `PCM${bitDepth}`}_${sampleRate}Hz_${Date.now()}.wav`;
                                     link.textContent = 'WAVを保存 / 開く';
                                     exportProgressBar.style.width = '100%';
                                     exportProgressText.innerText = '100%';
-                                    setExportState('WAVの準備が完了しました', '下のボタンをタップしてファイルを保存、または開いてください。iPhoneでは自動ダウンロードではなく、手動タップが必要です。', 'ready');
+                                    setExportState('WAVの準備が完了しました', `${bitDepth === '32f' ? '32bit Float' : bitDepth === '64f' ? '64bit Float' : `${bitDepth}bit PCM`} / ${sampleRate.toLocaleString()}Hz。下のボタンをタップして保存してください。`, 'ready');
                                     finish();
                                     // Keep this URL valid until the next export or page exit; iOS may open a preview first.
                                 } catch (error) {
@@ -1797,7 +2379,7 @@
                         };
                         worker.onmessageerror = () => finish(new Error('Workerとのデータ受け渡しに失敗しました。'));
                         try {
-                            worker.postMessage({ channelData, sampleRate: renderedBuffer.sampleRate, numChannels: renderedBuffer.numberOfChannels }, transferList);
+                            worker.postMessage({ channelData, sampleRate: renderedBuffer.sampleRate, numChannels: renderedBuffer.numberOfChannels, bitDepth }, transferList);
                         } catch (error) {
                             finish(new Error('WAVデータをWorkerへ転送できませんでした。'));
                         }
@@ -1985,57 +2567,69 @@
             document.getElementById('gateThresh').addEventListener('input', (e) => {
                 const v = parseFloat(e.target.value);
                 document.getElementById('gateThreshVal').innerText = `${v} dB`;
-                updateGateCurve(v);
+                applyGateSettings();
+            });
+            ['gateAttack', 'gateHold', 'gateRelease', 'gateRange'].forEach((id) => {
+                document.getElementById(id).addEventListener('input', (e) => {
+                    const value = parseFloat(e.target.value);
+                    const unit = id === 'gateRange' ? ' dB' : ' ms';
+                    document.getElementById(`${id}Val`).innerText = `${value}${unit}`;
+                    applyGateSettings();
+                });
             });
 
             document.getElementById('compThresh').addEventListener('input', (e) => {
                 const v = parseFloat(e.target.value);
                 document.getElementById('compThreshVal').innerText = `${v} dB`;
-                if(nodes.compressor) nodes.compressor.threshold.setTargetAtTime(v, audioCtx.currentTime, 0.02);
+                if(nodes.compProcessor) setWorkletParam(nodes.compProcessor, 'threshold', v); else if(nodes.compressor) nodes.compressor.threshold.setTargetAtTime(v, audioCtx.currentTime, 0.02);
             });
 
             document.getElementById('compRatio').addEventListener('input', (e) => {
                 const v = parseFloat(e.target.value);
                 document.getElementById('compRatioVal').innerText = `${v.toFixed(1)} : 1`;
-                if(nodes.compressor) nodes.compressor.ratio.setTargetAtTime(v, audioCtx.currentTime, 0.02);
+                if(nodes.compProcessor) setWorkletParam(nodes.compProcessor, 'ratio', v); else if(nodes.compressor) nodes.compressor.ratio.setTargetAtTime(v, audioCtx.currentTime, 0.02);
             });
 
             document.getElementById('compKnee').addEventListener('input', (e) => {
                 const v = parseFloat(e.target.value);
                 document.getElementById('compKneeVal').innerText = `${v} dB`;
-                if(nodes.compressor) nodes.compressor.knee.setTargetAtTime(v, audioCtx.currentTime, 0.02);
+                if(nodes.compProcessor) setWorkletParam(nodes.compProcessor, 'kneeDb', v); else if(nodes.compressor) nodes.compressor.knee.setTargetAtTime(v, audioCtx.currentTime, 0.02);
             });
 
             document.getElementById('compAttack').addEventListener('input', (e) => {
                 const v = parseFloat(e.target.value);
                 document.getElementById('compAttackVal').innerText = `${v} ms`;
-                if(nodes.compressor) nodes.compressor.attack.setTargetAtTime(v / 1000, audioCtx.currentTime, 0.02);
+                if(nodes.compProcessor) setWorkletParam(nodes.compProcessor, 'attackMs', v); else if(nodes.compressor) nodes.compressor.attack.setTargetAtTime(v / 1000, audioCtx.currentTime, 0.02);
             });
 
             document.getElementById('compRelease').addEventListener('input', (e) => {
                 const v = parseFloat(e.target.value);
                 document.getElementById('compReleaseVal').innerText = `${v} ms`;
-                if(nodes.compressor) nodes.compressor.release.setTargetAtTime(v / 1000, audioCtx.currentTime, 0.02);
+                if(nodes.compProcessor) setWorkletParam(nodes.compProcessor, 'releaseMs', v); else if(nodes.compressor) nodes.compressor.release.setTargetAtTime(v / 1000, audioCtx.currentTime, 0.02);
             });
 
             document.getElementById('compMakeup').addEventListener('input', (e) => {
                 const v = parseFloat(e.target.value);
                 document.getElementById('compMakeupVal').innerText = `${v > 0 ? '+' : ''}${v.toFixed(1)} dB`;
-                if(nodes.compMakeup) applyCompressorRouting();
+                if(nodes.compProcessor || nodes.compMakeup) applyCompressorRouting();
             });
 
             // Amp, Delay, Reverb Controls
             document.getElementById('ampDrive').addEventListener('input', (e) => {
                 const v = parseFloat(e.target.value);
                 document.getElementById('ampDriveVal').innerText = `${v} %`;
-                if(nodes.amp && document.getElementById('chkAmpEnable').checked) {
-                    nodes.amp.curve = makeDistortionCurve(v);
-                }
+                if (nodes.ampProcessor) setWorkletParam(nodes.ampProcessor, 'drive', v);
+                else if (nodes.amp) nodes.amp.curve = document.getElementById('chkAmpEnable').checked ? makeDistortionCurve(v) : null;
+            });
+
+            document.getElementById('ampQuality').addEventListener('change', (e) => {
+                if (nodes.ampProcessor) setWorkletParam(nodes.ampProcessor, 'quality', parseFloat(e.target.value));
             });
 
             document.getElementById('chkAmpEnable').addEventListener('change', (e) => {
                 const drv = parseFloat(document.getElementById('ampDrive').value);
-                if(nodes.amp) nodes.amp.curve = makeDistortionCurve(e.target.checked ? drv : 0);
+                if (nodes.ampProcessor) setWorkletParam(nodes.ampProcessor, 'enabled', e.target.checked ? 1 : 0);
+                else if (nodes.amp) nodes.amp.curve = e.target.checked ? makeDistortionCurve(drv) : null;
             });
 
             document.getElementById('delayTime').addEventListener('input', (e) => {
@@ -2098,6 +2692,13 @@
                 document.getElementById('masterGainVal').innerText = `${v > 0 ? '+' : ''}${v.toFixed(1)} dB`;
                 if(nodes.masterGain) nodes.masterGain.gain.setTargetAtTime(Math.pow(10, v / 20), audioCtx.currentTime, 0.02);
             });
+
+            document.getElementById('limiterCeiling').addEventListener('input', (e) => {
+                const v = parseFloat(e.target.value);
+                document.getElementById('limiterCeilingVal').innerText = `${v.toFixed(1)} dB`;
+                if (nodes.limiterProcessor) setWorkletParam(nodes.limiterProcessor, 'ceilingDb', v, 0.005);
+                else if (nodes.limiter && audioCtx) nodes.limiter.threshold.setTargetAtTime(v, audioCtx.currentTime, 0.005);
+            });
         }
 
         // Initialize App on Load
@@ -2131,10 +2732,12 @@
                     exportObjectUrl = null;
                 }
                 if (workerUrl) URL.revokeObjectURL(workerUrl);
+                if (dspWorkletUrl) URL.revokeObjectURL(dspWorkletUrl);
             }, { once: true });
 
             renderEQCanvas();
             renderCompCanvas();
+            setFileStatus('音源を選択してください。高精度DSPは再生開始時に初期化されます。', 'normal');
             animationFrameLoop();
         });
     </script>
