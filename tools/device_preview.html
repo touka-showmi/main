@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f3f5f9">
+  <title>実機モデル別・画面安全領域プレビュー（スマートウォッチ対応）</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3f5f9;
+      --panel: #fff;
+      --ink: #172033;
+      --muted: #657087;
+      --line: #dce2ec;
+      --green: #dff4e9;
+      --green-line: #73ad91;
+      --yellow: #ffe9b9;
+      --yellow-line: #d6a64c;
+      --red: #ffcaca;
+      --red-line: #d86d6d;
+      --accent: #465fc7;
+      --shadow: 0 12px 30px rgba(30, 43, 75, .08);
+    }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; background: var(--bg); }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+      line-height: 1.55;
+    }
+    button, select, input { font: inherit; }
+    .page {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(34px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    }
+    header { margin-bottom: 20px; }
+    .eyebrow { margin: 0 0 6px; color: var(--accent); font-size: .75rem; font-weight: 800; letter-spacing: .13em; }
+    h1 { margin: 0; font-size: clamp(1.45rem, 4vw, 2.15rem); line-height: 1.25; }
+    .lead { max-width: 850px; margin: 10px 0 0; color: var(--muted); }
+    .panel, .preview-card, .details-card, .notes {
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+    .filter-controls {
+      display: grid; grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) minmax(220px, 1.2fr) auto;
+      gap: 12px; align-items: end; padding: 15px 16px; margin: 16px 0 14px;
+    }
+    .filter-heading { grid-column: 1 / -1; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .filter-heading h2 { margin: 0; font-size: .98rem; }
+    .filter-heading p { margin: 0; color: var(--muted); font-size: .77rem; }
+    .filter-check { display: flex; align-items: center; min-height: 43px; gap: 9px; color: #3e4960; font-size: .86rem; }
+    .filter-check input { width: 18px; height: 18px; accent-color: var(--accent); flex: 0 0 auto; }
+    .filter-reset {
+      min-height: 43px; padding: 8px 13px; border: 1px solid #bac5dc; border-radius: 10px;
+      color: #293d89; background: #eef1fa; font-weight: 750; cursor: pointer;
+    }
+    .filter-reset:hover { background: #e2e8fb; }
+    .filter-reset:disabled { opacity: .48; cursor: not-allowed; }
+    .filter-status { grid-column: 1 / -1; margin: -2px 0 0; color: var(--muted); font-size: .77rem; }
+    .device-nav button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    .controls { display: grid; grid-template-columns: minmax(240px, 1.45fr) minmax(150px, .8fr) minmax(230px, 1.15fr) auto; gap: 12px; align-items: end; padding: 16px; margin: 0 0 14px; }
+    .state-control[hidden] { display: none; }
+    .control { min-width: 0; }
+    .control label, .control .label { display: block; margin: 0 0 6px; color: #4d5870; font-size: .81rem; font-weight: 750; }
+    select {
+      width: 100%; min-height: 43px; padding: 9px 36px 9px 11px;
+      border: 1px solid #cbd3e1; border-radius: 10px; color: var(--ink); background: #fff;
+    }
+    select:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid rgba(70,95,199,.25); outline-offset: 2px; }
+    .range-line { display: flex; align-items: center; gap: 10px; min-height: 43px; }
+    input[type="range"] { width: 100%; accent-color: var(--accent); }
+    output { min-width: 44px; color: #44506a; font-size: .84rem; font-variant-numeric: tabular-nums; text-align: right; }
+    .toggle-line { display: flex; gap: 8px; align-items: center; min-height: 43px; color: #3e4960; font-size: .87rem; white-space: nowrap; }
+    .toggle-line input { width: 18px; height: 18px; accent-color: var(--accent); }
+    .device-nav { display: flex; align-items: center; gap: 8px; }
+    .device-nav button, .upload-actions button {
+      min-height: 40px; padding: 8px 13px; border: 1px solid #bac5dc;
+      border-radius: 10px; background: #eef1fa; color: #293d89;
+      font-weight: 750; cursor: pointer;
+    }
+    .device-nav button:hover, .upload-actions button:hover { background: #e2e8fb; }
+    .device-nav button:active, .upload-actions button:active { transform: translateY(1px); }
+    .device-counter { min-width: 54px; color: var(--muted); font-size: .8rem; text-align: center; font-variant-numeric: tabular-nums; }
+    .upload-panel { display: grid; grid-template-columns: minmax(230px, 1fr) auto auto; gap: 12px; align-items: end; padding: 15px 16px; margin: 0 0 14px; }
+    .upload-panel label { display: block; margin-bottom: 6px; color: #4d5870; font-size: .81rem; font-weight: 750; }
+    .upload-panel input[type="file"] { width: 100%; min-width: 0; min-height: 42px; padding: 7px; border: 1px solid #cbd3e1; border-radius: 10px; background: #fff; }
+    .upload-status { grid-column: 1 / -1; margin: -3px 0 0; color: var(--muted); font-size: .78rem; overflow-wrap: anywhere; }
+    .upload-status.loaded { color: #176a43; }
+    /*
+      iframe 自体は端末のCSSビューポート寸法のまま動かす。
+      外側のラッパーだけをプレビュー表示用に縮小し、ページ倍率と表示倍率を分離する。
+    */
+    .iframe-viewport {
+      position: absolute; z-index: 2; top: 0; left: 0;
+      width: 0; height: 0; overflow: hidden;
+      transform-origin: top left; background: #fff;
+    }
+    .iframe-viewport[hidden] { display: none; }
+    .iframe-viewport iframe {
+      display: block; width: 100%; height: 100%;
+      border: 0; margin: 0; padding: 0; background: #fff;
+    }
+    .screen-copy[hidden] { display: none; }
+    .device-frame.switching { animation: deviceSwitch .22s ease both; }
+    @keyframes deviceSwitch { from { opacity: .45; transform: translateY(5px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(250px, .8fr); gap: 14px; align-items: stretch; }
+    .preview-card { min-width: 0; padding: 16px; }
+    .preview-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .preview-heading h2, .details-card h2, .notes h2 { margin: 0; font-size: 1rem; }
+    .preview-hint { color: var(--muted); font-size: .76rem; }
+    .stage {
+      display: flex; align-items: center; justify-content: center;
+      /* The stage owns its size. The child device frame must never resize this container. */
+      height: clamp(440px, 68vh, 680px); min-height: 440px; max-height: 680px;
+      margin-top: 12px; padding: 14px;
+      overflow: hidden; contain: layout size paint;
+      border: 1px dashed #c8d1df; border-radius: 14px;
+      background: radial-gradient(circle at center, #fff 0, #f5f7fb 70%);
+    }
+    .device-frame {
+      position: relative; flex: none; display: flex; align-items: stretch; justify-content: stretch;
+      padding: 8px; overflow: hidden; background: #242a37; border: 1px solid #151a24;
+      box-shadow: 0 13px 26px rgba(15, 23, 42, .25);
+    }
+    .device-frame.phone { border-radius: 34px; }
+    .device-frame.tablet { border-radius: 22px; padding: 9px; }
+    .device-frame.laptop { border-radius: 14px 14px 9px 9px; padding: 7px 7px 9px; }
+    .device-frame.foldable { border: 2px solid #111722; box-shadow: 0 13px 26px rgba(15,23,42,.27), inset 0 0 0 1px rgba(255,255,255,.12); }
+    .device-frame.foldable-closed { border-radius: 30px; }
+    .device-frame.foldable-open { border-radius: 20px; padding: 9px; }
+    .device-frame.foldable-flip-cover { border-radius: 25px; }
+    /* 折りたたみ外装に疑似ヒンジ線を追加しない。線は実画面の折り目だけに表示する。 */
+    .screen {
+      position: relative; flex: none; overflow: hidden; isolation: isolate;
+      background: var(--green); border-radius: 25px;
+    }
+    .tablet .screen { border-radius: 13px; }
+    .laptop .screen { border-radius: 7px 7px 2px 2px; }
+    .screen-copy {
+      position: absolute; z-index: 1; inset: 15% 12%; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; gap: 8px; padding: 10px;
+      color: #24543f; text-align: center; pointer-events: none;
+    }
+    .screen-copy strong { font-size: clamp(11px, 1.2vw, 15px); }
+    .screen-copy span { color: #3d6a55; font-size: clamp(9px, .95vw, 12px); }
+    .mock-ui { display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
+    .mock-ui i { display: block; width: 35px; height: 13px; border: 1px solid rgba(36,84,63,.4); border-radius: 5px; background: rgba(255,255,255,.48); }
+    .zone { position: absolute; z-index: 3; pointer-events: none; }
+    .zone.red { background: rgba(231, 96, 96, .68); border: 1px solid rgba(160, 43, 43, .5); }
+    .zone.yellow { background: rgba(242, 185, 65, .62); border: 1px solid rgba(170, 115, 25, .48); }
+    .zone-label { position: absolute; z-index: 4; color: #432b22; font-size: clamp(8px, .8vw, 11px); font-weight: 800; line-height: 1.15; text-align: center; pointer-events: none; text-shadow: 0 1px 0 rgba(255,255,255,.35); }
+    .cutout { position: absolute; z-index: 6; display: none; background: #080b11; box-shadow: inset 0 0 0 1px rgba(255,255,255,.07); pointer-events: none; }
+    .cutout.dynamic { width: 21%; height: 2.4%; top: 1.6%; left: 50%; transform: translateX(-50%); border-radius: 100px; }
+    .cutout.punch { width: 2.5%; aspect-ratio: 1; top: 1.8%; left: 50%; transform: translateX(-50%); border-radius: 50%; }
+    .cutout.notch { width: 13%; height: 3.2%; top: 0; left: 50%; transform: translateX(-50%); border-radius: 0 0 9px 9px; }
+    .cutout.side { top: 50%; left: 1.2%; width: 2.4%; height: 20%; transform: translateY(-50%); border-radius: 100px; }
+    .cutout.visible { display: block; }
+    /*
+      折り目の線は、展開した折りたたみディスプレイの中央にだけ表示する。
+      外周・ベゼル・閉じたカバー画面には疑似線を描かない。
+    */
+    .hinge-line {
+      display: none; position: absolute; z-index: 5; pointer-events: none;
+      opacity: .82;
+    }
+    .hinge-line.visible { display: block; }
+    .hinge-line.vertical {
+      top: 0; bottom: 0; left: 50%; width: 2px;
+      transform: translateX(-50%);
+      background: linear-gradient(90deg,
+        rgba(24, 43, 34, 0),
+        rgba(24, 43, 34, .17) 42%,
+        rgba(255, 255, 255, .34) 58%,
+        rgba(24, 43, 34, 0));
+    }
+    .hinge-line.horizontal {
+      left: 0; right: 0; top: 50%; height: 2px;
+      transform: translateY(-50%);
+      background: linear-gradient(180deg,
+        rgba(24, 43, 34, 0),
+        rgba(24, 43, 34, .17) 42%,
+        rgba(255, 255, 255, .34) 58%,
+        rgba(24, 43, 34, 0));
+    }
+    .laptop-base { display: none; position: absolute; left: -3%; right: -3%; bottom: -8px; height: 8px; background: linear-gradient(#aeb5c2, #737d8d); border-radius: 0 0 12px 12px; }
+    .laptop .laptop-base { display: block; }
+    /* Smartwatch body, screen and short band segments. */
+    .device-frame.watch {
+      z-index: 0; overflow: visible; padding: 4px;
+      border: 2px solid #171d29;
+      background: linear-gradient(145deg, #606b7d 0%, #2b3341 48%, #485367 100%);
+      box-shadow: 0 13px 26px rgba(15,23,42,.26), inset 0 0 0 1px rgba(255,255,255,.16);
+    }
+    .device-frame.watch.watch-round { border-radius: 50%; }
+    .device-frame.watch.watch-square { border-radius: 27%; }
+    .device-frame.watch .screen { z-index: 2; flex: none; }
+    .device-frame.watch .watch-strap {
+      display: block; position: absolute; z-index: 0; left: 50%; width: 42%;
+      transform: translateX(-50%); border: 1px solid rgba(10,15,23,.72);
+      background: repeating-linear-gradient(90deg, #303847 0, #303847 5px, #3a4557 5px, #3a4557 8px);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.07); pointer-events: none;
+    }
+    .device-frame.watch .watch-strap-top { height: 42%; bottom: calc(100% - 3px); border-radius: 9px 9px 2px 2px; }
+    .device-frame.watch .watch-strap-bottom { height: 42%; top: calc(100% - 3px); border-radius: 2px 2px 9px 9px; }
+    .device-frame.watch.watch-round .watch-strap { width: 39%; }
+    .device-frame.watch .screen-copy { inset: 18%; gap: 3px; padding: 3px; }
+    .device-frame.watch .screen-copy strong { font-size: clamp(8px, 1.05vw, 12px); }
+    .device-frame.watch .screen-copy span { font-size: clamp(7px, .82vw, 10px); }
+    .device-frame.watch .mock-ui i { width: 18px; height: 7px; border-radius: 3px; }
+    .zone.watch-edge {
+      background: transparent !important;
+      border: 1px solid rgba(170,115,25,.62) !important;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.14);
+    }
+    .device-meta { margin-top: 12px; color: var(--muted); font-size: .8rem; text-align: center; }
+    .details-card { padding: 17px; }
+    .details-card h2 { margin-bottom: 13px; }
+    .model-name { margin: 0 0 5px; font-size: 1.08rem; font-weight: 800; }
+    .model-category { margin: 0 0 14px; color: var(--muted); font-size: .78rem; }
+    .specs { display: grid; grid-template-columns: 1fr auto; gap: 9px 10px; margin: 0; font-size: .86rem; }
+    .specs dt { color: #657087; }
+    .specs dd { margin: 0; text-align: right; font-weight: 750; font-variant-numeric: tabular-nums; }
+    .caveat { margin: 15px 0 0; padding: 11px 12px; border-radius: 10px; background: #fff5df; color: #674d1d; font-size: .78rem; }
+    .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 15px 0 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+    .legend span { display: inline-flex; align-items: center; gap: 7px; font-size: .82rem; }
+    .swatch { width: 14px; height: 14px; border: 1px solid transparent; border-radius: 4px; }
+    .swatch.red { background: var(--red); border-color: var(--red-line); }
+    .swatch.yellow { background: var(--yellow); border-color: var(--yellow-line); }
+    .swatch.green { background: var(--green); border-color: var(--green-line); }
+    .notes { margin-top: 15px; padding: 17px; }
+    .notes p { margin: 8px 0 0; color: #4c5870; font-size: .86rem; }
+    .sources { margin-top: 13px; color: var(--muted); font-size: .78rem; }
+    .sources a { color: #4058ad; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+    .small { color: var(--muted); font-size: .76rem; }
+    @media (max-width: 760px) {
+      .controls { grid-template-columns: 1fr 1fr; }
+      .filter-controls { grid-template-columns: 1fr 1fr; }
+      .filter-heading { align-items: flex-start; flex-direction: column; }
+      .filter-reset { width: 100%; }
+      .upload-panel { grid-template-columns: 1fr 1fr; }
+      .upload-panel .file-control { grid-column: 1 / -1; }
+      .layout { grid-template-columns: 1fr; }
+      .stage { height: 475px; min-height: 475px; max-height: 475px; }
+      .details-card { order: -1; }
+    }
+    @media (max-width: 420px) {
+      .page { padding-left: max(11px, env(safe-area-inset-left)); padding-right: max(11px, env(safe-area-inset-right)); }
+      .controls { grid-template-columns: 1fr; padding: 13px; }
+      .filter-controls { grid-template-columns: 1fr; padding: 13px; }
+      .filter-heading, .filter-status { grid-column: auto; }
+      .upload-panel { grid-template-columns: 1fr; }
+      .upload-panel .file-control { grid-column: auto; }
+      .device-nav { width: 100%; }
+      .device-nav button { flex: 1; padding-inline: 8px; }
+      .stage { height: 440px; min-height: 440px; max-height: 440px; padding: 8px; }
+      .preview-card { padding: 12px; }
+    }
+    /*
+      スマートフォン横向きでは縦方向の表示領域が短くなるため、
+      端末送りナビゲーションを画面下部に固定して常時操作可能にする。
+      safe-areaを加味し、iframeや端末模型の寸法計算には影響させない。
+    */
+    @media screen and (orientation: landscape) and (max-height: 600px) and (max-width: 950px) {
+      .page { padding-bottom: calc(82px + env(safe-area-inset-bottom)); }
+      .device-nav {
+        position: fixed;
+        z-index: 1000;
+        left: 50%;
+        bottom: calc(8px + env(safe-area-inset-bottom));
+        transform: translateX(-50%);
+        width: min(390px, calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+        justify-content: space-between;
+        gap: 8px;
+        padding: 7px;
+        border: 1px solid #bac5dc;
+        border-radius: 14px;
+        background: rgba(255,255,255,.97);
+        box-shadow: 0 5px 22px rgba(15,23,42,.22);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+      .device-nav button {
+        flex: 1 1 0;
+        min-width: 0;
+        min-height: 42px;
+        padding: 8px 10px;
+        white-space: nowrap;
+        touch-action: manipulation;
+      }
+      .device-counter { min-width: 48px; flex: 0 0 auto; }
+      .stage { height: 340px; min-height: 340px; max-height: 340px; }
+    }
+    /* Do not animate width/height: the ResizeObserver must see stable geometry. */
+    @media (prefers-reduced-motion: no-preference) {
+      .device-frame { transition: opacity .12s ease; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="upload-panel panel" aria-label="HTMLファイルの読み込み">
+      <div class="control file-control">
+        <label for="htmlFileInput">確認したいHTMLファイルを読み込む</label>
+        <input id="htmlFileInput" type="file" accept=".html,.htm,text/html">
+      </div>
+      <div class="upload-actions"><button id="reloadHtmlButton" type="button" disabled>HTMLを再読み込み</button></div>
+      <div class="upload-actions"><button id="clearHtmlButton" type="button" disabled>読み込みを解除</button></div>
+      <p class="upload-status" id="uploadStatus" role="status">HTMLを読み込むと、上の端末画面内で実際のページを表示します。機種・向きを切り替えてレスポンシブ表示を確認できます。端末を移動しても最後に選択した縦横の向きを引き継ぎます。</p>
+    </section>
+
+    <header>
+      <p class="eyebrow">DEVICE PREVIEW / RESPONSIVE SAFE AREA</p>
+      <h1>実機モデル別・画面安全領域プレビュー（スマートウォッチ対応）</h1>
+      <p class="lead">スマートフォン・タブレット・PC・スマートウォッチを、メーカーや端末タイプで絞り込んで確認できます。主要機種だけの表示にも対応し、折りたたみ端末は閉じた状態と展開状態を別々に選択できます。</p>
+    </header>
+
+    <section class="filter-controls panel" aria-label="端末の絞り込み">
+      <div class="filter-heading">
+        <div>
+          <h2>端末を絞り込む</h2>
+          <p>主要機種・メーカー・端末タイプを組み合わせて表示できます。</p>
+        </div>
+      </div>
+      <div class="control">
+        <label for="manufacturerFilter">メーカー</label>
+        <select id="manufacturerFilter">
+          <option value="">すべてのメーカー</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for="deviceTypeFilter">端末タイプ</label>
+        <select id="deviceTypeFilter">
+          <option value="">すべてのタイプ</option>
+          <option value="smartphone">スマートフォン（通常型）</option>
+          <option value="foldable">折りたたみスマートフォン</option>
+          <option value="gaming">ゲーミングスマートフォン</option>
+          <option value="tablet">タブレット</option>
+          <option value="watch">スマートウォッチ</option>
+          <option value="laptop">ノートPC</option>
+        </select>
+      </div>
+      <label class="filter-check"><input id="majorOnlyFilter" type="checkbox" checked> 主要機種のみ表示</label>
+      <button id="resetFiltersButton" class="filter-reset" type="button">絞り込みをリセット</button>
+      <p class="filter-status" id="filterStatus" role="status" aria-live="polite">主要機種を表示しています。</p>
+    </section>
+
+    <section class="controls panel" aria-label="プレビュー設定">
+      <div class="control">
+        <label for="deviceSelect">端末モデル</label>
+        <select id="deviceSelect">
+          <optgroup label="Apple iPhone（現行・直近モデル）">
+            <option value="iphone18pro">Apple iPhone 18 Pro</option>
+            <option value="iphone18promax">Apple iPhone 18 Pro Max</option>
+            <option value="iphone17">Apple iPhone 17</option>
+            <option value="iphone17pro">Apple iPhone 17 Pro</option>
+            <option value="iphone17promax">Apple iPhone 17 Pro Max</option>
+            <option value="iphoneair">Apple iPhone Air</option>
+            <option value="iphone17e">Apple iPhone 17e</option>
+            <option value="iphone16">Apple iPhone 16</option>
+            <option value="iphone16pro">Apple iPhone 16 Pro</option>
+            <option value="iphone16promax">Apple iPhone 16 Pro Max</option>
+            <option value="iphone16e">Apple iPhone 16e</option>
+          </optgroup>
+          <optgroup label="Samsung Galaxy（S／Aシリーズ）">
+            <option value="galaxys26">Samsung Galaxy S26</option>
+            <option value="galaxys26plus">Samsung Galaxy S26+</option>
+            <option value="galaxys26ultra">Samsung Galaxy S26 Ultra</option>
+            <option value="galaxys25ultra">Samsung Galaxy S25 Ultra</option>
+            <option value="galaxya57">Samsung Galaxy A57 5G</option>
+          </optgroup>
+          <optgroup label="Google Pixel">
+            <option value="pixel11">Google Pixel 11</option>
+            <option value="pixel11pro">Google Pixel 11 Pro</option>
+            <option value="pixel11proxl">Google Pixel 11 Pro XL</option>
+            <option value="pixel10proxl">Google Pixel 10 Pro XL</option>
+          </optgroup>
+          <optgroup label="Sony Xperia">
+            <option value="xperia1viii">Sony Xperia 1 VIII</option>
+            <option value="xperia10viii">Sony Xperia 10 VIII</option>
+          </optgroup>
+          <optgroup label="SHARP AQUOS">
+            <option value="aquosr11">SHARP AQUOS R11</option>
+            <option value="aquosr10">SHARP AQUOS R10</option>
+            <option value="aquossense10">SHARP AQUOS sense10</option>
+          </optgroup>
+          <optgroup label="FCNT arrows">
+            <option value="arrowsalpha2">FCNT arrows Alpha2</option>
+            <option value="arrowsalpha">FCNT arrows Alpha</option>
+            <option value="arrowswe3">FCNT arrows We3</option>
+            <option value="arrowswe2plus">FCNT arrows We2 Plus</option>
+          </optgroup>
+          <optgroup label="OPPO">
+            <option value="oppofindx9ultra">OPPO Find X9 Ultra</option>
+            <option value="oppofindx9">OPPO Find X9</option>
+            <option value="opporeno16">OPPO Reno16 5G</option>
+            <option value="opporeno15a">OPPO Reno15 A</option>
+          </optgroup>
+          <optgroup label="Xiaomi／REDMI">
+            <option value="xiaomi17ultra">Xiaomi 17 Ultra</option>
+            <option value="xiaomi17">Xiaomi 17</option>
+            <option value="redminote15pro5g">Xiaomi REDMI Note 15 Pro 5G</option>
+          </optgroup>
+          <optgroup label="motorola">
+            <option value="motorolaedge70fusion">motorola edge 70 fusion</option>
+            <option value="motorolaedge60pro">motorola edge 60 pro</option>
+            <option value="motog37j">motorola moto g37j</option>
+          </optgroup>
+          <optgroup label="Nothing">
+            <option value="nothingphone3">Nothing Phone (3)</option>
+          </optgroup>
+          <optgroup label="ASUS">
+            <option value="asuszenfone12ultra">ASUS Zenfone 12 Ultra</option>
+          </optgroup>
+          <optgroup label="OPPO（Aシリーズ）">
+            <option value="oppoa55g">OPPO A5 5G</option>
+          </optgroup>
+          <optgroup label="motorola（moto gシリーズ）">
+            <option value="motog06">motorola moto g06</option>
+          </optgroup>
+          <optgroup label="ZTE／nubia／REDMAGIC">
+            <option value="nubias2lite">nubia S2 Lite</option>
+            <option value="redmagic11spro">REDMAGIC 11S Pro</option>
+          </optgroup>
+          <optgroup label="折りたたみスマートフォン：Samsung Galaxy Z Fold8">
+            <option value="galaxyzfold8__cover">Samsung Galaxy Z Fold8 — 閉じた状態</option>
+            <option value="galaxyzfold8__main">Samsung Galaxy Z Fold8 — 展開状態</option>
+          </optgroup>
+          <optgroup label="折りたたみスマートフォン：Samsung Galaxy Z Fold8 Ultra">
+            <option value="galaxyzfold8ultra__cover">Samsung Galaxy Z Fold8 Ultra — 閉じた状態</option>
+            <option value="galaxyzfold8ultra__main">Samsung Galaxy Z Fold8 Ultra — 展開状態</option>
+          </optgroup>
+          <optgroup label="折りたたみスマートフォン：Samsung Galaxy Z Flip8">
+            <option value="galaxyzflip8__cover">Samsung Galaxy Z Flip8 — 閉じた状態</option>
+            <option value="galaxyzflip8__main">Samsung Galaxy Z Flip8 — 開いた状態</option>
+          </optgroup>
+          <optgroup label="折りたたみスマートフォン：Apple iPhone Duo">
+            <option value="iphoneduo__cover">Apple iPhone Duo — 閉じた状態（アウターディスプレイ）</option>
+            <option value="iphoneduo__main">Apple iPhone Duo — 開いた状態（インナーディスプレイ）</option>
+          </optgroup>
+          <optgroup label="折りたたみスマートフォン：Google Pixel 11 Pro Fold">
+            <option value="pixel11profold__cover">Google Pixel 11 Pro Fold — 閉じた状態</option>
+            <option value="pixel11profold__main">Google Pixel 11 Pro Fold — 展開状態</option>
+          </optgroup>
+          <optgroup label="折りたたみスマートフォン：OPPO Find N6">
+            <option value="oppofindn6__cover">OPPO Find N6 — 閉じた状態</option>
+            <option value="oppofindn6__main">OPPO Find N6 — 展開状態</option>
+          </optgroup>
+          <optgroup label="折りたたみスマートフォン：motorola razr fold">
+            <option value="motorolarazrfold__cover">motorola razr fold — 閉じた状態</option>
+            <option value="motorolarazrfold__main">motorola razr fold — 展開状態</option>
+          </optgroup>
+          <optgroup label="スマートウォッチ：Apple Watch Series 12">
+            <option value="applewatchseries12_46">Apple Watch Series 12 — 46mm</option>
+            <option value="applewatchseries12_42">Apple Watch Series 12 — 42mm</option>
+          </optgroup>
+          <optgroup label="スマートウォッチ：Samsung Galaxy Watch9">
+            <option value="galaxywatch9_44">Samsung Galaxy Watch9 — 44mm</option>
+            <option value="galaxywatch9_40">Samsung Galaxy Watch9 — 40mm</option>
+          </optgroup>
+          <optgroup label="スマートウォッチ：Google Pixel Watch 4">
+            <option value="pixelwatch4_45">Google Pixel Watch 4 — 45mm</option>
+            <option value="pixelwatch4_41">Google Pixel Watch 4 — 41mm</option>
+          </optgroup>
+          <optgroup label="スマートウォッチ：Garmin Venu 4">
+            <option value="garminvenu4_45">Garmin Venu 4 — 45mm</option>
+            <option value="garminvenu4_41">Garmin Venu 4 — 41mm</option>
+          </optgroup>
+          
+          <optgroup label="小型・8インチ級タブレット">
+            <option value="ipadminia17pro">Apple iPad mini（A17 Pro・8.3インチ）</option>
+            <option value="legiontab88gen5">Lenovo Legion Tab（8.8インチ・第5世代）</option>
+          </optgroup>
+          <optgroup label="大型タブレット">
+            <option value="ipadair11m3">Apple iPad Air 11インチ（M3）</option>
+            <option value="tabs10ultra">Samsung Galaxy Tab S10 Ultra</option>
+          </optgroup>
+          <optgroup label="ノートPC">
+            <option value="macbookair13m4">Apple MacBook Air 13インチ（M4）</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="control">
+        <label for="orientationSelect">画面の向き</label>
+        <select id="orientationSelect">
+          <option value="portrait">縦向き</option>
+          <option value="landscape">横向き</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for="zoomRange">端末模型の表示サイズ（100%＝最大フィット／iframeのページ倍率とは別）</label>
+        <div class="range-line">
+          <input id="zoomRange" type="range" min="70" max="100" step="5" value="100">
+          <output id="zoomValue" for="zoomRange">100%</output>
+        </div>
+      </div>
+      <div class="control">
+        <span class="label">表示設定</span>
+        <label class="toggle-line"><input id="zonesToggle" type="checkbox" checked> 安全領域を重ねる</label>
+      </div>
+    </section>
+
+
+    <section class="layout" aria-label="端末プレビューと仕様">
+      <article class="preview-card">
+        <div class="preview-heading">
+          <h2 id="previewTitle">Apple iPhone 17 Pro</h2>
+          <span class="preview-hint">枠内がディスプレイの概形</span>
+        </div>
+        <div class="device-nav" aria-label="端末切り替え" style="margin-top:10px">
+          <button id="prevDeviceButton" type="button" aria-label="前の端末へ">← 前の端末</button>
+          <span class="device-counter" id="deviceCounter" aria-live="polite">1 / 11</span>
+          <button id="nextDeviceButton" type="button" aria-label="次の端末へ">次の端末 →</button>
+        </div>
+        <div class="stage" id="stage">
+          <div class="device-frame phone" id="deviceFrame">
+            <div class="watch-strap watch-strap-top" aria-hidden="true"></div>
+            <div class="watch-strap watch-strap-bottom" aria-hidden="true"></div>
+            <div class="screen" id="screen">
+              <div class="screen-copy" id="screenCopy">
+                <strong>主要な操作・情報</strong>
+                <span>赤・黄色の領域を避けて配置する</span>
+                <div class="mock-ui" aria-hidden="true"><i></i><i></i><i></i></div>
+              </div>
+              <div class="iframe-viewport" id="iframeViewport" hidden>
+                <iframe id="appFrame" title="読み込んだHTMLの端末プレビュー" sandbox="allow-scripts allow-forms allow-modals allow-popups allow-downloads" referrerpolicy="no-referrer"></iframe>
+              </div>
+              <div class="cutout dynamic" id="cutout"></div>
+              <div class="hinge-line" id="hingeLine" aria-hidden="true"></div>
+              <div class="laptop-base"></div>
+            </div>
+          </div>
+        </div>
+        <div class="device-meta" id="deviceMeta">表示解像度：1206 × 2622 px ／ 6.3インチ</div>
+        <div class="legend" aria-label="色の凡例">
+          <span><i class="swatch red"></i><strong>赤：重要な操作を置かない</strong></span>
+          <span><i class="swatch yellow"></i><strong>黄：余白を確保する</strong></span>
+          <span><i class="swatch green"></i><strong>緑：基本的に配置しやすい</strong></span>
+        </div>
+      </article>
+
+      <aside class="details-card">
+        <h2>選択中の端末仕様</h2>
+        <p class="model-name" id="modelName">Apple iPhone 17 Pro</p>
+        <p class="model-category" id="modelCategory">スマートフォン</p>
+        <dl class="specs">
+          <dt>ディスプレイ</dt><dd id="specSize">6.3インチ</dd>
+          <dt>本体寸法</dt><dd id="specBodySize">—</dd>
+          <dt>折りたたみ時の比率</dt><dd id="specFoldRatio">—</dd>
+          <dt>解像度／描画基準</dt><dd id="specResolution">1206 × 2622 px</dd>
+          <dt>CSS表示領域</dt><dd id="specViewport">402 × 874 px</dd>
+          <dt>表示領域の根拠</dt><dd id="specViewportBasis">機種別推定値</dd>
+          <dt>アスペクト比</dt><dd id="specRatio">約 20:9</dd>
+          <dt>iframeページ倍率</dt><dd id="specPageScale">100%（標準）</dd>
+          <dt>iframe実行環境DPR</dt><dd id="specFrameDpr">読込後に表示</dd>
+          <dt>CSSビューポート照合</dt><dd id="specFrameViewportMatch">未読み込み</dd>
+          <dt>カメラ形状</dt><dd id="specCutout">Dynamic Island</dd>
+          <dt>表示状態</dt><dd id="specState">通常画面</dd>
+          <dt>向き</dt><dd id="specOrientation">縦向き</dd>
+        </dl>
+        <p class="caveat" id="modelCaveat">安全領域の色分けは一般的なUI設計向けの目安です。OS・ブラウザー・表示モードにより実際の侵入領域は変わります。</p>
+      </aside>
+    </section>
+
+    <section class="notes">
+      <h2>このプレビューの見方と限界</h2>
+      <p>スマートフォン一覧は、日本国内で販売・流通する主要ブランドの2025～2026年の現行・直近モデルを中心とした代表機種カタログです。全メーカーの歴代全型番を意味するものではありません。画面解像度はメーカー公表値を優先し、メーカーがFHD+等の表記のみで詳細画素数を示していない場合は、代表的な近似値として登録し、機種詳細欄で未確認・推定であることを表示します。</p>
+      <p>機種ごとのパネル解像度とCSSビューポートを使って、端末画面の形とレスポンシブ幅を再現します。上部の端末模型倍率100%はプレビュー領域に収める最大フィットであり、実寸のインチ比を保つ縮尺ではありません。そのため、通常端末同士の物理的な大きさを厳密に相互比較する用途には使えません。Galaxy Z Flip8、iPhone Duo、Pixel 11 Pro Fold、OPPO Find N6、motorola razr foldは、閉じた状態と展開状態で同じ物理縮尺を使い、折りたたみ前後の外形変化を確認できるようにしています。折りたたみ端末は各状態を独立した端末候補として登録しているため、端末送りでも両方を順番に確認できます。ただし、実機OS・ブラウザーUI・ステータスバー・ジェスチャー領域を完全にエミュレートするものではありません。</p>
+      <p>赤はノッチ・ホーム操作・端ジェスチャーなどと重要要素が干渉しやすい領域、黄色はボタンなどを端に密着させないための余白目安です。折りたたみ画面の中央線はヒンジ位置の目安であり、実機の折り目幅を実寸再現するものではありません。折り目線の方向は、製品ごとの折りたたみ時／展開時の幅・高さの公表値から算出し、展開時の本体アスペクト比を基準に画面回転へ追従させます。背景や動画プレビューなど、端まで表示してよいコンテンツは赤・黄色の領域にも表示できます。</p>
+      <p>スマートウォッチはケースとバンドを描き、角丸四角形／円形の画面形状を反映します。黄色の輪郭は画面端で情報が切れないようにする安全余白の目安です。Apple WatchのwatchOSアプリは通常のSafari／Chrome向けWebページと同じ実行環境ではなく、Galaxy／Pixel等のWear OSでも利用できるブラウザーやCSS viewportは機種・OS・ブラウザーに依存します。ここで読み込むHTMLはCSS幅のレスポンシブ確認用であり、watchOSアプリやWear OSアプリそのものの画面エミュレーションではありません。</p>
+      <p>上部のHTML読み込み欄から .html / .htm を選ぶと、端末画面内のiframeで表示します。端末送りボタンで機種を連続して切り替え、縦横や折りたたみ状態ごとのレイアウトを確認できます。iframeはsandboxで分離しており、スクリプト・フォーム等は許可しますが、親ページと同じオリジンへのアクセスは制限します。localStorage、Cookie、Service Workerなどは利用できない場合があります。外部ファイルを相対パスで参照するHTMLは正しく表示できない場合があるため、CSS・画像・JavaScriptをHTMLに内包した単一ファイルが適しています。</p>
+      <p>iframeのページ倍率は標準の100%（1 CSS pxを1 CSS pxとしてレイアウト）を基本にします。折りたたみGalaxyのCSS表示領域はAndroid実機のWindowMetrics／表示密度の測定値に置き換えました。追加したAndroidスマートフォンのCSS表示領域は、パネル解像度を標準的な3x密度で換算した参考値を基本とし、個別の実機WindowMetricsを確認できていない値は機種詳細欄に推定と明記しています。Lenovo Legion TabはメーカーがAndroid論理密度を公開していないため、408PPIに近い420dpiを仮定した推定値です。選択端末ごとのCSSビューポート幅・高さをiframe自体に設定し、画面模型に収めるための縮小はiframeの外側ラッパーだけに適用します。そのため、外側のプレビュー表示倍率を変更しても、ページ内のCSSメディアクエリーや <code>window.innerWidth</code> は端末の推定CSSビューポートを基準に維持されます。HTMLにviewport metaがない場合は <code>width=device-width, initial-scale=1</code> を補います。既存のviewport metaは尊重します。なお、通常のHTMLだけでは選択した実機の <code>devicePixelRatio</code>、OS文字サイズ、ブラウザーUI、GPU描画密度を完全にはエミュレートできません。iframeから報告するDPRは、このプレビューを開いている実行環境の値です。例えば、PC上で開けばPCのDPR、iPhone上で開けばそのiPhoneのDPRが表示され、選択中の端末モデルに応じて切り替わる値ではありません。DPR依存の <code>canvas</code>、<code>srcset</code>、<code>resolution</code> メディアクエリー、タッチ／ポインター特性は実機または開発者ツールのデバイスエミュレーションで確認してください。</p>
+      <div class="sources">
+        仕様参照：
+        <a href="https://support.apple.com/ja-jp/125090" target="_blank" rel="noopener">iPhone 17 Pro</a> ·
+        <a href="https://store.google.com/jp/product/pixel_10_pro_specs?hl=ja" target="_blank" rel="noopener">Pixel 10 Pro / Pro XL</a> ·
+        <a href="https://www.samsung.com/jp/business/smartphones/galaxy-s/galaxy-s25-ultra-titanium-whitesilver-256gb-sm-s938qzsasjp/" target="_blank" rel="noopener">Galaxy S25 Ultra</a> ·
+        <a href="https://support.apple.com/ja-jp/122241" target="_blank" rel="noopener">iPad Air 11インチ（M3）</a> ·
+        <a href="https://www.samsung.com/jp/tablets/galaxy-tab-s/galaxy-tab-s10-ultra-gray-256gb-sm-x920nzaaxjp/" target="_blank" rel="noopener">Galaxy Tab S10 Ultra</a> ·
+        <a href="https://support.apple.com/ja-jp/122209" target="_blank" rel="noopener">MacBook Air 13インチ（M4）</a> ·
+        <a href="https://www.samsung.com/jp/smartphones/galaxy-z-fold8/" target="_blank" rel="noopener">Galaxy Z Fold8</a> ·
+        <a href="https://www.samsung.com/jp/smartphones/galaxy-z-fold8-ultra/" target="_blank" rel="noopener">Galaxy Z Fold8 Ultra</a> ·
+        <a href="https://api.samsungmobilepress.com/press-releases/galaxy-z-fold8-ultra-fold8-flip8-perfected-every-way-living" target="_blank" rel="noopener">Galaxy Z Flip8</a> ·
+        <a href="https://windowinsets.info/galaxy-z-fold8" target="_blank" rel="noopener">Fold8 Android実測論理サイズ</a> ·
+        <a href="https://windowinsets.info/galaxy-z-fold8-ultra" target="_blank" rel="noopener">Fold8 Ultra Android実測論理サイズ</a> ·
+        <a href="https://windowinsets.info/galaxy-z-flip8" target="_blank" rel="noopener">Flip8 Android実測論理サイズ</a> ·
+        <a href="https://images.apple.com/jp/ipad-mini/specs/" target="_blank" rel="noopener">iPad mini</a> ·
+        <a href="https://psref.lenovo.com/syspool/Sys/PDF/Lenovo_Tablets/Legion_Tab_8_8_5/Legion_Tab_8_8_5_Spec.pdf" target="_blank" rel="noopener">Lenovo Legion Tab（8.8インチ・第5世代）</a> ·
+        <a href="https://www.apple.com/jp/iphone-18-pro/specs/" target="_blank" rel="noopener">iPhone 18 Pro / 18 Pro Max</a> ·
+        <a href="https://www.apple.com/jp/iphone-air/specs/" target="_blank" rel="noopener">iPhone Air</a> ·
+        <a href="https://www.apple.com/jp/iphone/compare/" target="_blank" rel="noopener">iPhone各モデル比較</a> ·
+        <a href="https://www.samsung.com/jp/smartphones/galaxy-s26/" target="_blank" rel="noopener">Galaxy S26シリーズ</a> ·
+        <a href="https://www.docomo.ne.jp/product/sc54g/spec.html" target="_blank" rel="noopener">Galaxy A57 5G仕様</a> ·
+        <a href="https://store.google.com/jp/magazine/compare_pixel?hl=ja" target="_blank" rel="noopener">Google Pixel 11シリーズ比較</a> ·
+        <a href="https://www.sony.jp/xperia/products/xperia1m8/spec.html" target="_blank" rel="noopener">Xperia 1 VIII</a> ·
+        <a href="https://www.fcnt.com/product/arrows/" target="_blank" rel="noopener">FCNT arrowsシリーズ</a> ·
+        <a href="https://jp.sharp/k-tai/products/aquos-r11/specs/" target="_blank" rel="noopener">AQUOS R11</a> ·
+        <a href="https://www.oppo.com/jp/smartphones/series-reno/reno16/specs/" target="_blank" rel="noopener">OPPO Reno16 5G</a> ·
+        <a href="https://www.oppo.com/jp/smartphones/series-reno/reno15-a/specs/" target="_blank" rel="noopener">OPPO Reno15 A</a> ·
+        <a href="https://www.mi.com/jp/product/xiaomi-17-ultra/specs/" target="_blank" rel="noopener">Xiaomi 17 Ultra</a> ·
+        <a href="https://www.mi.com/jp/product/redmi-note-15-pro-5g/specs/" target="_blank" rel="noopener">REDMI Note 15 Pro 5G</a> ·
+        <a href="https://www.fcnt.com/product/arrows/alpha2/" target="_blank" rel="noopener">arrows Alpha2</a> ·
+        <a href="https://www.fcnt.com/product/arrows/we3/" target="_blank" rel="noopener">arrows We3</a> ·
+        <a href="https://www.au.com/mobile/product/smartphone/oppo_a5_5g/spec/" target="_blank" rel="noopener">OPPO A5 5G</a> ·
+        <a href="https://store.motorola.co.jp/item/MOTO_G06.html" target="_blank" rel="noopener">moto g06</a> ·
+        <a href="https://www.nubia.com/jp/news/sim_nubia-s2-lite.html" target="_blank" rel="noopener">nubia S2 Lite</a> ·
+        <a href="https://jp.redmagic.gg/pages/redmagic-11s-pro-specs" target="_blank" rel="noopener">REDMAGIC 11S Pro</a> ·
+        <a href="https://support.apple.com/ja-jp/148589" target="_blank" rel="noopener">Apple Watch Series 12 技術仕様</a> ·
+        <a href="https://news.samsung.com/jp/galaxy-watch-onsale-samsung-2026" target="_blank" rel="noopener">Samsung Galaxy Watch9 仕様</a> ·
+        <a href="https://support.google.com/googlepixelwatch/answer/12651869?hl=ja" target="_blank" rel="noopener">Google Pixel Watch 4 仕様</a> ·
+        <a href="https://www.garmin.co.jp/news/pressroom/news2025-0919-garmin-venu-4/" target="_blank" rel="noopener">Garmin Venu 4 仕様</a>
+      </div>
+      <p class="small">注：パネル解像度・画面サイズはメーカー公表値を参照しています。Galaxy折りたたみ端末のCSS表示領域は実機測定値を参照し、Lenovo Legion Tabは420dpi仮定の推定です。スマートウォッチのCSS viewportは検証用の仮定値で、Pixel Watch 4のパネル画素数もPPI・表示サイズからの推定です。端末模型倍率100%は最大フィットで、実寸比較用ではありません。iframe内部のページ倍率は標準100%を基本とし、外側の縮小とは分離しています。</p>
+    </section>
+  </main>
+
+  <script>
+    // panelW / panelH はメーカー公表の画面解像度です。UIのCSSピクセル数とは異なります。
+    // 折りたたみ端末は cover/main に別々のパネル仕様を持たせています。
+    const devices = {
+      iphone17pro: {
+        name: "Apple iPhone 17 Pro", category: "スマートフォン", type: "phone",
+        panelW: 1206, panelH: 2622, viewportW: 402, viewportH: 874, inches: "6.3インチ", cutout: "Dynamic Island", cutoutType: "dynamic",
+        safe: "ios-phone", defaultOrientation: "portrait", resolutionVerified: true
+      },
+      pixel10proxl: {
+        name: "Google Pixel 10 Pro XL", category: "スマートフォン", type: "phone",
+        panelW: 1344, panelH: 2992, viewportW: 448, viewportH: 997, inches: "6.8インチ", cutout: "パンチホール", cutoutType: "punch",
+        safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true
+      },
+      galaxys25ultra: {
+        name: "Samsung Galaxy S25 Ultra", category: "スマートフォン", type: "phone",
+        panelW: 1440, panelH: 3120, viewportW: 480, viewportH: 1040, inches: "6.9インチ", cutout: "パンチホール", cutoutType: "punch",
+        safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true
+      },
+      iphone18pro: {
+        name: "Apple iPhone 18 Pro", manufacturer: "Apple", category: "スマートフォン", type: "phone",
+        panelW: 1206, panelH: 2622, viewportW: 402, viewportH: 874, viewportBasis: "Apple公表画素数÷3のCSS寸法", inches: "6.3インチ",
+        cutout: "Dynamic Island", cutoutType: "dynamic", safe: "ios-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 71.9, bodyHeightMm: 150.0, fitWidthMm: 71.9, fitHeightMm: 150.0, physicalSizeSource: "メーカー公表寸法"
+      },
+      iphone18promax: {
+        name: "Apple iPhone 18 Pro Max", manufacturer: "Apple", category: "スマートフォン", type: "phone",
+        panelW: 1320, panelH: 2868, viewportW: 440, viewportH: 956, viewportBasis: "Apple公表画素数÷3のCSS寸法", inches: "6.9インチ",
+        cutout: "Dynamic Island", cutoutType: "dynamic", safe: "ios-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 78.0, bodyHeightMm: 163.4, fitWidthMm: 78.0, fitHeightMm: 163.4, physicalSizeSource: "メーカー公表寸法"
+      },
+      iphoneair: {
+        name: "Apple iPhone Air", manufacturer: "Apple", category: "スマートフォン", type: "phone",
+        panelW: 1260, panelH: 2736, viewportW: 420, viewportH: 912, viewportBasis: "Apple公表画素数÷3のCSS寸法", inches: "6.5インチ",
+        cutout: "Dynamic Island", cutoutType: "dynamic", safe: "ios-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 74.7, bodyHeightMm: 156.2, fitWidthMm: 74.7, fitHeightMm: 156.2, physicalSizeSource: "メーカー公表寸法"
+      },
+      iphone17: {
+        name: "Apple iPhone 17", manufacturer: "Apple", category: "スマートフォン", type: "phone",
+        panelW: 1206, panelH: 2622, viewportW: 402, viewportH: 874, viewportBasis: "Apple公表画素数÷3のCSS寸法", inches: "6.3インチ",
+        cutout: "Dynamic Island", cutoutType: "dynamic", safe: "ios-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 71.5, bodyHeightMm: 149.6, fitWidthMm: 71.5, fitHeightMm: 149.6, physicalSizeSource: "メーカー公表寸法"
+      },
+      iphone17promax: {
+        name: "Apple iPhone 17 Pro Max", manufacturer: "Apple", category: "スマートフォン", type: "phone",
+        panelW: 1320, panelH: 2868, viewportW: 440, viewportH: 956, viewportBasis: "Apple公表画素数÷3のCSS寸法", inches: "6.9インチ",
+        cutout: "Dynamic Island", cutoutType: "dynamic", safe: "ios-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 78.0, bodyHeightMm: 163.4, fitWidthMm: 78.0, fitHeightMm: 163.4, physicalSizeSource: "メーカー公表寸法"
+      },
+      iphone17e: {
+        name: "Apple iPhone 17e", manufacturer: "Apple", category: "スマートフォン", type: "phone",
+        panelW: 1170, panelH: 2532, viewportW: 390, viewportH: 844, viewportBasis: "Apple公表画素数÷3のCSS寸法", inches: "6.1インチ",
+        cutout: "Dynamic Island", cutoutType: "dynamic", safe: "ios-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 71.5, bodyHeightMm: 146.7, fitWidthMm: 71.5, fitHeightMm: 146.7, physicalSizeSource: "メーカー公表寸法"
+      },
+      iphone16pro: {
+        name: "Apple iPhone 16 Pro", manufacturer: "Apple", category: "スマートフォン", type: "phone",
+        panelW: 1206, panelH: 2622, viewportW: 402, viewportH: 874, viewportBasis: "Apple公表画素数÷3のCSS寸法", inches: "6.3インチ",
+        cutout: "Dynamic Island", cutoutType: "dynamic", safe: "ios-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 71.5, bodyHeightMm: 149.6, fitWidthMm: 71.5, fitHeightMm: 149.6, physicalSizeSource: "メーカー公表寸法"
+      },
+      iphone16promax: {
+        name: "Apple iPhone 16 Pro Max", manufacturer: "Apple", category: "スマートフォン", type: "phone",
+        panelW: 1320, panelH: 2868, viewportW: 440, viewportH: 956, viewportBasis: "Apple公表画素数÷3のCSS寸法", inches: "6.9インチ",
+        cutout: "Dynamic Island", cutoutType: "dynamic", safe: "ios-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 77.6, bodyHeightMm: 163.0, fitWidthMm: 77.6, fitHeightMm: 163.0, physicalSizeSource: "メーカー公表寸法"
+      },
+      iphone16: {
+        name: "Apple iPhone 16", manufacturer: "Apple", category: "スマートフォン", type: "phone",
+        panelW: 1179, panelH: 2556, viewportW: 393, viewportH: 852, viewportBasis: "Apple公表画素数÷3のCSS寸法", inches: "6.1インチ",
+        cutout: "Dynamic Island", cutoutType: "dynamic", safe: "ios-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 71.6, bodyHeightMm: 147.6, fitWidthMm: 71.6, fitHeightMm: 147.6, physicalSizeSource: "メーカー公表寸法"
+      },
+      iphone16e: {
+        name: "Apple iPhone 16e", manufacturer: "Apple", category: "スマートフォン", type: "phone",
+        panelW: 1170, panelH: 2532, viewportW: 390, viewportH: 844, viewportBasis: "Apple公表画素数÷3のCSS寸法", inches: "6.1インチ",
+        cutout: "ノッチ", cutoutType: "notch", safe: "ios-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 71.5, bodyHeightMm: 146.7, fitWidthMm: 71.5, fitHeightMm: 146.7, physicalSizeSource: "メーカー公表寸法"
+      },
+      galaxys26: {
+        name: "Samsung Galaxy S26", manufacturer: "Samsung", category: "スマートフォン", type: "phone",
+        panelW: 1080, panelH: 2340, viewportW: 360, viewportH: 780, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.3インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 71.7, bodyHeightMm: 149.6, fitWidthMm: 71.7, fitHeightMm: 149.6, physicalSizeSource: "メーカー公表寸法"
+      },
+      galaxys26plus: {
+        name: "Samsung Galaxy S26+", manufacturer: "Samsung", category: "スマートフォン", type: "phone",
+        panelW: 1440, panelH: 3120, viewportW: 480, viewportH: 1040, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.7インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 75.8, bodyHeightMm: 158.4, fitWidthMm: 75.8, fitHeightMm: 158.4, physicalSizeSource: "メーカー公表寸法"
+      },
+      galaxys26ultra: {
+        name: "Samsung Galaxy S26 Ultra", manufacturer: "Samsung", category: "スマートフォン", type: "phone",
+        panelW: 1440, panelH: 3120, viewportW: 480, viewportH: 1040, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.9インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 78.1, bodyHeightMm: 163.6, fitWidthMm: 78.1, fitHeightMm: 163.6, physicalSizeSource: "メーカー公表寸法"
+      },
+      galaxya57: {
+        name: "Samsung Galaxy A57 5G", manufacturer: "Samsung", category: "スマートフォン", type: "phone",
+        panelW: 1080, panelH: 2340, viewportW: 360, viewportH: 780, viewportBasis: "Full HD+表記からの代表解像度換算（実解像度は未確認）", inches: "6.7インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: false, bodyWidthMm: 77.0, bodyHeightMm: 162.0, fitWidthMm: 77.0, fitHeightMm: 162.0, physicalSizeSource: "メーカー公表寸法"
+      },
+      pixel11: {
+        name: "Google Pixel 11", manufacturer: "Google", category: "スマートフォン", type: "phone",
+        panelW: 1080, panelH: 2424, viewportW: 360, viewportH: 808, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.3インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 72.0, bodyHeightMm: 152.8, fitWidthMm: 72.0, fitHeightMm: 152.8, physicalSizeSource: "メーカー公表寸法"
+      },
+      pixel11pro: {
+        name: "Google Pixel 11 Pro", manufacturer: "Google", category: "スマートフォン", type: "phone",
+        panelW: 1280, panelH: 2856, viewportW: 427, viewportH: 952, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.3インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 71.9, bodyHeightMm: 152.7, fitWidthMm: 71.9, fitHeightMm: 152.7, physicalSizeSource: "メーカー公表寸法"
+      },
+      pixel11proxl: {
+        name: "Google Pixel 11 Pro XL", manufacturer: "Google", category: "スマートフォン", type: "phone",
+        panelW: 1344, panelH: 2992, viewportW: 448, viewportH: 997, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.8インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 76.5, bodyHeightMm: 162.7, fitWidthMm: 76.5, fitHeightMm: 162.7, physicalSizeSource: "メーカー公表寸法"
+      },
+      xperia1viii: {
+        name: "Sony Xperia 1 VIII", manufacturer: "Sony", category: "スマートフォン", type: "phone",
+        panelW: 1080, panelH: 2340, viewportW: 360, viewportH: 780, viewportBasis: "FHD+仕様からの代表解像度近似（実パネル画素数未確認）", inches: "6.5インチ",
+        cutout: "上部ベゼル", cutoutType: "none", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: false, bodyWidthMm: 74.0, bodyHeightMm: 162.0, fitWidthMm: 74.0, fitHeightMm: 162.0, physicalSizeSource: "メーカー公表寸法"
+      },
+      xperia10viii: {
+        name: "Sony Xperia 10 VIII", manufacturer: "Sony", category: "スマートフォン", type: "phone",
+        panelW: 1080, panelH: 2340, viewportW: 360, viewportH: 780, viewportBasis: "FHD+仕様からの代表解像度近似（実パネル画素数未確認）", inches: "6.1インチ",
+        cutout: "上部ベゼル", cutoutType: "none", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: false, bodyWidthMm: 72.0, bodyHeightMm: 153.0, fitWidthMm: 72.0, fitHeightMm: 153.0, physicalSizeSource: "メーカー公表寸法"
+      },
+      aquosr11: {
+        name: "SHARP AQUOS R11", manufacturer: "SHARP", category: "スマートフォン", type: "phone",
+        panelW: 1080, panelH: 2340, viewportW: 360, viewportH: 780, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.5インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 74.0, bodyHeightMm: 156.0, fitWidthMm: 74.0, fitHeightMm: 156.0, physicalSizeSource: "メーカー公表寸法"
+      },
+      aquosr10: {
+        name: "SHARP AQUOS R10", manufacturer: "SHARP", category: "スマートフォン", type: "phone",
+        panelW: 1080, panelH: 2340, viewportW: 360, viewportH: 780, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.5インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 75.0, bodyHeightMm: 156.0, fitWidthMm: 75.0, fitHeightMm: 156.0, physicalSizeSource: "メーカー公表寸法"
+      },
+      aquossense10: {
+        name: "SHARP AQUOS sense10", manufacturer: "SHARP", category: "スマートフォン", type: "phone",
+        panelW: 1080, panelH: 2340, viewportW: 360, viewportH: 780, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.1インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 73.0, bodyHeightMm: 149.0, fitWidthMm: 73.0, fitHeightMm: 149.0, physicalSizeSource: "メーカー公表寸法"
+      },
+      arrowsalpha2: {
+        name: "FCNT arrows Alpha2", manufacturer: "FCNT", category: "スマートフォン", type: "phone",
+        panelW: 1200, panelH: 2670, viewportW: 400, viewportH: 890, viewportBasis: "高精細FHD+超の公表仕様からの近似値", inches: "6.4インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: false, bodyWidthMm: 72.0, bodyHeightMm: 156.0, fitWidthMm: 72.0, fitHeightMm: 156.0, physicalSizeSource: "メーカー公表寸法"
+      },
+      arrowsalpha: {
+        name: "FCNT arrows Alpha", manufacturer: "FCNT", category: "スマートフォン", type: "phone",
+        panelW: 1200, panelH: 2670, viewportW: 400, viewportH: 890, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.4インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 72.0, bodyHeightMm: 156.0, fitWidthMm: 72.0, fitHeightMm: 156.0, physicalSizeSource: "メーカー公表寸法"
+      },
+      arrowswe3: {
+        name: "FCNT arrows We3", manufacturer: "FCNT", category: "スマートフォン", type: "phone",
+        panelW: 900, panelH: 1984, viewportW: 300, viewportH: 661, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.1インチ",
+        cutout: "上部ベゼル", cutoutType: "none", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 73.0, bodyHeightMm: 156.0, fitWidthMm: 73.0, fitHeightMm: 156.0, physicalSizeSource: "メーカー公表寸法"
+      },
+      arrowswe2plus: {
+        name: "FCNT arrows We2 Plus", manufacturer: "FCNT", category: "スマートフォン", type: "phone",
+        panelW: 1080, panelH: 2400, viewportW: 360, viewportH: 800, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.6インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 75.0, bodyHeightMm: 162.0, fitWidthMm: 75.0, fitHeightMm: 162.0, physicalSizeSource: "メーカー公表寸法"
+      },
+      oppofindx9ultra: {
+        name: "OPPO Find X9 Ultra", manufacturer: "OPPO", category: "スマートフォン", type: "phone",
+        panelW: 1440, panelH: 3168, viewportW: 480, viewportH: 1056, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.8インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 77.0, bodyHeightMm: 163.0, fitWidthMm: 77.0, fitHeightMm: 163.0, physicalSizeSource: "メーカー公表寸法"
+      },
+      oppofindx9: {
+        name: "OPPO Find X9", manufacturer: "OPPO", category: "スマートフォン", type: "phone",
+        panelW: 1256, panelH: 2760, viewportW: 419, viewportH: 920, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.6インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 74.0, bodyHeightMm: 157.0, fitWidthMm: 74.0, fitHeightMm: 157.0, physicalSizeSource: "メーカー公表寸法"
+      },
+      opporeno16: {
+        name: "OPPO Reno16 5G", manufacturer: "OPPO", category: "スマートフォン", type: "phone",
+        panelW: 1216, panelH: 2640, viewportW: 405, viewportH: 880, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.3インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 72.0, bodyHeightMm: 151.0, fitWidthMm: 72.0, fitHeightMm: 151.0, physicalSizeSource: "メーカー公表寸法"
+      },
+      opporeno15a: {
+        name: "OPPO Reno15 A", manufacturer: "OPPO", category: "スマートフォン", type: "phone",
+        panelW: 1080, panelH: 2372, viewportW: 360, viewportH: 791, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.6インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 75.0, bodyHeightMm: 158.0, fitWidthMm: 75.0, fitHeightMm: 158.0, physicalSizeSource: "メーカー公表寸法"
+      },
+      xiaomi17ultra: {
+        name: "Xiaomi 17 Ultra", manufacturer: "Xiaomi", category: "スマートフォン", type: "phone",
+        panelW: 1200, panelH: 2608, viewportW: 400, viewportH: 869, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.9インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 77.6, bodyHeightMm: 162.9, fitWidthMm: 77.6, fitHeightMm: 162.9, physicalSizeSource: "メーカー公表寸法"
+      },
+      xiaomi17: {
+        name: "Xiaomi 17", manufacturer: "Xiaomi", category: "スマートフォン", type: "phone",
+        panelW: 1220, panelH: 2656, viewportW: 407, viewportH: 885, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.3インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 71.8, bodyHeightMm: 151.1, fitWidthMm: 71.8, fitHeightMm: 151.1, physicalSizeSource: "メーカー公表寸法"
+      },
+      redminote15pro5g: {
+        name: "Xiaomi REDMI Note 15 Pro 5G", manufacturer: "Xiaomi", category: "スマートフォン", type: "phone",
+        panelW: 1280, panelH: 2772, viewportW: 427, viewportH: 924, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.83インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 78.09, bodyHeightMm: 163.61, fitWidthMm: 78.09, fitHeightMm: 163.61, physicalSizeSource: "メーカー公表寸法"
+      },
+      motorolaedge70fusion: {
+        name: "motorola edge 70 fusion", manufacturer: "motorola", category: "スマートフォン", type: "phone",
+        panelW: 1272, panelH: 2772, viewportW: 424, viewportH: 924, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.78インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 75.6, bodyHeightMm: 162.76, fitWidthMm: 75.6, fitHeightMm: 162.76, physicalSizeSource: "メーカー公表寸法"
+      },
+      motorolaedge60pro: {
+        name: "motorola edge 60 pro", manufacturer: "motorola", category: "スマートフォン", type: "phone",
+        panelW: 1220, panelH: 2712, viewportW: 407, viewportH: 904, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.7インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 73.04, bodyHeightMm: 160.69, fitWidthMm: 73.04, fitHeightMm: 160.69, physicalSizeSource: "メーカー公表寸法"
+      },
+      motog37j: {
+        name: "motorola moto g37j", manufacturer: "motorola", category: "スマートフォン", type: "phone",
+        panelW: 1080, panelH: 2400, viewportW: 360, viewportH: 800, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.72インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 76.5, bodyHeightMm: 166.23, fitWidthMm: 76.5, fitHeightMm: 166.23, physicalSizeSource: "メーカー公表寸法"
+      },
+      nothingphone3: {
+        name: "Nothing Phone (3)", manufacturer: "Nothing", category: "スマートフォン", type: "phone",
+        panelW: 1260, panelH: 2800, viewportW: 420, viewportH: 933, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.67インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true
+      },
+      asuszenfone12ultra: {
+        name: "ASUS Zenfone 12 Ultra", manufacturer: "ASUS", category: "スマートフォン", type: "phone",
+        panelW: 1080, panelH: 2400, viewportW: 360, viewportH: 800, viewportBasis: "Android標準密度3x換算の推定CSS表示領域（実機未測定）", inches: "6.78インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 77.0, bodyHeightMm: 163.8, fitWidthMm: 77.0, fitHeightMm: 163.8, physicalSizeSource: "メーカー公表寸法"
+      },
+      galaxyzfold8: {
+        name: "Samsung Galaxy Z Fold8", category: "折りたたみスマートフォン（ブック型）", type: "foldable", form: "book",
+        // Samsung公表寸法（幅×高さ）。閉状態と展開状態の差からヒンジ軸を算出する。
+        foldBodyDimensionsMm: {
+          folded: { width: 81.9, height: 123.9 },
+          unfolded: { width: 161.4, height: 123.9 }
+        },
+        displays: {
+          cover: { label: "閉じた状態（カバー画面）", type: "phone", frameClass: "foldable-closed", panelW: 1248, panelH: 1972, viewportW: 475.43, viewportH: 751.24, viewportBasis: "Android密度420dpiの実測論理サイズ", inches: "約5.5インチ", cutout: "カメラホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true },
+          main: { label: "開いた状態（メイン画面）", type: "tablet", frameClass: "foldable-open", panelW: 2448, panelH: 1848, viewportW: 704, viewportH: 932.57, viewportBasis: "Android密度420dpiの実測論理サイズ", inches: "約7.6インチ", cutout: "内側カメラ領域（概形）", cutoutType: "none", safe: "tablet", defaultOrientation: "portrait", resolutionVerified: true }
+        }, defaultDisplay: "cover"
+      },
+      galaxyzfold8ultra: {
+        name: "Samsung Galaxy Z Fold8 Ultra", category: "折りたたみスマートフォン（ブック型）", type: "foldable", form: "book",
+        // Samsung Mobile Press公表寸法（幅×高さ）。
+        foldBodyDimensionsMm: {
+          folded: { width: 72.8, height: 158.4 },
+          unfolded: { width: 143.2, height: 158.4 }
+        },
+        displays: {
+          cover: { label: "閉じた状態（カバー画面）", type: "phone", frameClass: "foldable-closed", panelW: 1080, panelH: 2520, viewportW: 360, viewportH: 840, inches: "約6.5インチ", cutout: "カメラホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true },
+          main: { label: "開いた状態（メイン画面）", type: "tablet", frameClass: "foldable-open", panelW: 2256, panelH: 2504, viewportW: 752, viewportH: 834.67, viewportBasis: "Android密度480dpiの実測論理サイズ", inches: "約8.0インチ", cutout: "内側カメラ領域（概形）", cutoutType: "none", safe: "tablet", defaultOrientation: "portrait", resolutionVerified: true }
+        }, defaultDisplay: "cover"
+      },
+      galaxyzflip8: {
+        name: "Samsung Galaxy Z Flip8", category: "折りたたみスマートフォン（縦折り型）", type: "foldable", form: "flip",
+        displays: {
+          cover: { label: "閉じた状態（上下2枚を重ねたカバー画面）", type: "phone", frameClass: "foldable-flip-cover", panelW: 948, panelH: 1048, viewportW: 399.16, viewportH: 441.26, viewportBasis: "Android密度380dpiの実測論理サイズ", inches: "約4.1インチ", cutout: "外側カメラ周辺（表示領域の概形）", cutoutType: "none", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 75.4, bodyHeightMm: 85.7, fitWidthMm: 75.4, fitHeightMm: 166.9, physicalSizeSource: "Samsung Mobile Press公表寸法" },
+          main: { label: "開いた状態（メイン画面）", type: "phone", frameClass: "foldable-open", panelW: 1080, panelH: 2520, viewportW: 360, viewportH: 840, inches: "約6.9インチ", cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 75.4, bodyHeightMm: 166.9, fitWidthMm: 75.4, fitHeightMm: 166.9, physicalSizeSource: "Samsung Mobile Press公表寸法" }
+        }, defaultDisplay: "cover"
+      },
+      iphoneduo: {
+        name: "Apple iPhone Duo", manufacturer: "Apple", category: "折りたたみスマートフォン（ブック型）", type: "foldable", form: "book", fitReferenceOrientation: "landscape",
+        displays: {
+          cover: { label: "閉じた状態（アウターディスプレイ）", type: "phone", frameClass: "foldable-closed", panelW: 1398, panelH: 2034, viewportW: 466, viewportH: 678, viewportBasis: "Apple公表画素数÷3のCSS表示領域", inches: "5.4インチ", cutout: "Dynamic Island", cutoutType: "dynamic", safe: "ios-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 84.1, bodyHeightMm: 117.8, fitWidthMm: 164.6, fitHeightMm: 117.8, physicalSizeSource: "Apple公表寸法" },
+          main: { label: "開いた状態（インナーディスプレイ）", type: "tablet", frameClass: "foldable-open", panelW: 2670, panelH: 1878, viewportW: 890, viewportH: 626, viewportBasis: "Apple公表画素数÷3のCSS表示領域", inches: "7.6インチ", cutout: "アンダーディスプレイカメラ", cutoutType: "none", safe: "tablet", defaultOrientation: "landscape", resolutionVerified: true, bodyWidthMm: 164.6, bodyHeightMm: 117.8, fitWidthMm: 164.6, fitHeightMm: 117.8, physicalSizeSource: "Apple公表寸法" }
+        }, defaultDisplay: "cover"
+      },
+
+      oppoa55g: {
+        name: "OPPO A5 5G", manufacturer: "OPPO", category: "スマートフォン", type: "phone",
+        panelW: 720, panelH: 1604, viewportW: 240, viewportH: 535, viewportBasis: "OPPO公表解像度÷3のCSS換算値", inches: "約6.7インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 76.0, bodyHeightMm: 166.0, fitWidthMm: 76.0, fitHeightMm: 166.0, physicalSizeSource: "OPPO公表寸法"
+      },
+      motog06: {
+        name: "motorola moto g06", manufacturer: "motorola", category: "スマートフォン", type: "phone",
+        panelW: 720, panelH: 1640, viewportW: 240, viewportH: 547, viewportBasis: "Motorola公表解像度÷3のCSS換算値", inches: "約6.9インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true
+      },
+      nubias2lite: {
+        name: "nubia S2 Lite", manufacturer: "ZTE", category: "スマートフォン", type: "phone",
+        panelW: 1080, panelH: 2400, viewportW: 360, viewportH: 800, viewportBasis: "FHD+表記からの代表解像度近似（実解像度未確認）", inches: "約6.7インチ",
+        cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: false
+      },
+      redmagic11spro: {
+        name: "REDMAGIC 11S Pro", manufacturer: "nubia／REDMAGIC", category: "ゲーミングスマートフォン", type: "phone",
+        panelW: 1216, panelH: 2688, viewportW: 405, viewportH: 896, viewportBasis: "REDMAGIC公表解像度÷3のCSS換算値", inches: "約6.85インチ",
+        cutout: "アンダーディスプレイカメラ", cutoutType: "none", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 76.54, bodyHeightMm: 163.82, fitWidthMm: 76.54, fitHeightMm: 163.82, physicalSizeSource: "REDMAGIC公表寸法"
+      },
+      pixel11profold: {
+        name: "Google Pixel 11 Pro Fold", manufacturer: "Google", category: "折りたたみスマートフォン（ブック型）", type: "foldable", form: "book",
+        foldBodyDimensionsMm: { folded: { width: 76.0, height: 155.2 }, unfolded: { width: 150.4, height: 155.2 } },
+        displays: {
+          cover: { label: "閉じた状態（カバー画面）", type: "phone", frameClass: "foldable-closed", panelW: 1080, panelH: 2342, viewportW: 360, viewportH: 781, viewportBasis: "Google公表解像度÷3のCSS換算値", inches: "約6.5インチ", cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 76.0, bodyHeightMm: 155.2, fitWidthMm: 150.4, fitHeightMm: 155.2, physicalSizeSource: "Google公表寸法" },
+          main: { label: "展開状態（インナーディスプレイ）", type: "tablet", frameClass: "foldable-open", panelW: 2076, panelH: 2152, viewportW: 692, viewportH: 717, viewportBasis: "Google公表解像度÷3のCSS換算値", inches: "約8.0インチ", cutout: "内側カメラ領域", cutoutType: "none", safe: "tablet", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 150.4, bodyHeightMm: 155.2, fitWidthMm: 150.4, fitHeightMm: 155.2, physicalSizeSource: "Google公表寸法" }
+        }, defaultDisplay: "cover"
+      },
+      oppofindn6: {
+        name: "OPPO Find N6", manufacturer: "OPPO", category: "折りたたみスマートフォン（ブック型）", type: "foldable", form: "book",
+        foldBodyDimensionsMm: { folded: { width: 74.0, height: 160.0 }, unfolded: { width: 146.0, height: 160.0 } },
+        displays: {
+          cover: { label: "閉じた状態（カバーディスプレイ）", type: "phone", frameClass: "foldable-closed", panelW: 1140, panelH: 2616, viewportW: 380, viewportH: 872, viewportBasis: "OPPO公表解像度÷3のCSS換算値", inches: "約6.6インチ", cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 74.0, bodyHeightMm: 160.0, fitWidthMm: 146.0, fitHeightMm: 160.0, physicalSizeSource: "OPPO公表寸法" },
+          main: { label: "展開状態（インナーディスプレイ）", type: "tablet", frameClass: "foldable-open", panelW: 2248, panelH: 2480, viewportW: 749, viewportH: 827, viewportBasis: "OPPO公表解像度÷3のCSS換算値", inches: "約8.1インチ", cutout: "内側カメラ領域", cutoutType: "none", safe: "tablet", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 146.0, bodyHeightMm: 160.0, fitWidthMm: 146.0, fitHeightMm: 160.0, physicalSizeSource: "OPPO公表寸法" }
+        }, defaultDisplay: "cover"
+      },
+      motorolarazrfold: {
+        name: "motorola razr fold", manufacturer: "Motorola", category: "折りたたみスマートフォン（ブック型）", type: "foldable", form: "book",
+        foldBodyDimensionsMm: { folded: { width: 73.6, height: 160.05 }, unfolded: { width: 144.47, height: 160.05 } },
+        displays: {
+          cover: { label: "閉じた状態（カバーディスプレイ）", type: "phone", frameClass: "foldable-closed", panelW: 1080, panelH: 2520, viewportW: 360, viewportH: 840, viewportBasis: "Motorola公表解像度÷3のCSS換算値", inches: "約6.6インチ", cutout: "パンチホール", cutoutType: "punch", safe: "android-phone", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 73.6, bodyHeightMm: 160.05, fitWidthMm: 144.47, fitHeightMm: 160.05, physicalSizeSource: "Motorola公表寸法" },
+          main: { label: "展開状態（メインディスプレイ）", type: "tablet", frameClass: "foldable-open", panelW: 2232, panelH: 2484, viewportW: 744, viewportH: 828, viewportBasis: "Motorola公表解像度÷3のCSS換算値", inches: "約8.1インチ", cutout: "内側カメラ領域", cutoutType: "none", safe: "tablet", defaultOrientation: "portrait", resolutionVerified: true, bodyWidthMm: 144.47, bodyHeightMm: 160.05, fitWidthMm: 144.47, fitHeightMm: 160.05, physicalSizeSource: "Motorola公表寸法" }
+        }, defaultDisplay: "cover"
+      },
+      ipadminia17pro: {
+        name: "Apple iPad mini（A17 Pro）", category: "8インチ級タブレット", type: "tablet",
+        panelW: 1488, panelH: 2266, viewportW: 744, viewportH: 1133, inches: "8.3インチ", cutout: "ベゼル内カメラ", cutoutType: "none",
+        safe: "tablet", defaultOrientation: "landscape", resolutionVerified: true
+      },
+      legiontab88gen5: {
+        name: "Lenovo Legion Tab（8.8インチ・第5世代）", category: "8インチ級タブレット", type: "tablet",
+        panelW: 3040, panelH: 1904, viewportW: 1158.10, viewportH: 725.33, viewportBasis: "420dpi仮定の推定値（実機密度は未確認）", inches: "8.8インチ", cutout: "ベゼル内カメラ", cutoutType: "none",
+        safe: "tablet", defaultOrientation: "landscape", resolutionVerified: true
+      },
+      ipadair11m3: {
+        name: "Apple iPad Air 11インチ（M3）", category: "タブレット", type: "tablet",
+        panelW: 1640, panelH: 2360, viewportW: 820, viewportH: 1180, inches: "10.86インチ（長方形換算）", cutout: "ベゼル内カメラ", cutoutType: "none",
+        safe: "tablet", defaultOrientation: "landscape", resolutionVerified: true
+      },
+      tabs10ultra: {
+        name: "Samsung Galaxy Tab S10 Ultra", category: "タブレット", type: "tablet",
+        panelW: 1848, panelH: 2960, viewportW: 1155, viewportH: 1850, inches: "14.6インチ", cutout: "前面カメラノッチ", cutoutType: "notch",
+        safe: "tablet-notch", defaultOrientation: "landscape", resolutionVerified: true
+      },
+      macbookair13m4: {
+        name: "Apple MacBook Air 13インチ（M4）", category: "ノートPC", type: "laptop",
+        panelW: 2560, panelH: 1664, viewportW: 1280, viewportH: 832, inches: "13.6インチ", cutout: "ディスプレイノッチ", cutoutType: "notch",
+        safe: "desktop", defaultOrientation: "landscape", resolutionVerified: true
+      },
+      applewatchseries12_46: {
+        name: "Apple Watch Series 12（46mm）", category: "スマートウォッチ（角丸四角形）", type: "watch", watchShape: "square",
+        panelW: 416, panelH: 496, viewportW: 208, viewportH: 248, viewportBasis: "パネル解像度を2x換算した検証用CSSサイズ（仮定）",
+        inches: "46mmケース", cutout: "なし", cutoutType: "none", safe: "watch",
+        bodyWidthMm: 40, bodyHeightMm: 46, displayWidthMm: 32.42, displayHeightMm: 38.67, bandExtensionMm: 19, resolutionVerified: true
+      },
+      applewatchseries12_42: {
+        name: "Apple Watch Series 12（42mm）", category: "スマートウォッチ（角丸四角形）", type: "watch", watchShape: "square",
+        panelW: 374, panelH: 446, viewportW: 187, viewportH: 223, viewportBasis: "パネル解像度を2x換算した検証用CSSサイズ（仮定）",
+        inches: "42mmケース", cutout: "なし", cutoutType: "none", safe: "watch",
+        bodyWidthMm: 37, bodyHeightMm: 42, displayWidthMm: 29.15, displayHeightMm: 34.76, bandExtensionMm: 18, resolutionVerified: true
+      },
+      galaxywatch9_44: {
+        name: "Samsung Galaxy Watch9（44mm）", category: "スマートウォッチ（円形）", type: "watch", watchShape: "round",
+        panelW: 480, panelH: 480, viewportW: 240, viewportH: 240, viewportBasis: "解像度を2x換算した検証用CSSサイズ（仮定）",
+        inches: "1.47インチ表示", cutout: "なし", cutoutType: "none", safe: "watch",
+        bodyWidthMm: 43.7, bodyHeightMm: 46, displayWidthMm: 37.3, displayHeightMm: 37.3, bandExtensionMm: 19, resolutionVerified: true
+      },
+      galaxywatch9_40: {
+        name: "Samsung Galaxy Watch9（40mm）", category: "スマートウォッチ（円形）", type: "watch", watchShape: "round",
+        panelW: 438, panelH: 438, viewportW: 219, viewportH: 219, viewportBasis: "解像度を2x換算した検証用CSSサイズ（仮定）",
+        inches: "1.34インチ表示", cutout: "なし", cutoutType: "none", safe: "watch",
+        bodyWidthMm: 40.4, bodyHeightMm: 42.7, displayWidthMm: 34.04, displayHeightMm: 34.04, bandExtensionMm: 18, resolutionVerified: true
+      },
+      pixelwatch4_45: {
+        name: "Google Pixel Watch 4（45mm）", category: "スマートウォッチ（円形）", type: "watch", watchShape: "round",
+        panelW: 456, panelH: 456, viewportW: 228, viewportH: 228, viewportBasis: "320ppi・約1.43インチからの画素数推定／2x換算",
+        inches: "45mmケース／約1.43インチ表示", cutout: "なし", cutoutType: "none", safe: "watch",
+        bodyWidthMm: 45, bodyHeightMm: 45, displayWidthMm: 36.2, displayHeightMm: 36.2, bandExtensionMm: 20, resolutionVerified: false
+      },
+      pixelwatch4_41: {
+        name: "Google Pixel Watch 4（41mm）", category: "スマートウォッチ（円形）", type: "watch", watchShape: "round",
+        panelW: 408, panelH: 408, viewportW: 204, viewportH: 204, viewportBasis: "320ppi・約1.28インチからの画素数推定／2x換算",
+        inches: "41mmケース／約1.28インチ表示", cutout: "なし", cutoutType: "none", safe: "watch",
+        bodyWidthMm: 41, bodyHeightMm: 41, displayWidthMm: 32.5, displayHeightMm: 32.5, bandExtensionMm: 18, resolutionVerified: false
+      },
+      garminvenu4_45: {
+        name: "Garmin Venu 4（45mm）", category: "スマートウォッチ（円形）", type: "watch", watchShape: "round",
+        panelW: 454, panelH: 454, viewportW: 227, viewportH: 227, viewportBasis: "パネル解像度を2x換算した検証用CSSサイズ（仮定）",
+        inches: "1.4インチ表示", cutout: "なし", cutoutType: "none", safe: "watch",
+        bodyWidthMm: 45, bodyHeightMm: 45, displayWidthMm: 35.56, displayHeightMm: 35.56, bandExtensionMm: 20, resolutionVerified: true
+      },
+      garminvenu4_41: {
+        name: "Garmin Venu 4（41mm）", category: "スマートウォッチ（円形）", type: "watch", watchShape: "round",
+        panelW: 390, panelH: 390, viewportW: 195, viewportH: 195, viewportBasis: "パネル解像度を2x換算した検証用CSSサイズ（仮定）",
+        inches: "1.2インチ表示", cutout: "なし", cutoutType: "none", safe: "watch",
+        bodyWidthMm: 41, bodyHeightMm: 41, displayWidthMm: 30.48, displayHeightMm: 30.48, bandExtensionMm: 18, resolutionVerified: true
+      }
+    };
+
+    // セレクト項目は表示状態ごとに独立したプロファイルとして扱う。
+    const deviceProfiles = {
+      iphone17pro: { modelKey: "iphone17pro" },
+      pixel10proxl: { modelKey: "pixel10proxl" },
+      galaxys25ultra: { modelKey: "galaxys25ultra" },
+      iphone18pro: { modelKey: "iphone18pro" },
+      iphone18promax: { modelKey: "iphone18promax" },
+      iphoneair: { modelKey: "iphoneair" },
+      iphone17: { modelKey: "iphone17" },
+      iphone17promax: { modelKey: "iphone17promax" },
+      iphone17e: { modelKey: "iphone17e" },
+      iphone16pro: { modelKey: "iphone16pro" },
+      iphone16promax: { modelKey: "iphone16promax" },
+      iphone16: { modelKey: "iphone16" },
+      iphone16e: { modelKey: "iphone16e" },
+      galaxys26: { modelKey: "galaxys26" },
+      galaxys26plus: { modelKey: "galaxys26plus" },
+      galaxys26ultra: { modelKey: "galaxys26ultra" },
+      galaxya57: { modelKey: "galaxya57" },
+      pixel11: { modelKey: "pixel11" },
+      pixel11pro: { modelKey: "pixel11pro" },
+      pixel11proxl: { modelKey: "pixel11proxl" },
+      xperia1viii: { modelKey: "xperia1viii" },
+      xperia10viii: { modelKey: "xperia10viii" },
+      aquosr11: { modelKey: "aquosr11" },
+      aquosr10: { modelKey: "aquosr10" },
+      aquossense10: { modelKey: "aquossense10" },
+      arrowsalpha2: { modelKey: "arrowsalpha2" },
+      arrowsalpha: { modelKey: "arrowsalpha" },
+      arrowswe3: { modelKey: "arrowswe3" },
+      arrowswe2plus: { modelKey: "arrowswe2plus" },
+      oppofindx9ultra: { modelKey: "oppofindx9ultra" },
+      oppofindx9: { modelKey: "oppofindx9" },
+      opporeno16: { modelKey: "opporeno16" },
+      opporeno15a: { modelKey: "opporeno15a" },
+      xiaomi17ultra: { modelKey: "xiaomi17ultra" },
+      xiaomi17: { modelKey: "xiaomi17" },
+      redminote15pro5g: { modelKey: "redminote15pro5g" },
+      motorolaedge70fusion: { modelKey: "motorolaedge70fusion" },
+      motorolaedge60pro: { modelKey: "motorolaedge60pro" },
+      motog37j: { modelKey: "motog37j" },
+      nothingphone3: { modelKey: "nothingphone3" },
+      asuszenfone12ultra: { modelKey: "asuszenfone12ultra" },
+      oppoa55g: { modelKey: "oppoa55g" },
+      motog06: { modelKey: "motog06" },
+      nubias2lite: { modelKey: "nubias2lite" },
+      redmagic11spro: { modelKey: "redmagic11spro" },
+      pixel11profold__cover: { modelKey: "pixel11profold", displayKey: "cover" },
+      pixel11profold__main: { modelKey: "pixel11profold", displayKey: "main" },
+      oppofindn6__cover: { modelKey: "oppofindn6", displayKey: "cover" },
+      oppofindn6__main: { modelKey: "oppofindn6", displayKey: "main" },
+      motorolarazrfold__cover: { modelKey: "motorolarazrfold", displayKey: "cover" },
+      motorolarazrfold__main: { modelKey: "motorolarazrfold", displayKey: "main" },
+      galaxyzfold8__cover: { modelKey: "galaxyzfold8", displayKey: "cover" },
+      galaxyzfold8__main: { modelKey: "galaxyzfold8", displayKey: "main" },
+      galaxyzfold8ultra__cover: { modelKey: "galaxyzfold8ultra", displayKey: "cover" },
+      galaxyzfold8ultra__main: { modelKey: "galaxyzfold8ultra", displayKey: "main" },
+      galaxyzflip8__cover: { modelKey: "galaxyzflip8", displayKey: "cover" },
+      galaxyzflip8__main: { modelKey: "galaxyzflip8", displayKey: "main" },
+      iphoneduo__cover: { modelKey: "iphoneduo", displayKey: "cover" },
+      iphoneduo__main: { modelKey: "iphoneduo", displayKey: "main" },
+      ipadminia17pro: { modelKey: "ipadminia17pro" },
+      legiontab88gen5: { modelKey: "legiontab88gen5" },
+      ipadair11m3: { modelKey: "ipadair11m3" },
+      tabs10ultra: { modelKey: "tabs10ultra" },
+      macbookair13m4: { modelKey: "macbookair13m4" },
+      applewatchseries12_46: { modelKey: "applewatchseries12_46" },
+      applewatchseries12_42: { modelKey: "applewatchseries12_42" },
+      galaxywatch9_44: { modelKey: "galaxywatch9_44" },
+      galaxywatch9_40: { modelKey: "galaxywatch9_40" },
+      pixelwatch4_45: { modelKey: "pixelwatch4_45" },
+      pixelwatch4_41: { modelKey: "pixelwatch4_41" },
+      garminvenu4_45: { modelKey: "garminvenu4_45" },
+      garminvenu4_41: { modelKey: "garminvenu4_41" }
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const deviceSelect = $("deviceSelect");
+    const orientationSelect = $("orientationSelect");
+    // 最後にユーザーが選んだ向きを端末間で共通保持する。
+    // ノートPCは表示上だけ横向きに固定し、ここに保持した設定は上書きしない。
+    let preferredOrientation = orientationSelect.value || "portrait";
+    const zoomRange = $("zoomRange");
+    const zoomValue = $("zoomValue");
+    const zonesToggle = $("zonesToggle");
+    const stage = $("stage");
+    const deviceFrame = $("deviceFrame");
+    const screen = $("screen");
+    const cutout = $("cutout");
+    const hingeLine = $("hingeLine");
+    const appFrame = $("appFrame");
+    const iframeViewport = $("iframeViewport");
+    const screenCopy = $("screenCopy");
+    const htmlFileInput = $("htmlFileInput");
+    const reloadHtmlButton = $("reloadHtmlButton");
+    const clearHtmlButton = $("clearHtmlButton");
+    const uploadStatus = $("uploadStatus");
+    let selectedHtmlFile = null;
+    let activeObjectUrl = null;
+
+    function getCurrentProfile() {
+      const profile = deviceProfiles[deviceSelect.value];
+      const model = devices[profile.modelKey];
+      const isFoldable = Boolean(profile.displayKey);
+      const view = isFoldable ? model.displays[profile.displayKey] : model;
+      return { profile, model, view, isFoldable };
+    }
+
+
+    // 「主要機種」は国内での認知度・流通量が高い代表シリーズを中心にした編集部基準の選定。
+    // コンセプト機、ゲーミング特化機、ニッチな単独モデルは既定の主要機種から除外する。
+    const MAJOR_MODEL_KEYS = new Set([
+      "iphone18pro", "iphone18promax", "iphone17", "iphone17pro", "iphone17promax",
+      "iphone16", "iphone16pro", "iphone16promax",
+      "galaxys25ultra", "galaxys26", "galaxys26plus", "galaxys26ultra", "galaxya57", "galaxyzfold8", "galaxyzflip8",
+      "pixel10proxl", "pixel11", "pixel11pro", "pixel11proxl", "pixel11profold",
+      "xperia1viii", "xperia10viii", "aquosr11", "aquosr10", "aquossense10",
+      "arrowsalpha2", "arrowswe3",
+      "oppofindx9ultra", "oppofindx9", "opporeno16", "opporeno15a", "oppofindn6",
+      "xiaomi17ultra", "xiaomi17", "redminote15pro5g",
+      "motorolaedge70fusion", "motorolaedge60pro", "motorolarazrfold",
+      "ipadminia17pro", "legiontab88gen5", "ipadair11m3", "tabs10ultra", "macbookair13m4",
+      "applewatchseries12_46", "applewatchseries12_42", "galaxywatch9_44", "galaxywatch9_40",
+      "pixelwatch4_45", "pixelwatch4_41", "garminvenu4_45", "garminvenu4_41"
+    ]);
+
+    function getManufacturer(modelKey, model) {
+      const declared = model.manufacturer || "";
+      const normalized = declared.toLowerCase();
+      if (normalized === "motorola") return "motorola";
+      if (declared === "nubia／REDMAGIC" || declared === "ZTE") return "ZTE／nubia";
+      if (declared) return declared;
+      if (/^(iphone|ipadmini|ipadair|applewatch|macbook)/.test(modelKey)) return "Apple";
+      if (/^(galaxy|tabs10)/.test(modelKey)) return "Samsung";
+      if (/^pixel/.test(modelKey)) return "Google";
+      if (/^xperia/.test(modelKey)) return "Sony";
+      if (/^aquos/.test(modelKey)) return "SHARP";
+      if (/^arrows/.test(modelKey)) return "FCNT";
+      if (/^oppo/.test(modelKey)) return "OPPO";
+      if (/^(xiaomi|redmi)/.test(modelKey)) return "Xiaomi";
+      if (/^(motorola|moto)/.test(modelKey)) return "motorola";
+      if (/^garmin/.test(modelKey)) return "Garmin";
+      if (/^legion/.test(modelKey)) return "Lenovo";
+      if (/^asus/.test(modelKey)) return "ASUS";
+      if (/^(nubia|redmagic)/.test(modelKey)) return "ZTE／nubia";
+      if (/^nothing/.test(modelKey)) return "Nothing";
+      return "その他";
+    }
+
+    function getDeviceType(model) {
+      if (model.type === "foldable") return "foldable";
+      if (model.type === "phone" && /ゲーミング/.test(model.category || "")) return "gaming";
+      if (model.type === "phone") return "smartphone";
+      if (model.type === "tablet") return "tablet";
+      if (model.type === "watch") return "watch";
+      if (model.type === "laptop") return "laptop";
+      return "other";
+    }
+
+    function getFilterInfo(option) {
+      const profile = deviceProfiles[option.value];
+      if (!profile) return { manufacturer: "その他", type: "other", major: false };
+      const model = devices[profile.modelKey];
+      const type = getDeviceType(model);
+      // タブレット・時計・PCは、このカタログに登録した代表製品を主要機種として扱う。
+      const major = ["tablet", "watch", "laptop"].includes(type) || MAJOR_MODEL_KEYS.has(profile.modelKey);
+      return { manufacturer: getManufacturer(profile.modelKey, model), type, major };
+    }
+
+    const manufacturerFilter = $("manufacturerFilter");
+    const deviceTypeFilter = $("deviceTypeFilter");
+    const majorOnlyFilter = $("majorOnlyFilter");
+    const filterStatus = $("filterStatus");
+    const prevDeviceButton = $("prevDeviceButton");
+    const nextDeviceButton = $("nextDeviceButton");
+
+    function getVisibleDeviceOptions() {
+      return Array.from(deviceSelect.options).filter(option => !option.disabled && !option.hidden);
+    }
+
+    function initializeManufacturerFilter() {
+      const order = ["Apple", "Samsung", "Google", "Sony", "SHARP", "FCNT", "OPPO", "Xiaomi", "motorola", "Nothing", "ASUS", "ZTE／nubia", "Lenovo", "Garmin", "その他"];
+      const available = new Set(Array.from(deviceSelect.options).filter(option => !option.disabled).map(option => getFilterInfo(option).manufacturer));
+      for (const name of order) {
+        if (!available.has(name)) continue;
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        manufacturerFilter.appendChild(option);
+      }
+    }
+
+    function applyDeviceFilters() {
+      const company = manufacturerFilter.value;
+      const type = deviceTypeFilter.value;
+      const majorOnly = majorOnlyFilter.checked;
+      const allOptions = Array.from(deviceSelect.options).filter(option => !option.disabled);
+
+      for (const option of allOptions) {
+        const info = getFilterInfo(option);
+        const matches = (!majorOnly || info.major)
+          && (!company || info.manufacturer === company)
+          && (!type || info.type === type);
+        option.hidden = !matches;
+      }
+      for (const group of Array.from(deviceSelect.querySelectorAll("optgroup"))) {
+        group.hidden = !Array.from(group.options).some(option => !option.hidden && !option.disabled);
+      }
+
+      const visible = getVisibleDeviceOptions();
+      const currentStillVisible = visible.some(option => option.value === deviceSelect.value);
+      if (visible.length && !currentStillVisible) deviceSelect.value = visible[0].value;
+      deviceSelect.disabled = visible.length === 0;
+      prevDeviceButton.disabled = visible.length < 2;
+      nextDeviceButton.disabled = visible.length < 2;
+
+      if (visible.length) {
+        const mode = majorOnly ? "主要機種のみ" : "すべての登録機種";
+        const companyText = company || "全メーカー";
+        const typeText = deviceTypeFilter.options[deviceTypeFilter.selectedIndex].textContent;
+        filterStatus.textContent = `${mode} ／ ${companyText} ／ ${typeText}：${visible.length} / ${allOptions.length} 項目を表示中`;
+      } else {
+        filterStatus.textContent = "条件に一致する端末がありません。メーカー・端末タイプの条件を変更してください。プレビューは直前の端末を保持しています。";
+        $("deviceCounter").textContent = "0 / 0";
+        // 選択中のoptionも非表示になるため、ここではupdate()を呼ばず直前の画面描画を保持する。
+        return;
+      }
+      update();
+    }
+
+    initializeManufacturerFilter();
+    manufacturerFilter.addEventListener("change", applyDeviceFilters);
+    deviceTypeFilter.addEventListener("change", applyDeviceFilters);
+    majorOnlyFilter.addEventListener("change", applyDeviceFilters);
+    $("resetFiltersButton").addEventListener("click", () => {
+      manufacturerFilter.value = "";
+      deviceTypeFilter.value = "";
+      majorOnlyFilter.checked = true;
+      applyDeviceFilters();
+    });
+
+    /*
+      折り目方向は機種名や画面解像度の登録順から決めない。
+      メーカー公表の「折りたたみ時」と「展開時」の本体寸法を比較し、
+      折りたたみで長さが変わらない方向をヒンジ軸として採用する。
+      例：幅だけが増えるブック型は縦軸、 高さだけが増えるFlip型は横軸。
+    */
+    function getFoldBodyDimensions(model) {
+      if (model.foldBodyDimensionsMm?.folded && model.foldBodyDimensionsMm?.unfolded) {
+        return model.foldBodyDimensionsMm;
+      }
+      const cover = model.displays?.cover;
+      const main = model.displays?.main;
+      if (!cover || !main) return null;
+      const hasDimensions = item => Number.isFinite(item.bodyWidthMm) && Number.isFinite(item.bodyHeightMm);
+      if (!hasDimensions(cover) || !hasDimensions(main)) return null;
+      return {
+        folded: { width: cover.bodyWidthMm, height: cover.bodyHeightMm },
+        unfolded: { width: main.bodyWidthMm, height: main.bodyHeightMm }
+      };
+    }
+
+    function deriveHingeGeometry(model, orientation) {
+      const body = getFoldBodyDimensions(model);
+      if (!body) return null;
+      const folded = body.folded;
+      const unfolded = body.unfolded;
+      const values = [folded.width, folded.height, unfolded.width, unfolded.height];
+      if (!values.every(value => Number.isFinite(value) && value > 0)) return null;
+
+      const widthChange = Math.abs(unfolded.width - folded.width);
+      const heightChange = Math.abs(unfolded.height - folded.height);
+      const ambiguityToleranceMm = 1.0;
+      if (Math.abs(widthChange - heightChange) <= ambiguityToleranceMm) return null;
+
+      // ヒンジ軸は、折りたたみ前後で寸法がほぼ変わらない方向に沿う。
+      const nativeAxis = widthChange > heightChange ? "vertical" : "horizontal";
+      // 展開時の実寸（幅×高さ）から、その機種の基準画面向きを判定する。
+      const nativeOrientation = unfolded.width >= unfolded.height ? "landscape" : "portrait";
+      const axis = orientation === nativeOrientation
+        ? nativeAxis
+        : (nativeAxis === "vertical" ? "horizontal" : "vertical");
+
+      return {
+        axis,
+        nativeAxis,
+        nativeOrientation,
+        widthChange,
+        heightChange,
+        folded,
+        unfolded
+      };
+    }
+
+
+    function ratioLabel(w, h) {
+      const ratio = Math.max(w, h) / Math.min(w, h);
+      const common = [
+        [16 / 9, "16:9"], [18 / 9, "18:9"], [19.5 / 9, "19.5:9"],
+        [20 / 9, "20:9"], [21 / 9, "21:9"], [16 / 10, "16:10"], [3 / 2, "3:2"], [4 / 3, "4:3"],
+        [10 / 16, "10:16"], [1, "1:1"]
+      ];
+      let closest = common.reduce((a, b) => Math.abs(a[0] - ratio) < Math.abs(b[0] - ratio) ? a : b);
+      return Math.abs(closest[0] - ratio) < .035 ? closest[1] : `約 ${ratio.toFixed(2)}:1`;
+    }
+
+    function addZone(kind, position, label) {
+      const el = document.createElement("div");
+      el.className = `zone ${kind}`;
+      Object.assign(el.style, position);
+      screen.appendChild(el);
+      if (label) {
+        const tag = document.createElement("div");
+        tag.className = "zone-label";
+        tag.textContent = label.text;
+        Object.assign(tag.style, label.style);
+        screen.appendChild(tag);
+      }
+    }
+
+    function drawZones(view, orientation) {
+      screen.querySelectorAll(".zone, .zone-label").forEach(el => el.remove());
+      if (!zonesToggle.checked) return;
+
+      if (view.type === "watch") {
+        const inset = view.watchShape === "round" ? "7%" : "6%";
+        addZone("watch-edge", {
+          top: inset, right: inset, bottom: inset, left: inset,
+          borderRadius: view.watchShape === "round" ? "50%" : "23%"
+        });
+        return;
+      }
+
+      if (view.type === "laptop") {
+        addZone("yellow", { inset: "0", border: "0", background: "transparent", boxShadow: "inset 0 0 0 1.8% rgba(242,185,65,.62)" });
+        addZone("yellow", { top: "0", left: "0", right: "0", height: "7%", background: "rgba(242,185,65,.23)", border: "0" }, { text: "ノッチ・上端に余裕", style: { top: "2%", left: "0", right: "0" } });
+        return;
+      }
+
+      if (view.type === "phone" && orientation === "portrait") {
+        const top = view.safe === "ios-phone" ? 7 : 5.5;
+        const bottom = view.safe === "ios-phone" ? 8 : 6.5;
+        addZone("red", { top: "0", left: "0", right: "0", height: `${top}%` });
+        addZone("red", { bottom: "0", left: "0", right: "0", height: `${bottom}%` });
+        addZone("yellow", { top: `${top}%`, bottom: `${bottom}%`, left: "0", width: "3%" });
+        addZone("yellow", { top: `${top}%`, bottom: `${bottom}%`, right: "0", width: "3%" });
+        addZone("red", { top: "1%", left: "0", right: "0", height: "5%", background: "transparent", border: "0" }, { text: "上端：ステータス／カメラ", style: { top: "3.4%", left: "0", right: "0" } });
+        addZone("red", { bottom: "0.5%", left: "0", right: "0", height: "5%", background: "transparent", border: "0" }, { text: "下端：ホーム操作", style: { bottom: "1.4%", left: "0", right: "0" } });
+      } else if (view.type === "phone") {
+        const side = view.safe === "ios-phone" ? 8 : 7;
+        addZone("red", { top: "0", bottom: "0", left: "0", width: `${side}%` });
+        addZone("red", { top: "0", bottom: "0", right: "0", width: `${side}%` });
+        addZone("yellow", { top: "0", left: `${side}%`, right: `${side}%`, height: "5%" });
+        addZone("yellow", { bottom: "0", left: `${side}%`, right: `${side}%`, height: "6%" });
+        addZone("red", { top: "0", left: "0", width: `${side}%`, height: "100%", background: "transparent", border: "0" }, { text: "端操作", style: { top: "47%", left: "0", width: `${side}%` } });
+        addZone("red", { top: "0", right: "0", width: `${side}%`, height: "100%", background: "transparent", border: "0" }, { text: "端操作", style: { top: "47%", right: "0", width: `${side}%` } });
+      } else {
+        addZone("yellow", { top: "0", left: "0", right: "0", height: "4.5%" });
+        addZone("yellow", { bottom: "0", left: "0", right: "0", height: "5%" });
+        addZone("yellow", { top: "4.5%", bottom: "5%", left: "0", width: "2.3%" });
+        addZone("yellow", { top: "4.5%", bottom: "5%", right: "0", width: "2.3%" });
+        if (view.safe === "tablet-notch" && orientation === "landscape") {
+          addZone("red", { top: "0", left: "0", right: "0", height: "3.5%", background: "rgba(231,96,96,.35)" });
+        }
+      }
+    }
+
+    function update() {
+      const { model, view, isFoldable, profile } = getCurrentProfile();
+
+      let orientation = preferredOrientation;
+      if (view.type === "laptop") {
+        // ノートPCのプレビューは横向き固定。ただしユーザーの最後の選択は保持する。
+        orientation = "landscape";
+        orientationSelect.value = "landscape";
+        orientationSelect.disabled = true;
+      } else if (view.type === "watch") {
+        // 時計は通常の腕時計方向で固定。別端末で選んだ縦横設定は保持する。
+        orientation = "portrait";
+        orientationSelect.value = "portrait";
+        orientationSelect.disabled = true;
+      } else {
+        orientationSelect.disabled = false;
+        orientationSelect.value = preferredOrientation;
+      }
+
+      const portrait = orientation === "portrait";
+      const w = portrait ? Math.min(view.panelW, view.panelH) : Math.max(view.panelW, view.panelH);
+      const h = portrait ? Math.max(view.panelW, view.panelH) : Math.min(view.panelW, view.panelH);
+
+      // Apply the model class before measuring the frame's real padding and borders.
+      const frameType = view.type;
+      const watchShapeClass = view.type === "watch" ? (view.watchShape === "round" ? "watch-round" : "watch-square") : "";
+      deviceFrame.className = `device-frame ${frameType}${watchShapeClass ? ` ${watchShapeClass}` : ""}${isFoldable ? ` foldable ${view.frameClass || "foldable-open"}` : ""} ${portrait ? "orientation-portrait" : "orientation-landscape"}`;
+      deviceFrame.setAttribute("aria-label", view.type === "watch" ? `${model.name}の正面プレビュー（バンド付き）` : `${model.name}の端末プレビュー`);
+
+      // The stage has a fixed CSS height and a width controlled by its parent grid.
+      // Subtract its padding, a 12px visual margin, and the frame's actual box extras.
+      const stageStyle = getComputedStyle(stage);
+      const frameStyle = getComputedStyle(deviceFrame);
+      const number = value => Number.parseFloat(value) || 0;
+      const stageInnerW = stage.clientWidth - number(stageStyle.paddingLeft) - number(stageStyle.paddingRight);
+      const stageInnerH = stage.clientHeight - number(stageStyle.paddingTop) - number(stageStyle.paddingBottom);
+      const frameExtraW = number(frameStyle.paddingLeft) + number(frameStyle.paddingRight)
+        + number(frameStyle.borderLeftWidth) + number(frameStyle.borderRightWidth);
+      const frameExtraH = number(frameStyle.paddingTop) + number(frameStyle.paddingBottom)
+        + number(frameStyle.borderTopWidth) + number(frameStyle.borderBottomWidth);
+      const availableScreenW = Math.max(1, stageInnerW - 24 - frameExtraW);
+      const availableScreenH = Math.max(1, stageInnerH - 24 - frameExtraH);
+
+      // 100% fits the selected model. For physical-size paired foldables (Flip8 / iPhone Duo),
+      // both states share the opened body's scale reference so the closed body is visibly shorter/narrower.
+      const hasPhysicalBody = Number.isFinite(view.bodyWidthMm) && Number.isFinite(view.bodyHeightMm);
+      const hasWatchBody = view.type === "watch" && hasPhysicalBody;
+      const bodyWmm = hasPhysicalBody ? (portrait ? Math.min(view.bodyWidthMm, view.bodyHeightMm) : Math.max(view.bodyWidthMm, view.bodyHeightMm)) : null;
+      const bodyHmm = hasPhysicalBody ? (portrait ? Math.max(view.bodyWidthMm, view.bodyHeightMm) : Math.min(view.bodyWidthMm, view.bodyHeightMm)) : null;
+      const fitPortrait = model.fitReferenceOrientation
+        ? model.fitReferenceOrientation === "portrait"
+        : portrait;
+      const refWmm = hasWatchBody
+        ? bodyWmm
+        : hasPhysicalBody
+          ? (fitPortrait ? Math.min(view.fitWidthMm, view.fitHeightMm) : Math.max(view.fitWidthMm, view.fitHeightMm))
+          : null;
+      const refHmm = hasWatchBody
+        ? bodyHmm + Number(view.bandExtensionMm || 0) * 2
+        : hasPhysicalBody
+          ? (fitPortrait ? Math.max(view.fitWidthMm, view.fitHeightMm) : Math.min(view.fitWidthMm, view.fitHeightMm))
+          : null;
+      const fitScale = hasPhysicalBody
+        ? Math.min(availableScreenW / refWmm, availableScreenH / refHmm)
+        : Math.min(availableScreenW / w, availableScreenH / h);
+      const zoomFactor = Number(zoomRange.value) / 100;
+      const scale = Math.max(0.001, fitScale * zoomFactor);
+      const drawW = Math.max(1, Math.round(hasPhysicalBody ? bodyWmm * scale : w * scale));
+      const drawH = Math.max(1, Math.round(hasPhysicalBody ? bodyHmm * scale : h * scale));
+      // Keep the content panel inside the body. Watch faces use active-display dimensions in millimeters.
+      const panelScale = hasPhysicalBody ? Math.min(drawW / w, drawH / h) : scale;
+      const screenDrawW = Math.max(1, Math.round(hasWatchBody ? view.displayWidthMm * scale : w * panelScale));
+      const screenDrawH = Math.max(1, Math.round(hasWatchBody ? view.displayHeightMm * scale : h * panelScale));
+
+      deviceFrame.style.width = `${drawW + frameExtraW}px`;
+      deviceFrame.style.height = `${drawH + frameExtraH}px`;
+      deviceFrame.style.alignItems = hasPhysicalBody ? "center" : "stretch";
+      deviceFrame.style.justifyContent = hasPhysicalBody ? "center" : "stretch";
+      screen.style.width = `${screenDrawW}px`;
+      screen.style.height = `${screenDrawH}px`;
+      screen.style.borderRadius = hasWatchBody
+        ? (view.watchShape === "round" ? "50%" : "23%")
+        : view.type === "phone" ? "25px" : view.type === "tablet" ? "13px" : "7px 7px 2px 2px";
+
+      // Browser-standard layout: iframe's own viewport stays at the target CSS px.
+      // Only the outer wrapper is visually scaled to fit the drawn device panel.
+      const baseViewportW = view.viewportW || Math.round(view.panelW / 2);
+      const baseViewportH = view.viewportH || Math.round(view.panelH / 2);
+      const cssViewportW = portrait ? Math.min(baseViewportW, baseViewportH) : Math.max(baseViewportW, baseViewportH);
+      const cssViewportH = portrait ? Math.max(baseViewportW, baseViewportH) : Math.min(baseViewportW, baseViewportH);
+      iframeViewport.style.width = `${cssViewportW}px`;
+      iframeViewport.style.height = `${cssViewportH}px`;
+      appFrame.style.width = `${cssViewportW}px`;
+      appFrame.style.height = `${cssViewportH}px`;
+      const iframeRenderScale = Math.min(screenDrawW / cssViewportW, screenDrawH / cssViewportH);
+      iframeViewport.style.transform = `scale(${iframeRenderScale})`;
+
+      cutout.className = "cutout";
+      if (view.cutoutType && view.cutoutType !== "none") {
+        let cutoutType = view.cutoutType;
+        if (view.type === "phone" && !portrait && cutoutType !== "notch") cutoutType = "side";
+        cutout.classList.add(cutoutType, "visible");
+      }
+
+      // 折り目線は展開画面だけに表示する。方向は各製品の折りたたみ前後の本体寸法から算出する。
+      // パネル解像度の縦横順や機種別の固定値には依存しない。
+      hingeLine.className = "hinge-line";
+      const hingeGeometry = isFoldable && profile.displayKey === "main"
+        ? deriveHingeGeometry(model, orientation)
+        : null;
+      if (hingeGeometry) {
+        hingeLine.classList.add("visible", hingeGeometry.axis);
+      }
+
+      drawZones(view, orientation);
+      const title = isFoldable ? `${model.name} — ${view.label}` : model.name;
+      $("previewTitle").textContent = title;
+      $("modelName").textContent = model.name;
+      $("modelCategory").textContent = model.category;
+      $("specSize").textContent = view.inches;
+      const orientedBodyW = hasPhysicalBody ? (portrait ? Math.min(view.bodyWidthMm, view.bodyHeightMm) : Math.max(view.bodyWidthMm, view.bodyHeightMm)) : null;
+      const orientedBodyH = hasPhysicalBody ? (portrait ? Math.max(view.bodyWidthMm, view.bodyHeightMm) : Math.min(view.bodyWidthMm, view.bodyHeightMm)) : null;
+      $("specBodySize").textContent = hasPhysicalBody ? `${orientedBodyW} × ${orientedBodyH} mm` : "—";
+      if (model.form === "flip" && hasPhysicalBody) {
+        const openedH = view.fitHeightMm;
+        $("specFoldRatio").textContent = profile.displayKey === "cover" ? `開状態の約${Math.round((86 / 167) * 100)}%の高さ` : "開いた状態（基準）";
+      } else if (model.form === "book" && model.manufacturer === "Apple" && hasPhysicalBody) {
+        $("specFoldRatio").textContent = profile.displayKey === "cover" ? `開状態の約${Math.round((84.1 / 164.6) * 100)}%の幅` : "開いた状態（基準）";
+      } else {
+        $("specFoldRatio").textContent = "—";
+      }
+      $("specResolution").textContent = `${w.toLocaleString("ja-JP")} × ${h.toLocaleString("ja-JP")} px`;
+      $("specViewport").textContent = `${cssViewportW.toLocaleString("ja-JP")} × ${cssViewportH.toLocaleString("ja-JP")} CSS px`;
+      $("specViewportBasis").textContent = view.viewportBasis || "機種別推定値";
+      $("specFrameViewportMatch").textContent = appFrame.src && appFrame.src !== "about:blank" ? "測定中" : "未読み込み";
+      $("specRatio").textContent = ratioLabel(w, h);
+      $("specCutout").textContent = view.cutout;
+      $("specState").textContent = isFoldable ? view.label : hasWatchBody ? "スマートウォッチ画面" : "通常画面";
+      $("specOrientation").textContent = hasWatchBody ? "腕時計向き（固定）" : portrait ? "縦向き" : "横向き";
+      const sampleStrong = screenCopy.querySelector("strong");
+      const sampleSpan = screenCopy.querySelector("span");
+      if (sampleStrong && sampleSpan) {
+        sampleStrong.textContent = hasWatchBody ? "10:08" : "主要な操作・情報";
+        sampleSpan.textContent = hasWatchBody ? "通知・ステータス" : "赤・黄色の領域を避けて配置する";
+      }
+      const bodyMeta = hasPhysicalBody ? ` ／ 本体 ${orientedBodyW} × ${orientedBodyH} mm` : "";
+      const foldMeta = model.form === "flip" && profile.displayKey === "cover" ? " ／ 上下2枚を重ねた縦折り状態" : "";
+      const watchMeta = hasWatchBody ? ` ／ バンド延長を含むケース周辺の表示余裕：約${view.bandExtensionMm * 2}mm` : "";
+      $("deviceMeta").textContent = `パネル解像度：${w.toLocaleString("ja-JP")} × ${h.toLocaleString("ja-JP")} px ／ CSS表示領域：${cssViewportW} × ${cssViewportH} CSS px ／ ${view.inches}${bodyMeta}${foldMeta}${watchMeta} ／ 倍率 ${zoomRange.value}%`;
+      zoomValue.textContent = `${zoomRange.value}%`;
+      $("modelCaveat").textContent = hasWatchBody
+        ? "スマートウォッチのケース・バンド・表示面形状を反映したプレビューです。黄色の細い輪郭は、円形／角丸表示の端で文字やボタンが切れないようにする余白目安です。Apple WatchのwatchOSアプリ画面は一般的なWebブラウザーと同じCSS viewportではなく、Wear OS等も実機ブラウザー・OSバージョンによって挙動が異なります。iframeのCSS表示領域はレスポンシブ検討用の推定値で、実機OSの完全なエミュレーションではありません。"
+        : model.form === "flip" && profile.displayKey === "cover"
+        ? "Galaxy Z Flip8の閉じた本体は約75×86mm、開いた状態は約75×167mmです。開いた状態と同じ物理縮尺で描画するため、閉じると高さが約51%になり、上下2枚を重ねた形状と中央の継ぎ目が確認できます。寸法はSamsung公表値です。"
+        : model.manufacturer === "Apple" && isFoldable
+          ? "iPhone Duoは折りたたみiPhoneを想定した仮想モデルで、Appleが公表した製品・仕様ではありません。寸法・解像度・CSS表示領域はプレビュー用の仮定値です。主要機種フィルターには含めません。"
+          : view.viewportBasis && view.viewportBasis.includes("420dpi仮定")
+            ? "Lenovoのパネル解像度・408PPI・16:10はメーカー公表値です。CSS表示領域はAndroid密度420dpiを仮定した推定値で、実機のwm density／Chrome viewportは未確認です。"
+            : isFoldable
+              ? "折りたたみ端末の閉じた状態／展開状態を独立した端末として表示しています。閉じたカバー画面には折り目線を表示しません。展開時の中央線は、各製品の折りたたみ時・展開時の本体幅と高さを比較し、変化しない寸法方向をヒンジ軸として算出します。展開時の本体幅・高さから基準向きを判定し、選択中の画面向きに応じて線を90度回転させます。寸法が不足または曖昧な製品では、誤った線を表示しないよう折り目線を表示しません。CSS表示領域は端末別の参考値です。"
+              : "安全領域の色分けは一般的なUI設計向けの目安です。OS・ブラウザー・表示モードにより実際の侵入領域は変わります。";
+      const deviceOptions = getVisibleDeviceOptions();
+      const selectedIndex = deviceOptions.findIndex(option => option.value === deviceSelect.value);
+      $("deviceCounter").textContent = deviceOptions.length && selectedIndex >= 0
+        ? `${selectedIndex + 1} / ${deviceOptions.length}`
+        : `0 / 0`;
+    }
+
+    // 端末を変更しても、最後に選択した縦横の向きを引き継ぐ。
+    // 各機種の defaultOrientation へ戻す処理は行わない。
+    deviceSelect.addEventListener("change", () => {
+      update();
+    });
+    orientationSelect.addEventListener("change", () => {
+      if (!orientationSelect.disabled) {
+        preferredOrientation = orientationSelect.value;
+      }
+      update();
+    });
+    zoomRange.addEventListener("input", update);
+    zonesToggle.addEventListener("change", update);
+
+    function moveDevice(step) {
+      const options = getVisibleDeviceOptions();
+      if (options.length < 2) return;
+      const current = options.findIndex(option => option.value === deviceSelect.value);
+      const next = (Math.max(0, current) + step + options.length) % options.length;
+      deviceSelect.value = options[next].value;
+      deviceSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      deviceFrame.classList.remove("switching");
+      void deviceFrame.offsetWidth;
+      deviceFrame.classList.add("switching");
+    }
+    $("prevDeviceButton").addEventListener("click", () => moveDevice(-1));
+    $("nextDeviceButton").addEventListener("click", () => moveDevice(1));
+
+    function setUploadStatus(message, loaded = false) {
+      uploadStatus.textContent = message;
+      uploadStatus.classList.toggle("loaded", loaded);
+    }
+
+    let loadGeneration = 0;
+    function ensureViewportMeta(source) {
+      // Typical responsive-browser default: device-width at an initial page scale of 1.
+      // Explicit author settings are preserved rather than silently rewritten.
+      const metaPattern = /<meta\b(?=[^>]*\bname\s*=\s*(["'])viewport\1)[^>]*>/i;
+      const match = source.match(metaPattern);
+      const defaultMeta = '<meta name="viewport" content="width=device-width, initial-scale=1">';
+      if (!match) {
+        if (/<head(?:\s[^>]*)?>/i.test(source)) {
+          return source.replace(/<head(?:\s[^>]*)?>/i, tag => `${tag}\n${defaultMeta}`);
+        }
+        if (/<html(?:\s[^>]*)?>/i.test(source)) {
+          return source.replace(/<html(?:\s[^>]*)?>/i, tag => `${tag}\n<head>${defaultMeta}</head>`);
+        }
+        return `<!doctype html><html lang="ja"><head><meta charset="utf-8">${defaultMeta}</head><body>${source}</body></html>`;
+      }
+      const metaTag = match[0];
+      const contentMatch = metaTag.match(/\bcontent\s*=\s*(["'])(.*?)\1/i);
+      if (!contentMatch) return source;
+      let content = contentMatch[2];
+      if (!/\binitial-scale\s*=/i.test(content)) {
+        content = `${content.trim().replace(/,\s*$/, "")}, initial-scale=1`;
+        const replacement = metaTag.replace(contentMatch[0], `content="${content}"`);
+        return source.replace(metaTag, replacement);
+      }
+      return source;
+    }
+
+    function injectFrameMetricsReporter(source) {
+      // Sandbox is intentionally opaque-origin. postMessage provides only size/DPR diagnostics.
+      const reporter = `<script>(function(){
+        function report(){
+          try {
+            var vv = window.visualViewport;
+            window.parent.postMessage({
+              type: "device-preview-frame-metrics",
+              width: window.innerWidth,
+              height: window.innerHeight,
+              dpr: window.devicePixelRatio || 1,
+              pageScale: vv ? vv.scale : 1
+            }, "*");
+          } catch (e) {}
+        }
+        window.addEventListener("load", report);
+        window.addEventListener("resize", report);
+        if (window.visualViewport) window.visualViewport.addEventListener("resize", report);
+        setTimeout(report, 0);
+      })();<\/script>`;
+      if (/<\/head\s*>/i.test(source)) return source.replace(/<\/head\s*>/i, `${reporter}</head>`);
+      return `${reporter}${source}`;
+    }
+
+    async function loadSelectedHtml() {
+      if (!selectedHtmlFile) return;
+      const file = selectedHtmlFile;
+      const lowerName = file.name.toLowerCase();
+      if (!(lowerName.endsWith(".html") || lowerName.endsWith(".htm"))) {
+        setUploadStatus("HTMLファイル（.html / .htm）を選択してください。");
+        return;
+      }
+      const generation = ++loadGeneration;
+      setUploadStatus(`読み込み中：${file.name}`);
+      reloadHtmlButton.disabled = true;
+      try {
+        const source = await file.text();
+        if (generation !== loadGeneration) return;
+        const preparedHtml = injectFrameMetricsReporter(ensureViewportMeta(source));
+        const htmlBlob = new Blob([preparedHtml], { type: "text/html;charset=utf-8" });
+        const nextUrl = URL.createObjectURL(htmlBlob);
+        const previousUrl = activeObjectUrl;
+        appFrame.onload = () => {
+          if (generation !== loadGeneration) {
+            URL.revokeObjectURL(nextUrl);
+            return;
+          }
+          activeObjectUrl = nextUrl;
+          if (previousUrl && previousUrl !== nextUrl) URL.revokeObjectURL(previousUrl);
+          iframeViewport.hidden = false;
+          screenCopy.hidden = true;
+          reloadHtmlButton.disabled = false;
+          clearHtmlButton.disabled = false;
+          setUploadStatus(`読み込み済み：${file.name} ／ 端末の推定CSS表示領域で表示中`, true);
+        };
+        appFrame.onerror = () => {
+          URL.revokeObjectURL(nextUrl);
+          if (generation === loadGeneration) {
+            reloadHtmlButton.disabled = false;
+            setUploadStatus(`読み込みに失敗しました：${file.name}`);
+          }
+        };
+        iframeViewport.hidden = false;
+        screenCopy.hidden = true;
+        appFrame.src = nextUrl;
+      } catch (error) {
+        reloadHtmlButton.disabled = false;
+        setUploadStatus(`HTMLを読み込めませんでした：${error && error.message ? error.message : "ファイルを確認してください"}`);
+      }
+    }
+
+    htmlFileInput.addEventListener("change", () => {
+      selectedHtmlFile = htmlFileInput.files && htmlFileInput.files[0] ? htmlFileInput.files[0] : null;
+      if (selectedHtmlFile) loadSelectedHtml();
+    });
+    reloadHtmlButton.addEventListener("click", loadSelectedHtml);
+    clearHtmlButton.addEventListener("click", () => {
+      loadGeneration++;
+      appFrame.onload = () => {
+        if (activeObjectUrl) URL.revokeObjectURL(activeObjectUrl);
+        activeObjectUrl = null;
+      };
+      appFrame.src = "about:blank";
+      iframeViewport.hidden = true;
+      screenCopy.hidden = false;
+      selectedHtmlFile = null;
+      htmlFileInput.value = "";
+      reloadHtmlButton.disabled = true;
+      clearHtmlButton.disabled = true;
+      setUploadStatus("HTMLの読み込みを解除しました。別のHTMLファイルを選択できます。");
+    });
+
+    let updateFrame = 0;
+    let lastStageSize = "";
+    function scheduleLayoutUpdate() {
+      if (updateFrame) return;
+      updateFrame = requestAnimationFrame(() => {
+        updateFrame = 0;
+        update();
+      });
+    }
+
+    if ("ResizeObserver" in window) {
+      const stageObserver = new ResizeObserver(entries => {
+        const rect = entries[0] && entries[0].contentRect;
+        if (!rect) return;
+        const key = `${Math.round(rect.width * 10) / 10}x${Math.round(rect.height * 10) / 10}`;
+        if (key === lastStageSize) return;
+        lastStageSize = key;
+        scheduleLayoutUpdate();
+      });
+      stageObserver.observe(stage);
+    }
+    // Also handle viewport/orientation changes. Both paths are frame-batched.
+    window.addEventListener("resize", scheduleLayoutUpdate, { passive: true });
+    window.addEventListener("message", event => {
+      if (event.source !== appFrame.contentWindow) return;
+      const data = event.data;
+      if (!data || data.type !== "device-preview-frame-metrics") return;
+      $("specPageScale").textContent = `${(Number(data.pageScale || 1) * 100).toFixed(0)}%`;
+      $("specFrameDpr").textContent = `${Number(data.dpr || 1).toFixed(2)}×`;
+      // Compare actual iframe layout viewport with the selected profile's target CSS viewport.
+      const values = $("specViewport").textContent.match(/[\d,]+/g) || [];
+      const expectedW = Number((values[0] || "0").replace(/,/g, ""));
+      const expectedH = Number((values[1] || "0").replace(/,/g, ""));
+      const actualW = Number(data.width);
+      const actualH = Number(data.height);
+      const matches = actualW === expectedW && actualH === expectedH;
+      $("specFrameViewportMatch").textContent = matches
+        ? "一致"
+        : `差異：${actualW} × ${actualH}`;
+    });
+
+    applyDeviceFilters();
+  </script>
+</body>
+</html>
