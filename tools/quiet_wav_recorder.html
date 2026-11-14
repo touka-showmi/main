@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<meta name="color-scheme" content="dark light">
+<title>Quiet WAV Recorder</title>
+<style>
+  :root { color-scheme: dark; --bg:#0b1020; --panel:#141c2e; --panel2:#1b2740; --line:#2c3a55; --text:#edf3ff; --muted:#9eacc4; --accent:#62a5ff; --accent2:#8bc0ff; --danger:#ff667a; --ok:#50d6a0; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; background:radial-gradient(1000px 520px at 50% -160px,#21345a 0%,var(--bg) 65%); color:var(--text); font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+  button,select { font:inherit; }
+  .wrap { width:min(900px,100%); margin:0 auto; padding:clamp(16px,4vw,34px); padding-bottom:max(26px,env(safe-area-inset-bottom)); }
+  header { margin:8px 0 22px; }
+  h1 { margin:0; font-size:clamp(1.45rem,4vw,2rem); letter-spacing:.01em; }
+  .subtitle { color:var(--muted); margin:8px 0 0; line-height:1.65; font-size:.94rem; }
+  .panel { background:linear-gradient(160deg,rgba(27,39,64,.96),rgba(17,25,42,.97)); border:1px solid var(--line); border-radius:20px; padding:clamp(16px,3.5vw,26px); box-shadow:0 18px 55px #0004; }
+  .statebar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding-bottom:18px; border-bottom:1px solid var(--line); }
+  .state { display:flex; align-items:center; gap:10px; font-weight:650; }
+  .lamp { width:11px; height:11px; border-radius:50%; background:#73819a; box-shadow:0 0 0 4px #73819a22; }
+  .lamp.live { background:var(--danger); box-shadow:0 0 0 5px #ff667a22; animation:pulse 1.7s infinite; }
+  .lamp.paused { background:#f6bd4b; box-shadow:0 0 0 5px #f6bd4b22; }
+  @keyframes pulse { 50% { box-shadow:0 0 0 9px #ff667a08; } }
+  .clock { font-variant-numeric:tabular-nums; font-size:clamp(2.3rem,8vw,4rem); font-weight:700; letter-spacing:.045em; text-align:center; margin:24px 0 4px; }
+  .clock-label { text-align:center; color:var(--muted); font-size:.85rem; }
+  .meter-wrap { margin:22px 0 20px; }
+  .meter-head { display:flex; justify-content:space-between; gap:12px; color:var(--muted); font-size:.82rem; margin-bottom:8px; }
+  .meter { height:12px; border-radius:99px; background:#080d18; border:1px solid #30405c; overflow:hidden; }
+  .meter-fill { height:100%; width:0%; border-radius:99px; background:linear-gradient(90deg,#42c994,#b6df68,#f0b94c,#ff667a); transition:width .08s linear; }
+  .controls { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:24px 0 8px; }
+  button { min-height:48px; padding:12px 20px; border-radius:13px; border:1px solid transparent; cursor:pointer; font-weight:700; transition:transform .08s,filter .15s,opacity .15s; }
+  button:active { transform:translateY(1px); }
+  button:disabled { opacity:.42; cursor:not-allowed; }
+  .primary { background:var(--accent); color:#071426; min-width:160px; }
+  .primary:hover:not(:disabled) { filter:brightness(1.08); }
+  .stop { background:#3a2430; color:#ffdce1; border-color:#754052; }
+  .secondary { background:#24334d; color:var(--text); border-color:#405372; }
+  .save { background:#174735; color:#d8fff0; border-color:#287a5a; }
+  .settings { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:25px; }
+  .field { min-width:0; }
+  label { display:block; font-size:.86rem; font-weight:650; margin-bottom:7px; }
+  select { width:100%; min-height:46px; padding:10px 12px; background:#0e1728; color:var(--text); border:1px solid #405372; border-radius:11px; }
+  .hint { color:var(--muted); font-size:.8rem; line-height:1.55; margin:7px 0 0; }
+  .details { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:18px; }
+  .detail { background:#0d1627a8; border:1px solid #293954; border-radius:12px; padding:12px; min-width:0; }
+  .detail small { display:block; color:var(--muted); font-size:.75rem; margin-bottom:5px; }
+  .detail strong { font-size:.9rem; overflow-wrap:anywhere; }
+  .result { display:none; margin-top:20px; border:1px solid #2d7058; background:#0f2b23; border-radius:14px; padding:15px; }
+  .result.show { display:block; }
+  .result-title { font-weight:700; margin-bottom:5px; }
+  .result-meta { color:#b3dcca; font-size:.84rem; line-height:1.6; overflow-wrap:anywhere; }
+  .result-actions { display:flex; flex-wrap:wrap; gap:9px; margin-top:13px; }
+  .notice { margin-top:18px; border:1px solid #594c2c; background:#292313; color:#f6e8bd; padding:13px 14px; border-radius:12px; font-size:.83rem; line-height:1.65; }
+  .foot { color:var(--muted); font-size:.79rem; line-height:1.7; margin:18px 2px 0; }
+  .hidden { display:none !important; }
+  @media (max-width:620px) {
+    .settings { grid-template-columns:1fr; }
+    .details { grid-template-columns:1fr 1fr; }
+    .controls button { flex:1 1 42%; }
+    .primary { flex-basis:100% !important; }
+    .panel { border-radius:16px; }
+  }
+  @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Quiet WAV Recorder</h1>
+    <p class="subtitle">開始音・終了音を鳴らさずに録音し、端末内でWAVファイルを作成します。録音中は画面に状態を表示します。</p>
+  </header>
+
+  <main class="panel" aria-label="録音画面">
+    <div class="statebar">
+      <div class="state"><span id="lamp" class="lamp" aria-hidden="true"></span><span id="stateText" role="status" aria-live="polite">待機中</span></div>
+      <div id="privacyText" class="hint">マイク未使用</div>
+    </div>
+
+    <div id="clock" class="clock" aria-label="録音時間">00:00:00</div>
+    <div class="clock-label">録音時間</div>
+
+    <div class="meter-wrap">
+      <div class="meter-head"><span>入力レベル</span><span id="levelText">-- dB</span></div>
+      <div class="meter" role="meter" aria-label="マイク入力レベル" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="meterFill" class="meter-fill"></div></div>
+    </div>
+
+    <div class="controls">
+      <button id="startBtn" class="primary" type="button">● 録音開始</button>
+      <button id="pauseBtn" class="secondary" type="button" disabled>一時停止</button>
+      <button id="stopBtn" class="stop" type="button" disabled>録音終了</button>
+    </div>
+
+    <div class="settings">
+      <div class="field">
+        <label for="micSelect">マイク入力</label>
+        <select id="micSelect"><option value="">システム既定のマイク</option></select>
+        <p class="hint">マイクの一覧は、最初の録音許可後に端末名が表示されます。</p>
+      </div>
+      <div class="field">
+        <label for="qualitySelect">録音形式</label>
+        <select id="qualitySelect">
+          <option value="24" selected>WAV / PCM 24-bit（高音質）</option>
+          <option value="16">WAV / PCM 16-bit（互換性重視）</option>
+        </select>
+        <p class="hint">サンプルレートは原則48 kHz。端末が対応しない場合は利用可能な値に切り替えます。</p>
+      </div>
+    </div>
+
+    <div class="details">
+      <div class="detail"><small>サンプルレート</small><strong id="rateInfo">未接続</strong></div>
+      <div class="detail"><small>チャンネル</small><strong id="channelInfo">未接続</strong></div>
+      <div class="detail"><small>保存形式</small><strong id="formatInfo">PCM 24-bit</strong></div>
+    </div>
+
+    <div id="result" class="result" aria-live="polite">
+      <div class="result-title">録音ファイルを作成しました</div>
+      <div id="resultMeta" class="result-meta"></div>
+      <div class="result-actions">
+        <button id="downloadBtn" class="save" type="button">WAVを保存</button>
+        <button id="shareBtn" class="secondary" type="button">共有／ファイルに保存</button>
+        <button id="newBtn" class="secondary" type="button">新しく録音</button>
+      </div>
+    </div>
+
+    <div class="notice">
+      <strong>利用上の注意：</strong>ブラウザーのマイク許可画面やOSが表示するプライバシー表示・通知音は、このページから消せません。録音開始時にアプリ独自の音は鳴りません。周囲の人の同意と各地域のルールを確認して使用してください。
+    </div>
+  </main>
+
+  <p class="foot">録音データは外部サーバーへ送信せず、このページを開いている端末のメモリー上でWAV化します。長時間録音ではメモリーを多く使います。スマートフォンでは録音中に画面を閉じたり、別アプリへ切り替えたり、端末をロックするとOS側で録音が中断される場合があります。</p>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const el = {
+    lamp:$('lamp'), state:$('stateText'), privacy:$('privacyText'), clock:$('clock'),
+    meter:$('meterFill'), meterBox:document.querySelector('.meter'), level:$('levelText'),
+    start:$('startBtn'), pause:$('pauseBtn'), stop:$('stopBtn'), mic:$('micSelect'), quality:$('qualitySelect'),
+    rate:$('rateInfo'), channels:$('channelInfo'), format:$('formatInfo'), result:$('result'), resultMeta:$('resultMeta'),
+    download:$('downloadBtn'), share:$('shareBtn'), newRec:$('newBtn')
+  };
+
+  const state = {
+    phase:'idle', stream:null, context:null, source:null, processor:null, silentGain:null, analyser:null,
+    worklet:false, chunks:[], bytes:0, channels:1, sampleRate:48000, bits:24,
+    startedAt:0, elapsedBefore:0, timerId:0, meterId:0, wakeLock:null,
+    blob:null, fileName:'', objectUrl:null, stopPromise:null, trackHandlers:null
+  };
+
+  function setState(phase, message) {
+    state.phase = phase;
+    el.state.textContent = message;
+    el.lamp.className = 'lamp' + (phase === 'recording' ? ' live' : phase === 'paused' ? ' paused' : '');
+    el.start.disabled = phase === 'starting' || phase === 'recording' || phase === 'paused' || phase === 'stopping';
+    el.pause.disabled = !(phase === 'recording' || phase === 'paused');
+    el.pause.textContent = phase === 'paused' ? '録音を再開' : '一時停止';
+    el.stop.disabled = !(phase === 'recording' || phase === 'paused');
+    el.privacy.textContent = (phase === 'recording' || phase === 'paused') ? 'マイク使用中' : phase === 'starting' ? 'マイク接続中' : 'マイク未使用';
+  }
+
+  function formatTime(ms) {
+    const total = Math.max(0, Math.floor(ms / 1000));
+    const h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), s = total % 60;
+    return [h,m,s].map(v => String(v).padStart(2,'0')).join(':');
+  }
+  function elapsed() {
+    return state.elapsedBefore + (state.phase === 'recording' ? performance.now() - state.startedAt : 0);
+  }
+  function startClock() {
+    clearInterval(state.timerId);
+    state.timerId = setInterval(() => { el.clock.textContent = formatTime(elapsed()); }, 200);
+  }
+  function stopClock() {
+    clearInterval(state.timerId); state.timerId = 0;
+    el.clock.textContent = formatTime(elapsed());
+  }
+
+  function setMeter(rms) {
+    const db = rms > 0 ? 20 * Math.log10(rms) : -100;
+    const pct = Math.max(0, Math.min(100, (db + 60) / 60 * 100));
+    el.meter.style.width = pct.toFixed(1) + '%';
+    el.level.textContent = db <= -99 ? '無音' : db.toFixed(0) + ' dBFS';
+    el.meterBox.setAttribute('aria-valuenow', String(Math.round(pct)));
+  }
+
+  async function refreshMics() {
+    if (!navigator.mediaDevices?.enumerateDevices) return;
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const current = el.mic.value;
+      const inputs = devices.filter(d => d.kind === 'audioinput');
+      el.mic.replaceChildren();
+      const def = document.createElement('option'); def.value = ''; def.textContent = 'システム既定のマイク'; el.mic.append(def);
+      inputs.forEach((d, i) => {
+        const opt = document.createElement('option');
+        opt.value = d.deviceId;
+        opt.textContent = d.label || `マイク ${i + 1}`;
+        el.mic.append(opt);
+      });
+      if ([...el.mic.options].some(o => o.value === current)) el.mic.value = current;
+    } catch (_) { /* デバイス一覧が取れない環境では既定入力を利用 */ }
+  }
+
+  async function getMicrophone() {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error('このブラウザーではマイク録音を利用できません。最新のSafari / Chrome / Edge / FirefoxをHTTPS接続で開いてください。');
+    }
+    const deviceId = el.mic.value;
+    const audio = {
+      channelCount:{ideal:2}, sampleRate:{ideal:48000}, sampleSize:{ideal:24},
+      echoCancellation:{ideal:false}, noiseSuppression:{ideal:false}, autoGainControl:{ideal:false}
+    };
+    if (deviceId) audio.deviceId = { exact:deviceId };
+    try {
+      return await navigator.mediaDevices.getUserMedia({audio, video:false});
+    } catch (firstError) {
+      // 一部ブラウザー・ドライバーでは高度な制約を受け付けないため、基本制約で再試行。
+      if (deviceId) {
+        try { return await navigator.mediaDevices.getUserMedia({audio:{deviceId:{exact:deviceId}}, video:false}); }
+        catch (_) { /* 下の既定入力も試す */ }
+      }
+      try { return await navigator.mediaDevices.getUserMedia({audio:true, video:false}); }
+      catch (_) { throw firstError; }
+    }
+  }
+
+  function makeWorkletSource() {
+    return `class QuietPcmRecorder extends AudioWorkletProcessor {
+      constructor(options) {
+        super();
+        this.chunkFrames = options.processorOptions.chunkFrames || 4096;
+        this.channels = 0; this.frames = 0; this.buffers = []; this.recording = true;
+        this.port.onmessage = (event) => {
+          const m = event.data || {};
+          if (m.cmd === 'pause') { this.recording = false; this.flush(); this.port.postMessage({cmd:'ack', id:m.id}); }
+          else if (m.cmd === 'resume') { this.recording = true; this.port.postMessage({cmd:'ack', id:m.id}); }
+          else if (m.cmd === 'stop') { this.recording = false; this.flush(); this.port.postMessage({cmd:'ack', id:m.id}); }
+        };
+      }
+      process(inputs, outputs) {
+        const out = outputs[0];
+        if (out) for (let c=0;c<out.length;c++) out[c].fill(0);
+        if (!this.recording) return true;
+        const input = inputs[0];
+        if (!input || !input.length || !input[0].length) return true;
+        const ch = Math.min(2, input.length);
+        if (ch !== this.channels) {
+          this.flush(); this.channels = ch;
+          this.buffers = Array.from({length:ch}, () => new Float32Array(this.chunkFrames));
+        }
+        const n = input[0].length; let offset = 0;
+        while (offset < n) {
+          const take = Math.min(this.chunkFrames - this.frames, n - offset);
+          for (let c=0;c<this.channels;c++) this.buffers[c].set(input[c].subarray(offset, offset + take), this.frames);
+          this.frames += take; offset += take;
+          if (this.frames >= this.chunkFrames) this.flush();
+        }
+        return true;
+      }
+      flush() {
+        if (!this.frames || !this.channels) return;
+        const bytes = new Uint8Array(this.frames * this.channels * 3);
+        let p=0;
+        for (let i=0;i<this.frames;i++) for (let c=0;c<this.channels;c++) {
+          let x = this.buffers[c][i];
+          if (!Number.isFinite(x)) x = 0;
+          x = Math.max(-1, Math.min(1, x));
+          const v = x < 0 ? Math.round(x * 0x800000) : Math.round(x * 0x7fffff);
+          bytes[p++] = v & 255; bytes[p++] = (v >> 8) & 255; bytes[p++] = (v >> 16) & 255;
+        }
+        this.port.postMessage({cmd:'pcm', pcm:bytes.buffer, channels:this.channels}, [bytes.buffer]);
+        this.frames = 0;
+      }
+    }
+    registerProcessor('quiet-pcm-recorder', QuietPcmRecorder);`;
+  }
+
+  function addChunk(uint8) {
+    if (!uint8 || !uint8.length) return;
+    state.chunks.push(uint8);
+    state.bytes += uint8.byteLength;
+  }
+
+  function floatToPcm(floatData, channels, bits) {
+    const bytesPerSample = bits / 8;
+    const out = new Uint8Array(floatData.length * bytesPerSample);
+    const view = new DataView(out.buffer);
+    let offset = 0;
+    for (let i = 0; i < floatData.length; i++) {
+      let x = Number.isFinite(floatData[i]) ? Math.max(-1, Math.min(1, floatData[i])) : 0;
+      if (bits === 16) {
+        const v = x < 0 ? Math.round(x * 32768) : Math.round(x * 32767);
+        view.setInt16(offset, v, true); offset += 2;
+      } else {
+        const v = x < 0 ? Math.round(x * 8388608) : Math.round(x * 8388607);
+        out[offset++] = v & 255; out[offset++] = (v >> 8) & 255; out[offset++] = (v >> 16) & 255;
+      }
+    }
+    return out;
+  }
+
+  function installScriptProcessor(source, context, channels) {
+    const bufferSize = 4096;
+    const processor = context.createScriptProcessor(bufferSize, channels, 1);
+    const silent = context.createGain(); silent.gain.value = 0;
+    processor.onaudioprocess = (event) => {
+      const input = event.inputBuffer;
+      const ch = Math.max(1, Math.min(2, input.numberOfChannels));
+      if (state.phase !== 'recording' || !input.length) {
+        event.outputBuffer.getChannelData(0).fill(0); return;
+      }
+      state.channels = ch;
+      el.channels.textContent = ch === 1 ? 'モノラル（入力に準拠）' : 'ステレオ（入力に準拠）';
+      const frameCount = input.length;
+      const interleaved = new Float32Array(frameCount * ch);
+      for (let i=0;i<frameCount;i++) for (let c=0;c<ch;c++) interleaved[i*ch+c] = input.getChannelData(c)[i];
+      addChunk(floatToPcm(interleaved, ch, state.bits));
+      event.outputBuffer.getChannelData(0).fill(0);
+    };
+    source.connect(processor); processor.connect(silent);
+    if (state.analyser) state.analyser.connect(silent);
+    silent.connect(context.destination);
+    state.processor = processor; state.silentGain = silent; state.worklet = false;
+  }
+
+  function waitWorkletAck(id, timeoutMs=2500) {
+    return new Promise((resolve, reject) => {
+      const started = performance.now();
+      const check = (event) => {
+        if (event.data?.cmd === 'ack' && event.data.id === id) {
+          state.processor.port.removeEventListener('message', check); resolve();
+        }
+      };
+      state.processor.port.addEventListener('message', check);
+      state.processor.port.start?.();
+      const timer = setTimeout(() => {
+        state.processor.port.removeEventListener('message', check);
+        reject(new Error('録音処理との同期がタイムアウトしました。'));
+      }, timeoutMs);
+      // resolve時にタイマーを止めるため、Promiseのthenで処理
+      const originalResolve = resolve;
+      resolve = () => { clearTimeout(timer); originalResolve(); };
+      if (performance.now() - started > timeoutMs) reject(new Error('同期タイムアウト'));
+    });
+  }
+
+  async function configureAudioGraph() {
+    const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextCtor) throw new Error('このブラウザーはWeb Audio APIに対応していません。');
+    let context;
+    try { context = new AudioContextCtor({sampleRate:48000, latencyHint:'playback'}); }
+    catch (_) { context = new AudioContextCtor({latencyHint:'playback'}); }
+    state.context = context;
+    if (context.state === 'suspended') await context.resume();
+    state.sampleRate = context.sampleRate;
+    state.source = context.createMediaStreamSource(state.stream);
+    state.analyser = context.createAnalyser();
+    state.analyser.fftSize = 2048;
+    state.source.connect(state.analyser);
+
+    const track = state.stream.getAudioTracks()[0];
+    const settings = track?.getSettings ? track.getSettings() : {};
+    const requestedChannels = Number(settings.channelCount || 1);
+    const inputChannels = Math.max(1, Math.min(2, requestedChannels));
+
+    if (context.audioWorklet?.addModule && typeof AudioWorkletNode !== 'undefined') {
+      let moduleUrl;
+      try {
+        const blob = new Blob([makeWorkletSource()], {type:'application/javascript'});
+        moduleUrl = URL.createObjectURL(blob);
+        await context.audioWorklet.addModule(moduleUrl);
+        const node = new AudioWorkletNode(context, 'quiet-pcm-recorder', {
+          numberOfInputs:1, numberOfOutputs:1, outputChannelCount:[1], channelCount:2, channelCountMode:'max',
+          processorOptions:{chunkFrames:4096}
+        });
+        node.port.onmessage = (event) => {
+          const data = event.data || {};
+          if (data.cmd === 'pcm') {
+            const part = new Uint8Array(data.pcm);
+            if (state.bits === 24) addChunk(part);
+            else {
+              // 16-bit選択時は、Workletから来る24-bit PCMを16-bitへ変換。
+              const count = part.length / 3;
+              const out = new Uint8Array(count * 2); let p=0;
+              for (let i=0;i<part.length;i+=3) {
+                let v = part[i] | (part[i+1] << 8) | (part[i+2] << 16);
+                if (v & 0x800000) v |= 0xff000000;
+                const s = Math.max(-32768, Math.min(32767, Math.round(v / 256)));
+                out[p++] = s & 255; out[p++] = (s >> 8) & 255;
+              }
+              addChunk(out);
+            }
+            if (data.channels) {
+              state.channels = data.channels;
+              el.channels.textContent = data.channels === 1 ? 'モノラル（入力に準拠）' : 'ステレオ（入力に準拠）';
+            }
+          }
+        };
+        state.processor = node; state.worklet = true;
+        const silent = context.createGain(); silent.gain.value = 0;
+        state.silentGain = silent;
+        state.source.connect(node); node.connect(silent);
+        if (state.analyser) state.analyser.connect(silent);
+        silent.connect(context.destination);
+        node.port.start?.();
+      } catch (error) {
+        // Workletが使えない場合は互換性の高いScriptProcessorへ。
+        installScriptProcessor(state.source, context, inputChannels);
+      } finally {
+        if (moduleUrl) URL.revokeObjectURL(moduleUrl);
+      }
+    } else {
+      installScriptProcessor(state.source, context, inputChannels);
+    }
+
+    el.rate.textContent = `${state.sampleRate.toLocaleString('ja-JP')} Hz`;
+    el.channels.textContent = state.channels === 1 ? 'モノラル（入力に準拠）' : 'ステレオ（入力に準拠）';
+  }
+
+  async function requestWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    try { state.wakeLock = await navigator.wakeLock.request('screen'); }
+    catch (_) { state.wakeLock = null; }
+  }
+  async function releaseWakeLock() {
+    try { await state.wakeLock?.release(); } catch (_) {}
+    state.wakeLock = null;
+  }
+
+  async function startRecording() {
+    if (state.phase !== 'idle' && state.phase !== 'ready') return;
+    if (!window.isSecureContext) {
+      alert('マイク録音にはHTTPS接続、またはlocalhostでの表示が必要です。'); return;
+    }
+    setState('starting', 'マイクに接続しています…');
+    el.result.classList.remove('show');
+    state.bits = Number(el.quality.value) === 16 ? 16 : 24;
+    el.formatInfo.textContent = `PCM ${state.bits}-bit`;
+    state.chunks = []; state.bytes = 0; state.elapsedBefore = 0; state.blob = null;
+    try {
+      state.stream = await getMicrophone();
+      await refreshMics();
+      await configureAudioGraph();
+      state.startedAt = performance.now();
+      setState('recording', '録音中');
+      startClock();
+      await requestWakeLock();
+      const track = state.stream.getAudioTracks()[0];
+      if (track) {
+        track.onmute = () => { if (state.phase === 'recording') el.state.textContent = '録音中（マイク入力が一時停止）'; };
+        track.onunmute = () => { if (state.phase === 'recording') el.state.textContent = '録音中'; };
+        track.onended = () => { if (state.phase === 'recording' || state.phase === 'paused') finishRecording(true); };
+      }
+      state.meterId = requestAnimationFrame(updateMeter);
+      if (navigator.mediaDevices?.addEventListener) navigator.mediaDevices.addEventListener('devicechange', refreshMics);
+    } catch (error) {
+      await cleanupAudio();
+      setState('idle', '待機中');
+      const msg = error?.name === 'NotAllowedError' ? 'マイクの使用が許可されていません。ブラウザーのサイト設定からマイクを許可してください。'
+        : error?.name === 'NotFoundError' ? '利用できるマイクが見つかりません。'
+        : error?.message || 'マイクを開始できませんでした。';
+      alert(msg);
+    }
+  }
+
+  function updateMeter() {
+    if (!state.analyser || (state.phase !== 'recording' && state.phase !== 'paused')) return;
+    const data = new Float32Array(state.analyser.fftSize);
+    state.analyser.getFloatTimeDomainData(data);
+    let sum = 0;
+    for (let i=0;i<data.length;i++) sum += data[i] * data[i];
+    setMeter(Math.sqrt(sum / data.length));
+    state.meterId = requestAnimationFrame(updateMeter);
+  }
+
+  async function pauseOrResume() {
+    if (state.phase === 'recording') {
+      try {
+        if (state.worklet) {
+          const id = 'pause-' + Date.now();
+          state.processor.port.postMessage({cmd:'pause', id});
+          await waitWorkletAck(id);
+        }
+        state.elapsedBefore += performance.now() - state.startedAt;
+        setState('paused', '一時停止中'); stopClock();
+        await releaseWakeLock();
+      } catch (error) { alert(error.message); }
+    } else if (state.phase === 'paused') {
+      try {
+        if (state.context?.state === 'suspended') await state.context.resume();
+        if (state.worklet) {
+          const id = 'resume-' + Date.now();
+          state.processor.port.postMessage({cmd:'resume', id});
+          await waitWorkletAck(id);
+        }
+        state.startedAt = performance.now();
+        setState('recording', '録音中'); startClock(); await requestWakeLock();
+      } catch (error) { alert(error.message); }
+    }
+  }
+
+  function makeWavHeader(dataBytes, sampleRate, channels, bits) {
+    const bytesPerSample = bits / 8;
+    const blockAlign = channels * bytesPerSample;
+    const buffer = new ArrayBuffer(44);
+    const v = new DataView(buffer);
+    const write = (offset, str) => { for (let i=0;i<str.length;i++) v.setUint8(offset+i, str.charCodeAt(i)); };
+    write(0,'RIFF'); v.setUint32(4, 36 + dataBytes, true); write(8,'WAVE');
+    write(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true);
+    v.setUint16(22,channels,true); v.setUint32(24,sampleRate,true);
+    v.setUint32(28,sampleRate * blockAlign,true); v.setUint16(32,blockAlign,true);
+    v.setUint16(34,bits,true); write(36,'data'); v.setUint32(40,dataBytes,true);
+    return new Uint8Array(buffer);
+  }
+
+  async function cleanupAudio() {
+    cancelAnimationFrame(state.meterId); state.meterId = 0;
+    clearInterval(state.timerId); state.timerId = 0;
+    await releaseWakeLock();
+    if (state.stream) {
+      for (const track of state.stream.getTracks()) {
+        track.onmute = track.onunmute = track.onended = null;
+        try { track.stop(); } catch (_) {}
+      }
+    }
+    try { state.source?.disconnect(); } catch (_) {}
+    try { state.processor?.disconnect(); } catch (_) {}
+    try { state.silentGain?.disconnect(); } catch (_) {}
+    if (state.processor && !state.worklet) state.processor.onaudioprocess = null;
+    if (state.context) { try { await state.context.close(); } catch (_) {} }
+    state.stream = state.context = state.source = state.processor = state.silentGain = state.analyser = null;
+    state.worklet = false;
+    if (navigator.mediaDevices?.removeEventListener) navigator.mediaDevices.removeEventListener('devicechange', refreshMics);
+    setMeter(0);
+  }
+
+  async function finishRecording(automatic=false) {
+    if (state.phase !== 'recording' && state.phase !== 'paused') return;
+    const wasRecording = state.phase === 'recording';
+    if (wasRecording && state.startedAt) state.elapsedBefore += performance.now() - state.startedAt;
+    setState('stopping', '録音データを確定しています…');
+    stopClock();
+    try {
+      if (state.worklet && state.processor) {
+        const id = 'stop-' + Date.now();
+        state.processor.port.postMessage({cmd:'stop', id});
+        await waitWorkletAck(id, 4000);
+      }
+      const maxWavBytes = 0xFFFFFFFF - 36;
+      if (state.bytes > maxWavBytes) throw new Error('WAVの標準形式で保存できる上限（約4GB）を超えました。録音時間を短くして保存してください。');
+      const header = makeWavHeader(state.bytes, state.sampleRate, state.channels, state.bits);
+      state.blob = new Blob([header, ...state.chunks], {type:'audio/wav'});
+      state.fileName = `quiet_recording_${new Date().toISOString().replace(/[:.]/g,'-')}.wav`;
+      const sizeMb = state.blob.size / (1024 * 1024);
+      el.resultMeta.textContent = `${formatTime(state.elapsedBefore)} ／ ${state.sampleRate.toLocaleString('ja-JP')} Hz ／ ${state.channels === 1 ? 'モノラル' : 'ステレオ'} ／ PCM ${state.bits}-bit ／ ${sizeMb.toFixed(1)} MB`;
+      el.result.classList.add('show');
+      if (state.objectUrl) URL.revokeObjectURL(state.objectUrl);
+      state.objectUrl = URL.createObjectURL(state.blob);
+      setState('ready', automatic ? '入力が終了しました' : '録音終了');
+      el.start.disabled = false;
+    } catch (error) {
+      alert(error?.message || 'WAVファイルを作成できませんでした。');
+      setState('ready', '録音終了（保存エラー）');
+    } finally {
+      await cleanupAudio();
+      el.clock.textContent = formatTime(state.elapsedBefore);
+      state.startedAt = 0;
+      state.chunks = [];
+    }
+  }
+
+  function downloadBlob() {
+    if (!state.blob) return;
+    const url = state.objectUrl || URL.createObjectURL(state.blob);
+    const a = document.createElement('a'); a.href = url; a.download = state.fileName || 'recording.wav';
+    a.style.display = 'none'; document.body.append(a); a.click(); a.remove();
+    if (!state.objectUrl) setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+
+  async function shareBlob() {
+    if (!state.blob) return;
+    try {
+      if (typeof File !== 'undefined' && navigator.canShare && navigator.share) {
+        const file = new File([state.blob], state.fileName || 'recording.wav', {type:'audio/wav'});
+        if (navigator.canShare({files:[file]})) {
+          await navigator.share({files:[file], title:'録音WAV'});
+          return;
+        }
+      }
+      downloadBlob();
+      alert('このブラウザーはファイル共有に対応していないため、通常の保存操作を実行しました。');
+    } catch (error) {
+      if (error?.name !== 'AbortError') alert('共有を開始できませんでした。WAVを保存ボタンを使用してください。');
+    }
+  }
+
+  function reset() {
+    if (state.objectUrl) { URL.revokeObjectURL(state.objectUrl); state.objectUrl = null; }
+    state.blob = null; state.fileName = ''; state.chunks = []; state.bytes = 0; state.elapsedBefore = 0; state.startedAt = 0;
+    el.result.classList.remove('show'); el.clock.textContent = '00:00:00';
+    el.rate.textContent = '未接続'; el.channels.textContent = '未接続';
+    setState('idle','待機中');
+  }
+
+  el.start.addEventListener('click', startRecording);
+  el.pause.addEventListener('click', pauseOrResume);
+  el.stop.addEventListener('click', () => finishRecording(false));
+  el.download.addEventListener('click', downloadBlob);
+  el.share.addEventListener('click', shareBlob);
+  el.newRec.addEventListener('click', reset);
+  el.quality.addEventListener('change', () => { el.formatInfo.textContent = `PCM ${el.quality.value}-bit`; });
+  refreshMics();
+  setState('idle','待機中');
+
+  // タブが再表示された際、対応ブラウザーでは画面ロックを再取得する。
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible' && state.phase === 'recording' && !state.wakeLock) await requestWakeLock();
+  });
+  window.addEventListener('beforeunload', (event) => {
+    if (state.phase === 'recording' || state.phase === 'paused') { event.preventDefault(); event.returnValue = ''; }
+  });
+})();
+</script>
+</body>
+</html>
