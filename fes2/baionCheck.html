@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>純音（倍音なし音）ジェネレーター & スペクトログラム</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --accent-glow: rgba(56, 189, 248, 0.25);
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --border-color: #334155;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --success: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    header {
+      text-align: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      color: var(--accent);
+      margin-bottom: 4px;
+      letter-spacing: 0.02em;
+    }
+
+    header p {
+      font-size: 0.85rem;
+      color: var(--text-sub);
+    }
+
+    .visualizer-section {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    @media (min-width: 850px) {
+      .visualizer-section {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .canvas-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .canvas-card h2 {
+      font-size: 0.95rem;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .canvas-card h2::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background-color: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      background-color: #030712;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      height: 220px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .canvas-badge {
+      position: absolute;
+      bottom: 8px;
+      right: 10px;
+      background-color: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(4px);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      color: var(--text-sub);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      pointer-events: none;
+    }
+
+    .controls-section {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    @media (min-width: 850px) {
+      .controls-section {
+        grid-template-columns: 1.2fr 0.8fr;
+      }
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      color: var(--text-main);
+      font-weight: 600;
+      border-left: 4px solid var(--accent);
+      padding-left: 10px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 550px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.82rem;
+      color: var(--text-sub);
+      font-weight: 500;
+    }
+
+    input[type="text"], select, input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background-color: #0f172a;
+      color: var(--text-main);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="text"]:focus, select:focus, input[type="number"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .range-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .range-val {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent);
+      min-width: 42px;
+      text-align: right;
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    @media (max-width: 500px) {
+      .btn-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    button {
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      color: #0f172a;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--accent-hover);
+      color: #ffffff;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .btn-danger {
+      background-color: var(--danger);
+      color: #ffffff;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background-color: var(--danger-hover);
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-outline:hover:not(:disabled) {
+      background-color: rgba(56, 189, 248, 0.12);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .info-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background-color: rgba(30, 41, 59, 0.7);
+    }
+
+    .info-box {
+      background-color: rgba(56, 189, 248, 0.05);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--text-sub);
+    }
+
+    .info-box ul {
+      margin-top: 8px;
+      margin-left: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .info-box strong {
+      color: var(--accent);
+    }
+
+    .status-tag {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      background-color: #334155;
+      color: var(--text-sub);
+      display: inline-block;
+      margin-left: auto;
+    }
+
+    .status-tag.active {
+      background-color: rgba(16, 185, 129, 0.2);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>倍音ゼロ「純音」ジェネレーター & スペクトログラム</h1>
+    <p>上部のリアルタイム解析画面で、倍音を含まない「純音（サイン波）」の波形特性を観察できます</p>
+  </header>
+
+  <!-- 上部：リアルタイム可視化エリア（2画面） -->
+  <section class="visualizer-section">
+    <!-- FFT 周波数スペクトル -->
+    <div class="canvas-card">
+      <h2>
+        周波数スペクトル (FFT)
+        <span id="fftStatus" class="status-tag">待機中</span>
+      </h2>
+      <div class="canvas-wrapper">
+        <canvas id="fftCanvas"></canvas>
+        <div class="canvas-badge">ピーク 1つ ＝ 倍音ゼロ (純音)</div>
+      </div>
+    </div>
+
+    <!-- スペクトログラム -->
+    <div class="canvas-card">
+      <h2>
+        スペクトログラム (時間 × 周波数)
+        <span id="specStatus" class="status-tag">待機中</span>
+      </h2>
+      <div class="canvas-wrapper">
+        <canvas id="spectrogramCanvas"></canvas>
+        <div class="canvas-badge">横線 1本 ＝ 単一周波数 (純音)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 下部：パラメータ入力・操作ボタン・解説エリア -->
+  <section class="controls-section">
+    <!-- 入力 & 操作パネル -->
+    <div class="card">
+      <div class="card-title">音響パラメータ・コントロール</div>
+
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label for="sequence">周波数シーケンス (Hz / カンマ区切り)</label>
+          <input type="text" id="sequence" value="440, 554.37, 659.25, 880" placeholder="例: 440, 554.37, 659.25, 880">
+        </div>
+
+        <div class="form-group">
+          <label for="waveform">波形選択</label>
+          <select id="waveform">
+            <option value="sine" selected>サイン波 (倍音なし・純音)</option>
+            <option value="triangle">三角波 (弱い奇数倍音)</option>
+            <option value="sawtooth">鋸波 (強力な全倍音)</option>
+            <option value="square">矩形波 (強力な奇数倍音)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="duration">1音の長さ (秒)</label>
+          <input type="number" id="duration" value="0.8" step="0.1" min="0.1" max="5.0">
+        </div>
+
+        <div class="form-group">
+          <label for="fadeTime">クリック防止フェード (秒)</label>
+          <input type="number" id="fadeTime" value="0.05" step="0.01" min="0.001" max="0.5">
+        </div>
+
+        <div class="form-group">
+          <label for="volume">出力音量</label>
+          <div class="range-container">
+            <input type="range" id="volume" min="0" max="1" step="0.05" value="0.5">
+            <span id="volVal" class="range-val">50%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 操作ボタン -->
+      <div class="btn-row">
+        <button id="btnPlay" class="btn-primary">▶ 順に再生</button>
+        <button id="btnStop" class="btn-danger" disabled>■ 停止</button>
+        <button id="btnDownload" class="btn-outline">💾 WAV保存</button>
+      </div>
+    </div>
+
+    <!-- 解説パネル -->
+    <div class="card info-card">
+      <div class="card-title">純音（サイン波）の解説</div>
+      <div class="info-box">
+        <strong>なぜサイン波には倍音が出ないのか？</strong>
+        <ul>
+          <li><strong>単一周波数:</strong> サイン波（正弦波）は数学的に最も滑らかな周期波であり、ただ1つの周波数成分のみで構成されます。</li>
+          <li><strong>過渡倍音ノイズの防止:</strong> 音の出始めと終わりで波形が断絶すると「プチッ」と瞬時倍音（過渡ノイズ）が生じるため、微小なフェードイン/アウト（エンベロープ）で完全な純音を維持します。</li>
+          <li><strong>実験比較:</strong> 波形を「鋸波」や「矩形波」に変えると、上部の画面に何本もの並行する倍音線（高調波）が出現します。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  let audioCtx = null;
+  let analyser = null;
+  let isPlaying = false;
+  let stopRequested = false;
+  let animFrameId = null;
+
+  // キャンバス・コンテキスト取得
+  const fftCanvas = document.getElementById('fftCanvas');
+  const fftCtx = fftCanvas.getContext('2d');
+  const specCanvas = document.getElementById('spectrogramCanvas');
+  const specCtx = specCanvas.getContext('2d');
+
+  // UI要素
+  const fftStatus = document.getElementById('fftStatus');
+  const specStatus = document.getElementById('specStatus');
+  const btnPlay = document.getElementById('btnPlay');
+  const btnStop = document.getElementById('btnStop');
+  const btnDownload = document.getElementById('btnDownload');
+  const volInput = document.getElementById('volume');
+  const volVal = document.getElementById('volVal');
+
+  volInput.addEventListener('input', (e) => {
+    volVal.textContent = Math.round(e.target.value * 100) + '%';
+  });
+
+  function resizeCanvases() {
+    const rectFft = fftCanvas.parentElement.getBoundingClientRect();
+    const rectSpec = specCanvas.parentElement.getBoundingClientRect();
+
+    fftCanvas.width = rectFft.width || 400;
+    fftCanvas.height = rectFft.height || 220;
+    specCanvas.width = rectSpec.width || 400;
+    specCanvas.height = rectSpec.height || 220;
+
+    // スペクトログラム背景を黒で初期化
+    specCtx.fillStyle = '#030712';
+    specCtx.fillRect(0, 0, specCanvas.width, specCanvas.height);
+  }
+
+  window.addEventListener('resize', resizeCanvases);
+  // 初回描画待ち
+  setTimeout(resizeCanvases, 50);
+
+  function getInputs() {
+    const rawSeq = document.getElementById('sequence').value;
+    const freqs = rawSeq.split(',')
+      .map(v => parseFloat(v.trim()))
+      .filter(v => !isNaN(v) && v > 0 && v <= 20000);
+
+    return {
+      waveform: document.getElementById('waveform').value,
+      freqs: freqs.length > 0 ? freqs : [440],
+      duration: Math.max(0.1, parseFloat(document.getElementById('duration').value) || 0.8),
+      fadeTime: Math.max(0.001, parseFloat(document.getElementById('fadeTime').value) || 0.05),
+      volume: parseFloat(volInput.value)
+    };
+  }
+
+  function initAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.4;
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
+
+  function startVisualizer() {
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    // スペクトログラム用のオフスクリーンキャンバス（高速スクロール処理用）
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = specCanvas.width;
+    tempCanvas.height = specCanvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+
+    function draw() {
+      animFrameId = requestAnimationFrame(draw);
+      analyser.getByteFrequencyData(dataArray);
+
+      // --- 1. FFT (周波数スペクトル) 描画 ---
+      fftCtx.fillStyle = '#030712';
+      fftCtx.fillRect(0, 0, fftCanvas.width, fftCanvas.height);
+
+      const barWidth = (fftCanvas.width / (bufferLength / 2)) * 2.8;
+      let x = 0;
+
+      for (let i = 0; i < bufferLength / 2; i++) {
+        const barHeight = (dataArray[i] / 255) * fftCanvas.height;
+        
+        // シアンカラーのグラデーション
+        fftCtx.fillStyle = '#38bdf8';
+        fftCtx.fillRect(x, fftCanvas.height - barHeight, barWidth, barHeight);
+
+        x += barWidth + 1;
+        if (x > fftCanvas.width) break;
+      }
+
+      // --- 2. スペクトログラム描画 (左へスクロール) ---
+      tempCtx.drawImage(specCanvas, 0, 0);
+      specCtx.drawImage(tempCanvas, -2, 0);
+
+      // 右端のクリア
+      specCtx.fillStyle = '#030712';
+      specCtx.fillRect(specCanvas.width - 2, 0, 2, specCanvas.height);
+
+      const sliceHeight = specCanvas.height / (bufferLength / 2);
+      for (let i = 0; i < bufferLength / 2; i++) {
+        const val = dataArray[i]; // 0 ~ 255
+        const y = specCanvas.height - (i * sliceHeight);
+
+        if (val > 10) {
+          // 青〜シアン〜緑〜赤〜白への色変換 (HSL)
+          const hue = 210 - (val / 255) * 210;
+          const lightness = Math.min(65, (val / 255) * 55 + 10);
+          specCtx.fillStyle = `hsl(${hue}, 100%, ${lightness}%)`;
+          specCtx.fillRect(specCanvas.width - 2, y, 2, sliceHeight + 1);
+        }
+      }
+    }
+
+    draw();
+  }
+
+  async function playSequence() {
+    initAudio();
+    const config = getInputs();
+
+    isPlaying = true;
+    stopRequested = false;
+    btnPlay.disabled = true;
+    btnStop.disabled = false;
+    btnDownload.disabled = true;
+
+    fftStatus.textContent = '解析中';
+    fftStatus.classList.add('active');
+    specStatus.textContent = '解析中';
+    specStatus.classList.add('active');
+
+    if (!animFrameId) {
+      startVisualizer();
+    }
+
+    for (let i = 0; i < config.freqs.length; i++) {
+      if (stopRequested) break;
+      await playTone(config.freqs[i], config);
+    }
+
+    stopPlayback();
+  }
+
+  function playTone(freq, config) {
+    return new Promise((resolve) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = config.waveform;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+      // クリックノイズを完全に除去するスムーズなフェード（エンベロープ）
+      const now = audioCtx.currentTime;
+      const attack = Math.min(config.fadeTime, config.duration / 2);
+      const release = Math.min(config.fadeTime, config.duration / 2);
+
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(config.volume, now + attack);
+      gain.gain.setValueAtTime(config.volume, now + config.duration - release);
+      gain.gain.linearRampToValueAtTime(0, now + config.duration);
+
+      osc.connect(gain);
+      gain.connect(analyser);
+      analyser.connect(audioCtx.destination);
+
+      osc.start(now);
+      osc.stop(now + config.duration);
+
+      let checkInterval = setInterval(() => {
+        if (stopRequested) {
+          try {
+            osc.stop();
+          } catch(e) {}
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 20);
+
+      osc.onended = () => {
+        clearInterval(checkInterval);
+        resolve();
+      };
+    });
+  }
+
+  function stopPlayback() {
+    stopRequested = true;
+    isPlaying = false;
+    btnPlay.disabled = false;
+    btnStop.disabled = true;
+    btnDownload.disabled = false;
+
+    fftStatus.textContent = '待機中';
+    fftStatus.classList.remove('active');
+    specStatus.textContent = '待機中';
+    specStatus.classList.remove('active');
+  }
+
+  btnPlay.addEventListener('click', playSequence);
+  btnStop.addEventListener('click', stopPlayback);
+
+  btnDownload.addEventListener('click', async () => {
+    const config = getInputs();
+    const sampleRate = 44100;
+    const totalDuration = config.freqs.length * config.duration;
+
+    // オフラインレンダリングで高速処理
+    const offlineCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, sampleRate * totalDuration, sampleRate);
+
+    let currentTime = 0;
+    config.freqs.forEach(freq => {
+      const osc = offlineCtx.createOscillator();
+      const gain = offlineCtx.createGain();
+
+      osc.type = config.waveform;
+      osc.frequency.setValueAtTime(freq, currentTime);
+
+      const attack = Math.min(config.fadeTime, config.duration / 2);
+      const release = Math.min(config.fadeTime, config.duration / 2);
+
+      gain.gain.setValueAtTime(0, currentTime);
+      gain.gain.linearRampToValueAtTime(config.volume, currentTime + attack);
+      gain.gain.setValueAtTime(config.volume, currentTime + config.duration - release);
+      gain.gain.linearRampToValueAtTime(0, currentTime + config.duration);
+
+      osc.connect(gain);
+      gain.connect(offlineCtx.destination);
+
+      osc.start(currentTime);
+      osc.stop(currentTime + config.duration);
+
+      currentTime += config.duration;
+    });
+
+    const renderedBuffer = await offlineCtx.startRendering();
+    const wavBlob = audioBufferToWav(renderedBuffer);
+
+    // ダウンロード実行
+    const url = URL.createObjectURL(wavBlob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = `pure_tone_${config.waveform}_${Date.now()}.wav`;
+    document.body.appendChild(a);
+    a.click();
+
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  });
+
+  function audioBufferToWav(buffer) {
+    const numChannels = buffer.numberOfChannels;
+    const sampleRate = buffer.sampleRate;
+    const format = 1; // PCM
+    const bitDepth = 16;
+    const bytesPerSample = bitDepth / 8;
+    const blockAlign = numChannels * bytesPerSample;
+    const dataSize = buffer.length * numChannels * bytesPerSample;
+    const headerSize = 44;
+    const arrayBuffer = new ArrayBuffer(headerSize + dataSize);
+    const view = new DataView(arrayBuffer);
+
+    function writeString(offset, string) {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    }
+
+    // RIFF ヘッダー
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + dataSize, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, format, true);
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * blockAlign, true);
+    view.setUint16(32, blockAlign, true);
+    view.setUint16(34, bitDepth, true);
+    writeString(36, 'data');
+    view.setUint32(40, dataSize, true);
+
+    // サンプルデータ書き込み
+    let offset = 44;
+    for (let i = 0; i < buffer.length; i++) {
+      for (let channel = 0; channel < numChannels; channel++) {
+        let sample = buffer.getChannelData(channel)[i];
+        sample = Math.max(-1, Math.min(1, sample));
+        sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+        view.setInt16(offset, sample, true);
+        offset += 2;
+      }
+    }
+
+    return new Blob([arrayBuffer], { type: 'audio/wav' });
+  }
+</script>
+</body>
+</html>
